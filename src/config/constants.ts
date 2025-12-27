@@ -46,9 +46,14 @@ export const AUDIO_PATHS = {
 export const SCENE_CONSTANTS = {
   /** Default background color */
   BACKGROUND_COLOR: '#ececec',
-  /** Default camera position */
-  DEFAULT_CAMERA_POSITION: [0, 0, 10] as const,
-  /** Default camera FOV */
-  DEFAULT_CAMERA_FOV: 75,
+} as const;
+
+/**
+ * Error boundary UI constants
+ */
+export const ERROR_BOUNDARY_CONSTANTS = {
+  TITLE: 'Something went wrong',
+  DEFAULT_MESSAGE: 'An unexpected error occurred',
+  RETRY_BUTTON_TEXT: 'Try again',
 } as const;
 

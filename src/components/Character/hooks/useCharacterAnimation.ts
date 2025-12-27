@@ -3,7 +3,7 @@
  * Handles animation initialization, switching, and crossfading
  */
 
-import { useRef } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { AnimationMap, AnimationName, AnimationRefs } from '../../../types';
@@ -34,41 +34,69 @@ export const useCharacterAnimation = ({
   const currentAnimationRef = useRef<AnimationName>(currentAnimation);
 
   /**
-   * Initialize an animation action
+   * Initialize animation mixer if it doesn't exist
    */
-  const initializeAnimation = (animationData: THREE.AnimationClip[]): THREE.AnimationAction | null => {
+  const initializeMixer = useCallback((): THREE.AnimationMixer | null => {
     if (!mixerRef.current && groupRef.current) {
       mixerRef.current = new THREE.AnimationMixer(groupRef.current);
     }
+    return mixerRef.current;
+  }, [groupRef]);
 
-    if (!mixerRef.current) return null;
+  /**
+   * Initialize an animation action
+   */
+  const initializeAnimation = useCallback(
+    (animationData: THREE.AnimationClip[]): THREE.AnimationAction | null => {
+      const mixer = initializeMixer();
+      if (!mixer || !animationData[0]) return null;
 
-    const clip = animationData[0];
-    const action = mixerRef.current.clipAction(clip);
+      const clip = animationData[0];
+      const action = mixer.clipAction(clip);
 
-    action.setLoop(THREE.LoopRepeat, Infinity);
-    action.reset();
-    action.fadeIn(ANIMATION_CONSTANTS.CROSSFADE_DURATION);
-    action.play();
-    action.paused = false;
+      action.setLoop(THREE.LoopRepeat, Infinity);
+      action.reset();
+      action.fadeIn(ANIMATION_CONSTANTS.CROSSFADE_DURATION);
+      action.play();
+      action.paused = false;
 
-    return action;
-  };
+      return action;
+    },
+    [initializeMixer]
+  );
 
   /**
    * Switch to a new animation with crossfading
    */
-  const switchAnimation = (newAnimationData: THREE.AnimationClip[]): void => {
-    // Store current action for fading out
-    if (currentActionRef.current) {
-      previousActionRef.current = currentActionRef.current;
-      previousActionRef.current.fadeOut(ANIMATION_CONSTANTS.CROSSFADE_DURATION);
-    }
+  const switchAnimation = useCallback(
+    (newAnimationData: THREE.AnimationClip[]): void => {
+      // Store current action for fading out
+      if (currentActionRef.current) {
+        previousActionRef.current = currentActionRef.current;
+        previousActionRef.current.fadeOut(ANIMATION_CONSTANTS.CROSSFADE_DURATION);
+      }
 
-    // Initialize new animation
-    currentActionRef.current = initializeAnimation(newAnimationData);
-    animationInitialized.current = true;
-  };
+      // Initialize new animation
+      currentActionRef.current = initializeAnimation(newAnimationData);
+      animationInitialized.current = true;
+    },
+    [initializeAnimation]
+  );
+
+  // Cleanup mixer on unmount
+  useEffect(() => {
+    return () => {
+      if (mixerRef.current) {
+        // Stop all actions
+        mixerRef.current.stopAllAction();
+        // Dispose of the mixer
+        mixerRef.current = null;
+      }
+      currentActionRef.current = null;
+      previousActionRef.current = null;
+      animationInitialized.current = false;
+    };
+  }, []);
 
   useFrame((_state, delta) => {
     // Check for animation changes

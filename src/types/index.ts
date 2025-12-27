@@ -63,14 +63,25 @@ export interface AnimationState {
 }
 
 /**
+ * LipsyncManager interface
+ * Type definition for wawa-lipsync Lipsync instance
+ */
+export interface LipsyncManager {
+  connectAudio: (audioElement: HTMLAudioElement) => void;
+  processAudio: () => void;
+  viseme: string;
+}
+
+/**
  * Chatbot/Audio store state
  */
 export interface ChatbotState {
   audioPlayer: HTMLAudioElement | null;
-  lipsyncManager: any | null; // wawa-lipsync doesn't have types
+  lipsyncManager: LipsyncManager | null;
   isAudioPlaying: boolean;
   setupAudioPlayer: () => void;
   playAudio: (url: string) => void;
+  cleanup: () => void;
 }
 
 /**

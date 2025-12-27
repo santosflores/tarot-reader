@@ -3,7 +3,7 @@
  * Handles mouth morph targets based on audio playback
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
 import { VISEMES } from 'wawa-lipsync';
@@ -20,8 +20,22 @@ interface UseVisemeManagerParams {
  * @param avatarSkinnedMeshes - Array of skinned meshes with morph targets
  */
 export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams): void => {
+  // Use proper hook selectors at component level instead of getState() in useFrame
   const lipsyncManager = useChatbot((state) => state.lipsyncManager);
   const isAudioPlaying = useChatbot((state) => state.isAudioPlaying);
+  const audioPlayer = useChatbot((state) => state.audioPlayer);
+
+  // Use refs to track values for useFrame (avoid accessing store in render loop)
+  const lipsyncManagerRef = useRef(lipsyncManager);
+  const isAudioPlayingRef = useRef(isAudioPlaying);
+  const audioPlayerRef = useRef(audioPlayer);
+
+  // Update refs when values change
+  useEffect(() => {
+    lipsyncManagerRef.current = lipsyncManager;
+    isAudioPlayingRef.current = isAudioPlaying;
+    audioPlayerRef.current = audioPlayer;
+  }, [lipsyncManager, isAudioPlaying, audioPlayer]);
 
   /**
    * Update a morph target value with smoothing
@@ -50,12 +64,19 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   );
 
   useFrame(() => {
-    const audioPlayer = useChatbot.getState().audioPlayer;
-    const isPlaying = audioPlayer && !audioPlayer.paused && !audioPlayer.ended && audioPlayer.currentTime > 0;
+    const currentAudioPlayer = audioPlayerRef.current;
+    const currentIsAudioPlaying = isAudioPlayingRef.current;
+    const currentLipsyncManager = lipsyncManagerRef.current;
 
-    if (isPlaying && isAudioPlaying && lipsyncManager) {
-      lipsyncManager.processAudio();
-      const currentViseme = lipsyncManager.viseme;
+    const isPlaying =
+      currentAudioPlayer &&
+      !currentAudioPlayer.paused &&
+      !currentAudioPlayer.ended &&
+      currentAudioPlayer.currentTime > 0;
+
+    if (isPlaying && currentIsAudioPlaying && currentLipsyncManager) {
+      currentLipsyncManager.processAudio();
+      const currentViseme = currentLipsyncManager.viseme;
 
       Object.values(VISEMES).forEach((viseme) => {
         const targetValue = viseme === currentViseme ? 1 : 0;

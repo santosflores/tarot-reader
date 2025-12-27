@@ -3,24 +3,60 @@
  * Provides controls for adjusting camera position and FOV
  */
 
+import { memo, useCallback, useMemo } from 'react';
 import { useCamera } from '../../../hooks/useCamera';
 import { CAMERA_POSITION_LIMITS, CAMERA_FOV_LIMITS, DEFAULT_CAMERA_RESET_POSITION } from '../../../config/camera';
 import type { CameraPosition } from '../../../types';
 
-export const CameraControls = () => {
+export const CameraControls = memo(() => {
   const { cameraPosition, cameraFov, setCameraPosition, setCameraFov } = useCamera();
 
-  const handlePositionChange = (axis: 'x' | 'y' | 'z', value: number) => {
-    const newPosition: CameraPosition = [...cameraPosition];
-    if (axis === 'x') newPosition[0] = value;
-    if (axis === 'y') newPosition[1] = value;
-    if (axis === 'z') newPosition[2] = value;
-    setCameraPosition(newPosition);
-  };
+  const handlePositionChange = useCallback(
+    (axis: 'x' | 'y' | 'z', value: number) => {
+      const newPosition: CameraPosition = [...cameraPosition];
+      if (axis === 'x') newPosition[0] = value;
+      if (axis === 'y') newPosition[1] = value;
+      if (axis === 'z') newPosition[2] = value;
+      setCameraPosition(newPosition);
+    },
+    [cameraPosition, setCameraPosition]
+  );
 
-  const handleReset = () => {
+  const handleXChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handlePositionChange('x', parseFloat(e.target.value));
+    },
+    [handlePositionChange]
+  );
+
+  const handleYChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handlePositionChange('y', parseFloat(e.target.value));
+    },
+    [handlePositionChange]
+  );
+
+  const handleZChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handlePositionChange('z', parseFloat(e.target.value));
+    },
+    [handlePositionChange]
+  );
+
+  const handleFovChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setCameraFov(parseInt(e.target.value));
+    },
+    [setCameraFov]
+  );
+
+  const handleReset = useCallback(() => {
     setCameraPosition(DEFAULT_CAMERA_RESET_POSITION);
-  };
+  }, [setCameraPosition]);
+
+  const formattedX = useMemo(() => cameraPosition[0].toFixed(1), [cameraPosition[0]]);
+  const formattedY = useMemo(() => cameraPosition[1].toFixed(1), [cameraPosition[1]]);
+  const formattedZ = useMemo(() => cameraPosition[2].toFixed(1), [cameraPosition[2]]);
 
   return (
     <div className="mb-4">
@@ -28,7 +64,7 @@ export const CameraControls = () => {
 
       <div className="mb-2">
         <label className="block text-xs mb-1">
-          X: <span className="font-medium">{cameraPosition[0].toFixed(1)}</span>
+          X: <span className="font-medium">{formattedX}</span>
         </label>
         <input
           type="range"
@@ -36,14 +72,14 @@ export const CameraControls = () => {
           max={CAMERA_POSITION_LIMITS.X.max}
           step="0.1"
           value={cameraPosition[0]}
-          onChange={(e) => handlePositionChange('x', parseFloat(e.target.value))}
+          onChange={handleXChange}
           className="w-full"
         />
       </div>
 
       <div className="mb-2">
         <label className="block text-xs mb-1">
-          Y: <span className="font-medium">{cameraPosition[1].toFixed(1)}</span>
+          Y: <span className="font-medium">{formattedY}</span>
         </label>
         <input
           type="range"
@@ -51,14 +87,14 @@ export const CameraControls = () => {
           max={CAMERA_POSITION_LIMITS.Y.max}
           step="0.1"
           value={cameraPosition[1]}
-          onChange={(e) => handlePositionChange('y', parseFloat(e.target.value))}
+          onChange={handleYChange}
           className="w-full"
         />
       </div>
 
       <div className="mb-2">
         <label className="block text-xs mb-1">
-          Z: <span className="font-medium">{cameraPosition[2].toFixed(1)}</span>
+          Z: <span className="font-medium">{formattedZ}</span>
         </label>
         <input
           type="range"
@@ -66,7 +102,7 @@ export const CameraControls = () => {
           max={CAMERA_POSITION_LIMITS.Z.max}
           step="0.1"
           value={cameraPosition[2]}
-          onChange={(e) => handlePositionChange('z', parseFloat(e.target.value))}
+          onChange={handleZChange}
           className="w-full"
         />
       </div>
@@ -81,7 +117,7 @@ export const CameraControls = () => {
           max={CAMERA_FOV_LIMITS.max}
           step="1"
           value={cameraFov}
-          onChange={(e) => setCameraFov(parseInt(e.target.value))}
+          onChange={handleFovChange}
           className="w-full"
         />
       </div>
@@ -94,5 +130,7 @@ export const CameraControls = () => {
       </button>
     </div>
   );
-};
+});
+
+CameraControls.displayName = 'CameraControls';
 

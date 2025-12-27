@@ -3,27 +3,31 @@
  * Root application component
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { UI } from './components/UI/UI';
 import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useChatbot } from './hooks/useChatbot';
 import { SCENE_CONSTANTS } from './config/constants';
+import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
 import { safeAsync } from './utils/errors';
 
 function App() {
-  const setupAudioPlayer = useChatbot((state) => state.setupAudioPlayer);
+  const setupAudioPlayerRef = useRef<(() => void) | null>(null);
 
-  // Initialize audio player on mount
+  // Initialize audio player on mount (only once)
   useEffect(() => {
-    safeAsync(
-      async () => {
-        setupAudioPlayer();
-      },
-      'Failed to initialize audio player'
-    );
-  }, [setupAudioPlayer]);
+    if (!setupAudioPlayerRef.current) {
+      setupAudioPlayerRef.current = useChatbot.getState().setupAudioPlayer;
+      safeAsync(
+        async () => {
+          setupAudioPlayerRef.current?.();
+        },
+        'Failed to initialize audio player'
+      );
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -31,8 +35,8 @@ function App() {
       <Canvas
         shadows
         camera={{
-          position: SCENE_CONSTANTS.DEFAULT_CAMERA_POSITION,
-          fov: SCENE_CONSTANTS.DEFAULT_CAMERA_FOV,
+          position: DEFAULT_CAMERA_POSITION,
+          fov: DEFAULT_CAMERA_FOV,
         }}
       >
         <color attach="background" args={[SCENE_CONSTANTS.BACKGROUND_COLOR]} />

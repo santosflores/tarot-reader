@@ -5,11 +5,23 @@
 
 import { create } from 'zustand';
 import { Lipsync } from 'wawa-lipsync';
-import type { ChatbotState } from '../types';
+import type { ChatbotState, LipsyncManager } from '../types';
+import { logError } from '../utils/errors';
 
 interface ChatbotStore extends ChatbotState {
   lipsyncManagerInitialized: boolean;
 }
+
+// Store event handlers for cleanup
+let audioEventHandlers: {
+  onplaying: (() => void) | null;
+  onended: (() => void) | null;
+  onpause: (() => void) | null;
+} = {
+  onplaying: null,
+  onended: null,
+  onpause: null,
+};
 
 export const useChatbot = create<ChatbotStore>((set, get) => ({
   audioPlayer: null,
@@ -24,7 +36,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     }
 
     if (typeof Audio === 'undefined') {
-      console.warn('Audio API not available');
+      logError(new Error('Audio API not available'), { context: 'useChatbot.setupAudioPlayer' });
       return;
     }
 
@@ -32,9 +44,10 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     audioPlayer.crossOrigin = 'anonymous';
     audioPlayer.preload = 'auto';
 
-    const lipsyncManager = new Lipsync();
+    const lipsyncManager = new Lipsync() as LipsyncManager;
 
-    audioPlayer.onplaying = () => {
+    // Create event handlers
+    const handlePlaying = () => {
       const state = get();
       if (!state.lipsyncManagerInitialized && state.lipsyncManager) {
         state.lipsyncManager.connectAudio(audioPlayer);
@@ -43,13 +56,23 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
       set({ isAudioPlaying: true });
     };
 
-    audioPlayer.onended = () => {
+    const handleEnded = () => {
       set({ isAudioPlaying: false });
     };
 
-    audioPlayer.onpause = () => {
+    const handlePause = () => {
       set({ isAudioPlaying: false });
     };
+
+    // Store handlers for cleanup
+    audioEventHandlers.onplaying = handlePlaying;
+    audioEventHandlers.onended = handleEnded;
+    audioEventHandlers.onpause = handlePause;
+
+    // Attach event handlers
+    audioPlayer.onplaying = handlePlaying;
+    audioPlayer.onended = handleEnded;
+    audioPlayer.onpause = handlePause;
 
     set({ audioPlayer, lipsyncManager });
   },
@@ -57,13 +80,50 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
   playAudio: (url: string) => {
     const audioPlayer = get().audioPlayer;
     if (!audioPlayer) {
-      console.warn('Audio player not initialized. Call setupAudioPlayer() first.');
+      logError(new Error('Audio player not initialized. Call setupAudioPlayer() first.'), {
+        context: 'useChatbot.playAudio',
+      });
       return;
     }
     audioPlayer.src = url;
     audioPlayer.play().catch((error) => {
-      console.error('Error playing audio:', error);
+      logError(error, { context: 'useChatbot.playAudio', url });
     });
+  },
+
+  cleanup: () => {
+    const { audioPlayer } = get();
+    if (audioPlayer) {
+      // Remove event handlers
+      if (audioEventHandlers.onplaying) {
+        audioPlayer.onplaying = null;
+      }
+      if (audioEventHandlers.onended) {
+        audioPlayer.onended = null;
+      }
+      if (audioEventHandlers.onpause) {
+        audioPlayer.onpause = null;
+      }
+
+      // Pause and reset audio
+      audioPlayer.pause();
+      audioPlayer.src = '';
+
+      // Reset handlers
+      audioEventHandlers = {
+        onplaying: null,
+        onended: null,
+        onpause: null,
+      };
+
+      // Reset state
+      set({
+        audioPlayer: null,
+        lipsyncManager: null,
+        isAudioPlaying: false,
+        lipsyncManagerInitialized: false,
+      });
+    }
   },
 }));
 
