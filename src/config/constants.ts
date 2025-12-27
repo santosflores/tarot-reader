@@ -30,7 +30,7 @@ export const UI_CONSTANTS = {
  * Model paths
  */
 export const MODEL_PATHS = {
-  CHARACTER: '/models/Witch2.glb',
+  CHARACTER: '/models/Witch.glb',
 } as const;
 
 /**
