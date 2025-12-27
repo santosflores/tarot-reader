@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import type { AnimationState, AnimationName } from '../types';
-import { DEFAULT_ANIMATION, AVAILABLE_ANIMATIONS } from '@/config/animations';
+import { DEFAULT_ANIMATION, AVAILABLE_ANIMATIONS } from '../config/animations';
 
 interface AnimationStore extends AnimationState {
   animationFiles?: Record<string, string>;

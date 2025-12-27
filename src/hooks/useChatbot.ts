@@ -32,7 +32,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     audioPlayer.crossOrigin = 'anonymous';
     audioPlayer.preload = 'auto';
 
-    const lipsyncManager = new Lipsync({});
+    const lipsyncManager = new Lipsync();
 
     audioPlayer.onplaying = () => {
       const state = get();

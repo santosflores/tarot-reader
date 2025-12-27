@@ -8,7 +8,7 @@ import type { CameraState } from '../types';
 import {
   DEFAULT_CAMERA_POSITION,
   DEFAULT_CAMERA_FOV,
-} from '@/config/camera';
+} from '../config/camera';
 
 export const useCamera = create<CameraState>((set) => ({
   cameraPosition: DEFAULT_CAMERA_POSITION,
