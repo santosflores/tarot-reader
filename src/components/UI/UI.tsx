@@ -11,7 +11,7 @@ import { UI_CONSTANTS } from '../../config/constants';
 export const UI = () => {
   return (
     <div
-      className="absolute top-2.5 left-2.5 z-[100] bg-white/90 p-4 rounded-lg shadow-lg"
+      className="absolute top-2.5 left-2.5 z-[100] bg-white/90 p-4 rounded-lg shadow-lg w-[300px] max-h-[calc(100vh-20px)] overflow-y-auto"
       style={{
         zIndex: UI_CONSTANTS.Z_INDEX,
         background: UI_CONSTANTS.BACKGROUND_COLOR,

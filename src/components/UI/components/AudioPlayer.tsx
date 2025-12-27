@@ -22,7 +22,7 @@ export const AudioPlayer = () => {
     <div className="mb-4">
       <h3 className="text-sm font-semibold mb-2">Audio Controls</h3>
       <button
-        onClick={() => handlePlayAudio(`/${AUDIO_PATHS.HI_MESSAGE}`)}
+        onClick={() => handlePlayAudio(`/${AUDIO_PATHS.WELCOME}`)}
         className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors text-sm font-medium"
       >
         Play Audio

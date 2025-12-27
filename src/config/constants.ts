@@ -37,8 +37,6 @@ export const MODEL_PATHS = {
  * Audio paths
  */
 export const AUDIO_PATHS = {
-  HI_MESSAGE: 'audios/hi_message.mp3',
-  WELCOME_MESSAGE: 'audios/welcome_message.mp3',
   WELCOME: 'audios/welcome.mp3',
 } as const;
 
