@@ -54,9 +54,9 @@ export const CameraControls = memo(() => {
     setCameraPosition(DEFAULT_CAMERA_RESET_POSITION);
   }, [setCameraPosition]);
 
-  const formattedX = useMemo(() => cameraPosition[0].toFixed(1), [cameraPosition[0]]);
-  const formattedY = useMemo(() => cameraPosition[1].toFixed(1), [cameraPosition[1]]);
-  const formattedZ = useMemo(() => cameraPosition[2].toFixed(1), [cameraPosition[2]]);
+  const formattedX = useMemo(() => cameraPosition[0].toFixed(1), [cameraPosition]);
+  const formattedY = useMemo(() => cameraPosition[1].toFixed(1), [cameraPosition]);
+  const formattedZ = useMemo(() => cameraPosition[2].toFixed(1), [cameraPosition]);
 
   return (
     <div className="mb-4">
