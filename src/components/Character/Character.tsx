@@ -10,6 +10,7 @@ import { ANIMATION_CONFIG } from '../../config/animations';
 import { MODEL_PATHS } from '../../config/constants';
 import { useCharacterAnimation } from './hooks/useCharacterAnimation';
 import { useVisemeManager } from './hooks/useVisemeManager';
+import { useBlinkManager } from './hooks/useBlinkManager';
 import { findSkinnedMeshes } from '../../utils/three';
 import type { CharacterProps, AnimationMap, AnimationName } from '../../types';
 import * as THREE from 'three';
@@ -81,6 +82,7 @@ export const Character = ({ ...props }: CharacterProps) => {
   });
 
   useVisemeManager({ avatarSkinnedMeshes });
+  useBlinkManager({ avatarSkinnedMeshes });
 
   return (
     <group {...props} ref={group}>
