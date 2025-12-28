@@ -6,6 +6,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import type { UserProfile, UserProfileUpdate } from '../types/supabase';
 
 /**
  * Hook for managing Supabase authentication state
@@ -48,10 +49,15 @@ export const useAuth = () => {
     return { data, error };
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName,
+        },
+      },
     });
     return { data, error };
   }, []);
@@ -68,6 +74,20 @@ export const useAuth = () => {
     return { data, error };
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { data, error };
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { data, error };
+  }, []);
+
   return {
     user,
     session,
@@ -76,6 +96,76 @@ export const useAuth = () => {
     signUp,
     signOut,
     signInWithOAuth,
+    resetPassword,
+    updatePassword,
+  };
+};
+
+/**
+ * Hook for managing user profile data
+ */
+export const useUserProfile = (userId?: string) => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchProfile = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const updateProfile = useCallback(async (updates: UserProfileUpdate) => {
+    if (!userId) {
+      return { data: null, error: new Error('No user ID provided') };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      return { data, error: null };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to update profile');
+      return { data: null, error };
+    }
+  }, [userId]);
+
+  return {
+    profile,
+    loading,
+    error,
+    updateProfile,
+    refetch: fetchProfile,
   };
 };
 
