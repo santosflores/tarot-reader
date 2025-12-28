@@ -82,12 +82,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    // Immediately update state on successful sign-in to avoid race condition
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.user);
+      // Fetch profile asynchronously, don't block navigation
+      fetchProfile(data.user.id).then(setProfile);
+    }
+    
     return { error: error ? new Error(error.message) : null };
-  }, []);
+  }, [fetchProfile]);
 
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     const { data, error } = await supabase.auth.signUp({
