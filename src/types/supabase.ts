@@ -36,41 +36,33 @@ export type Database = {
     Tables: {
       user_profiles: {
         Row: {
-          id: string
-          display_name: string | null
           bio: string | null
-          preferences: Json
           birthdate: string | null
           created_at: string
+          display_name: string | null
+          id: string
+          preferences: Json | null
           updated_at: string
         }
         Insert: {
-          id: string
-          display_name?: string | null
           bio?: string | null
-          preferences?: Json
           birthdate?: string | null
           created_at?: string
+          display_name?: string | null
+          id: string
+          preferences?: Json | null
           updated_at?: string
         }
         Update: {
-          id?: string
-          display_name?: string | null
           bio?: string | null
-          preferences?: Json
           birthdate?: string | null
           created_at?: string
+          display_name?: string | null
+          id?: string
+          preferences?: Json | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -214,9 +206,3 @@ export const Constants = {
   },
 } as const
 
-/**
- * Convenience type for UserProfile table
- */
-export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
-export type UserProfileInsert = Database['public']['Tables']['user_profiles']['Insert']
-export type UserProfileUpdate = Database['public']['Tables']['user_profiles']['Update']
