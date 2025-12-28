@@ -8,7 +8,7 @@ import { AnimationSelector } from './components/AnimationSelector';
 import { CameraControls } from './components/CameraControls';
 import { AudioPlayer } from './components/AudioPlayer';
 import { SupabaseTest } from './components/SupabaseTest';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();

@@ -5,7 +5,7 @@
 
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
 
 export function LoginForm() {
@@ -33,6 +33,7 @@ export function LoginForm() {
         navigate(from, { replace: true });
       }
     } catch (err) {
+      console.error(err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

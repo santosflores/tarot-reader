@@ -5,7 +5,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
 import { supabase } from '../../lib/supabase';
 
@@ -101,6 +101,7 @@ export function ResetPasswordForm() {
         }, 2000);
       }
     } catch (err) {
+      console.error(err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

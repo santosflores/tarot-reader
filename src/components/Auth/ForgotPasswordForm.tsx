@@ -5,7 +5,7 @@
 
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
 
 export function ForgotPasswordForm() {
@@ -29,6 +29,7 @@ export function ForgotPasswordForm() {
         setSuccess(true);
       }
     } catch (err) {
+      console.error(err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

@@ -5,7 +5,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/Auth';
 import { LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm } from './components/Auth';
 import App from './App';

@@ -1,28 +1,13 @@
 /**
- * Auth Context Provider
+ * Auth Provider Component
  * Provides authentication state and methods globally
  */
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { useEffect, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import type { UserProfile, UserProfileUpdate } from '../types/supabase';
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  profile: UserProfile | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
-  signOut: () => Promise<{ error: Error | null }>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
-  updateProfile: (updates: UserProfileUpdate) => Promise<{ error: Error | null }>;
-  refreshProfile: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext, AuthContextType } from './AuthContext';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -192,12 +177,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
 }
