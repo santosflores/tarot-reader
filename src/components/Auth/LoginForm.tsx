@@ -3,7 +3,7 @@
  * Email and password login with links to signup and forgot password
  */
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
@@ -14,11 +14,18 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { signIn } = useAuthContext();
+  const { signIn, user, loading: authLoading } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+
+  // Redirect when user becomes authenticated
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, from]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,16 +36,20 @@ export function LoginForm() {
       const { error } = await signIn(email, password);
       if (error) {
         setError(error.message);
-      } else {
-        navigate(from, { replace: true });
+        setLoading(false);
       }
+      // Don't navigate here - let the useEffect handle it when user state updates
     } catch (err) {
       console.error(err);
       setError('An unexpected error occurred');
-    } finally {
       setLoading(false);
     }
   };
+
+  // If already logged in, show nothing while redirecting
+  if (user && !authLoading) {
+    return null;
+  }
 
   return (
     <AuthLayout

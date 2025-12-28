@@ -3,7 +3,7 @@
  * User registration with email, password, and display name
  */
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
@@ -17,8 +17,15 @@ export function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { signUp } = useAuthContext();
+  const { signUp, user, loading: authLoading } = useAuthContext();
   const navigate = useNavigate();
+
+  // Redirect when user becomes authenticated (auto-confirm enabled)
+  useEffect(() => {
+    if (user && !authLoading && !success) {
+      navigate('/', { replace: true });
+    }
+  }, [user, authLoading, navigate, success]);
 
   const validatePassword = (pass: string): string | null => {
     if (pass.length < 8) {
@@ -59,18 +66,23 @@ export function SignupForm() {
       const { error, needsConfirmation } = await signUp(email, password, displayName || undefined);
       if (error) {
         setError(error.message);
+        setLoading(false);
       } else if (needsConfirmation) {
         setSuccess(true);
-      } else {
-        navigate('/');
+        setLoading(false);
       }
+      // If no confirmation needed, useEffect will handle navigation when user state updates
     } catch (err) {
       console.error(err);
       setError('An unexpected error occurred');
-    } finally {
       setLoading(false);
     }
   };
+
+  // If already logged in, show nothing while redirecting
+  if (user && !authLoading && !success) {
+    return null;
+  }
 
   if (success) {
     return (
