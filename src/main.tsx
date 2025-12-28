@@ -4,7 +4,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/Auth';
 import { LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm } from './components/Auth';
@@ -22,15 +22,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
           <Route path="/reset-password" element={<ResetPasswordForm />} />
           
-          {/* Protected Routes */}
+          {/* Protected Main App */}
           <Route
-            path="/*"
+            path="/"
             element={
               <ProtectedRoute>
                 <App />
               </ProtectedRoute>
             }
           />
+          
+          {/* Catch-all: redirect unknown routes to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

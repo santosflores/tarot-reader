@@ -19,7 +19,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile
+  // Fetch user profile (non-blocking)
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -41,20 +41,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state
   useEffect(() => {
+    let mounted = true;
+
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error.message);
+          if (mounted) {
+            setLoading(false);
+          }
+          return;
+        }
 
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false); // Set loading to false immediately after session check
+        }
+
+        // Fetch profile asynchronously (non-blocking)
         if (session?.user) {
-          const userProfile = await fetchProfile(session.user.id);
-          setProfile(userProfile);
+          fetchProfile(session.user.id).then((profileData) => {
+            if (mounted && profileData) {
+              setProfile(profileData);
+            }
+          });
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
-      } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -62,21 +81,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
+        if (!mounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
+        setLoading(false); // Always set loading to false when auth state changes
 
+        // Fetch profile asynchronously (non-blocking)
         if (session?.user) {
-          const userProfile = await fetchProfile(session.user.id);
-          setProfile(userProfile);
+          fetchProfile(session.user.id).then((profileData) => {
+            if (mounted && profileData) {
+              setProfile(profileData);
+            }
+          });
         } else {
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -91,8 +117,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!error && data.session) {
       setSession(data.session);
       setUser(data.user);
+      setLoading(false);
       // Fetch profile asynchronously, don't block navigation
-      fetchProfile(data.user.id).then(setProfile);
+      fetchProfile(data.user.id).then((profileData) => {
+        if (profileData) {
+          setProfile(profileData);
+        }
+      });
     }
     
     return { error: error ? new Error(error.message) : null };
@@ -122,6 +153,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setProfile(null);
+      setUser(null);
+      setSession(null);
     }
     return { error: error ? new Error(error.message) : null };
   }, []);
