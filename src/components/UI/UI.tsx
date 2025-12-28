@@ -4,10 +4,8 @@
  */
 
 import { useState } from 'react';
-import { AnimationSelector } from './components/AnimationSelector';
-import { CameraControls } from './components/CameraControls';
-import { AudioPlayer } from './components/AudioPlayer';
 import { SupabaseTest } from './components/SupabaseTest';
+import { ControlsTabs } from './components/ControlsTabs';
 import { useAuthContext } from '../../hooks/useAuthContext';
 
 export const UI = () => {
@@ -53,9 +51,7 @@ export const UI = () => {
       )}
       
       <SupabaseTest />
-      <AudioPlayer />
-      <AnimationSelector />
-      <CameraControls />
+      <ControlsTabs />
     </div>
   );
 };

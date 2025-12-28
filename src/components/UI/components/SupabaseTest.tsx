@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 type ConnectionStatus = "checking" | "connected" | "error";
 
@@ -76,12 +77,26 @@ export const SupabaseTest = () => {
     error: "❌",
   };
 
-  return (
-    <div className="mb-4 border-b pb-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-2">
-        🔌 Supabase Connection
-      </h3>
+  const getStatusIndicator = (): 'success' | 'error' | 'warning' | null => {
+    switch (status) {
+      case 'connected':
+        return 'success';
+      case 'error':
+        return 'error';
+      case 'checking':
+        return 'warning';
+      default:
+        return null;
+    }
+  };
 
+  return (
+    <CollapsibleSection
+      title="Supabase Connection"
+      icon="🔌"
+      defaultExpanded={false}
+      statusIndicator={getStatusIndicator()}
+    >
       <div className={`p-2 rounded border text-xs ${statusColors[status]}`}>
         <div className="flex items-center gap-2">
           <span>{statusIcons[status]}</span>
@@ -111,6 +126,6 @@ export const SupabaseTest = () => {
             : "Not set"}
         </div>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 };
