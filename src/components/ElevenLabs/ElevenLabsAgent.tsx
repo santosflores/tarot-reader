@@ -3,287 +3,170 @@
  * Text-only conversation interface using ElevenLabs Agents Platform
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
+import type { Role, Status, Callbacks } from '@elevenlabs/client';
 
-// Type definition for messages from ElevenLabs SDK
-type ElevenLabsMessage =
-  | { role: 'agent' | 'user'; message: string; source?: string }
-  | { type: 'user_message' | 'user_transcript' | 'user_transcript_final'; text?: string; transcript?: string }
-  | { type: 'agent_chat_response_part'; text_response_part?: { type: 'start' | 'delta' | 'stop'; text?: string }; response_part?: { type: 'start' | 'delta' | 'stop'; text?: string } }
-  | { type: 'agent_response' | 'agent_chat_response'; agent_response_event?: { agent_response: string }; agent_response?: string; text?: string; response?: string }
-  | { type: 'debug'; [key: string]: unknown }
-  | { [key: string]: unknown };
+// MessagePayload type from @elevenlabs/types (re-exported here for convenience)
+interface MessagePayload {
+  message: string;
+  source: 'user' | 'ai';
+  role: Role;
+}
 
-export function ElevenLabsAgent() {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'agent' | 'system'; content: string; timestamp: Date; isStreaming?: boolean }>>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const streamingMessageIndexRef = useRef<number | null>(null);
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ChatMessage {
+  readonly id: string;
+  readonly role: Role | 'system';
+  readonly content: string;
+  readonly timestamp: Date;
+  readonly isStreaming?: boolean;
+}
+
+interface LogMessageParams {
+  message: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+const generateMessageId = (): string => `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'An unexpected error occurred';
+};
+
+// ============================================================================
+// Custom Hook: useAgentMessages
+// ============================================================================
+
+function useAgentMessages() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const addMessage = useCallback((role: ChatMessage['role'], content: string): void => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: generateMessageId(),
+        role,
+        content,
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
+  const addStreamingMessage = useCallback((): number => {
+    let newIndex = -1;
+    setMessages((prev) => {
+      newIndex = prev.length;
+      return [
+        ...prev,
+        {
+          id: generateMessageId(),
+          role: 'agent' as const,
+          content: '',
+          timestamp: new Date(),
+          isStreaming: true,
+        },
+      ];
+    });
+    return newIndex;
+  }, []);
+
+  const updateStreamingMessage = useCallback((index: number, content: string): void => {
+    setMessages((prev) => {
+      if (index < 0 || index >= prev.length || !prev[index].isStreaming) {
+        return prev;
+      }
+      const updated = [...prev];
+      updated[index] = { ...updated[index], content };
+      return updated;
+    });
+  }, []);
+
+  const finalizeStreamingMessage = useCallback((index: number, content?: string): void => {
+    setMessages((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        content: content ?? updated[index].content,
+        isStreaming: false,
+      };
+      return updated;
+    });
+  }, []);
+
+  return {
+    messages,
+    addMessage,
+    addStreamingMessage,
+    updateStreamingMessage,
+    finalizeStreamingMessage,
+  };
+}
+
+// ============================================================================
+// Custom Hook: useStreamingUpdates
+// ============================================================================
+
+function useStreamingUpdates(
+  onUpdate: (index: number, content: string) => void
+) {
+  const streamingIndexRef = useRef<number | null>(null);
   const streamingTextRef = useRef<string>('');
   const rafIdRef = useRef<number | null>(null);
 
-  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
-
-  // Throttled update function for streaming messages
-  const updateStreamingMessage = () => {
+  const flushUpdate = useCallback(() => {
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
     }
     rafIdRef.current = requestAnimationFrame(() => {
-      if (streamingMessageIndexRef.current !== null) {
-        setMessages((prevMessages) => {
-          const updated = [...prevMessages];
-          const streamIndex = streamingMessageIndexRef.current!;
-          if (streamIndex < updated.length && updated[streamIndex].isStreaming) {
-            updated[streamIndex] = {
-              ...updated[streamIndex],
-              content: streamingTextRef.current,
-            };
-          }
-          return updated;
-        });
+      if (streamingIndexRef.current !== null) {
+        onUpdate(streamingIndexRef.current, streamingTextRef.current);
       }
       rafIdRef.current = null;
     });
-  };
+  }, [onUpdate]);
 
-  const addMessage = (role: 'user' | 'agent' | 'system', content: string) => {
-    console.log('addMessage called:', role, content);
-    setMessages((prev) => {
-      const newMessages = [
-        ...prev,
-        {
-          role,
-          content,
-          timestamp: new Date(),
-        },
-      ];
-      console.log('Updated messages array, new length:', newMessages.length);
-      return newMessages;
-    });
-  };
+  const startStreaming = useCallback((index: number): void => {
+    streamingIndexRef.current = index;
+    streamingTextRef.current = '';
+  }, []);
 
-  const conversation = useConversation({
-    textOnly: true,
-    clientTools: {
-      logMessage: (parameters: { message: string }) => {
-        // Log the message to console
-        console.log('Agent logMessage:', parameters.message);
-        
-        // Optionally display in the UI as a system message
-        addMessage('system', `[Log] ${parameters.message}`);
-        
-        // Return success confirmation
-        return 'Message logged successfully';
-      },
-    },
-    onConnect: () => {
-      setIsConnected(true);
-      setError(null);
-      addMessage('system', 'Connected to agent');
-    },
-    onDisconnect: () => {
-      setIsConnected(false);
-      addMessage('system', 'Disconnected from agent');
-    },
-    onMessage: (message: ElevenLabsMessage) => {
-      // The SDK transforms messages into a simpler format
-      // Check for the transformed format first using type guards
-      if ('role' in message && 'message' in message && typeof message.message === 'string') {
-        if (message.role === 'agent' && message.message) {
-          // Agent message from SDK
-          console.log('Adding agent message:', message.message);
-          addMessage('agent', message.message);
-        } else if (message.role === 'user' && message.message) {
-          // User message from SDK (if any)
-          console.log('Adding user message from SDK:', message.message);
-          addMessage('user', message.message);
-        }
-      }
-      // Fallback: Handle raw WebSocket message formats (if SDK doesn't transform them)
-      else if ('type' in message && (message.type === 'user_message' || message.type === 'user_transcript' || message.type === 'user_transcript_final')) {
-        const msg = message as { type: 'user_message' | 'user_transcript' | 'user_transcript_final'; text?: string; transcript?: string };
-        const text = msg.text || msg.transcript || '';
-        if (text) {
-          console.log('Adding user message (raw):', text);
-          addMessage('user', text);
-        }
-      }
-      // Handle streaming agent response parts (for real-time streaming if supported)
-      else if ('type' in message && message.type === 'agent_chat_response_part') {
-        const msg = message as { type: 'agent_chat_response_part'; text_response_part?: { type: 'start' | 'delta' | 'stop'; text?: string }; response_part?: { type: 'start' | 'delta' | 'stop'; text?: string } };
-        const responsePart = msg.text_response_part || msg.response_part;
-        console.log('Agent chat response part:', responsePart);
-        
-        if (responsePart && 'type' in responsePart) {
-          if (responsePart.type === 'start') {
-            console.log('Starting streaming response');
-            streamingTextRef.current = '';
-            // Add a placeholder message for streaming
-            setMessages((prev) => {
-              const newIndex = prev.length;
-              streamingMessageIndexRef.current = newIndex;
-              console.log('Created streaming message at index:', newIndex);
-              return [
-                ...prev,
-                {
-                  role: 'agent',
-                  content: '',
-                  timestamp: new Date(),
-                  isStreaming: true,
-                },
-              ];
-            });
-          } else if (responsePart.type === 'delta') {
-            // Accumulate streaming text
-            const deltaText = responsePart.text || '';
-            streamingTextRef.current += deltaText;
-            console.log('Streaming delta, current text length:', streamingTextRef.current.length);
-            // Throttled update to prevent UI freezing
-            updateStreamingMessage();
-          } else if (responsePart.type === 'stop') {
-            console.log('Stopping streaming response');
-            // End of streaming - mark as complete
-            if (streamingMessageIndexRef.current !== null) {
-              setMessages((prevMessages) => {
-                const updated = [...prevMessages];
-                const streamIndex = streamingMessageIndexRef.current!;
-                if (streamIndex < updated.length && updated[streamIndex].isStreaming) {
-                  updated[streamIndex] = {
-                    ...updated[streamIndex],
-                    content: streamingTextRef.current,
-                    isStreaming: false,
-                  };
-                  console.log('Finalized streaming message:', updated[streamIndex].content);
-                }
-                return updated;
-              });
-              streamingMessageIndexRef.current = null;
-              streamingTextRef.current = '';
-            }
-          }
-        }
-      }
-      // Handle final agent response event (raw WebSocket format)
-      else if ('type' in message && (message.type === 'agent_response' || message.type === 'agent_chat_response')) {
-        const msg = message as { type: 'agent_response' | 'agent_chat_response'; agent_response_event?: { agent_response: string }; agent_response?: string; text?: string; response?: string };
-        const agentResponse = 
-          (msg.agent_response_event?.agent_response) || 
-          (msg.agent_response) || 
-          (msg.text) || 
-          (msg.response);
-        
-        console.log('Agent response event (raw):', agentResponse);
-        
-        if (agentResponse && typeof agentResponse === 'string') {
-          // Update the streaming message if it exists, otherwise add new
-          if (streamingMessageIndexRef.current !== null) {
-            console.log('Updating existing streaming message');
-            setMessages((prevMessages) => {
-              const updated = [...prevMessages];
-              const streamIndex = streamingMessageIndexRef.current!;
-              if (streamIndex < updated.length) {
-                updated[streamIndex] = {
-                  ...updated[streamIndex],
-                  content: agentResponse,
-                  isStreaming: false,
-                };
-              }
-              return updated;
-            });
-            streamingMessageIndexRef.current = null;
-            streamingTextRef.current = '';
-          } else {
-            console.log('Adding new agent message (raw)');
-            // Add as new message if no streaming message exists
-            addMessage('agent', agentResponse);
-          }
-        }
-      }
-      // Handle debug messages
-      else if ('type' in message && message.type === 'debug') {
-        console.log('Debug message:', message);
-      }
-      // Log unhandled message formats for debugging
-      else {
-        console.warn('Unhandled message format:', message);
-      }
-    },
-    onError: (error: Error | { message?: string } | string) => {
-      const errorMessage = error instanceof Error ? error.message : typeof error === 'string' ? error : error.message || 'An error occurred';
-      setError(errorMessage);
-      console.error('ElevenLabs error:', error);
-    },
-    onStatusChange: (status) => {
-      console.log('Status changed:', status);
-    },
-    onUnhandledClientToolCall: (toolCall) => {
-      console.warn('Unhandled client tool call:', toolCall);
-    },
-  });
+  const appendText = useCallback((text: string): void => {
+    streamingTextRef.current += text;
+    flushUpdate();
+  }, [flushUpdate]);
 
-  const handleStartSession = async () => {
-    if (!agentId) {
-      setError('Agent ID is not configured. Please set VITE_ELEVENLABS_AGENT_ID in your environment variables.');
-      return;
-    }
+  const stopStreaming = useCallback((): { index: number | null; text: string } => {
+    const result = {
+      index: streamingIndexRef.current,
+      text: streamingTextRef.current,
+    };
+    streamingIndexRef.current = null;
+    streamingTextRef.current = '';
+    return result;
+  }, []);
 
-    try {
-      setError(null);
-      await conversation.startSession({
-        agentId,
-        connectionType: 'websocket', // or 'webrtc' if preferred
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start session';
-      setError(errorMessage);
-      console.error('Failed to start session:', err);
-    }
-  };
+  const getStreamingState = useCallback(() => ({
+    index: streamingIndexRef.current,
+    text: streamingTextRef.current,
+  }), []);
 
-  const handleEndSession = async () => {
-    try {
-      await conversation.endSession();
-    } catch (err) {
-      console.error('Failed to end session:', err);
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (!message.trim() || !isConnected) return;
-
-    const messageText = message.trim();
-    // Manually add user message to UI immediately
-    addMessage('user', messageText);
-    
-    conversation.sendUserMessage(messageText);
-    setMessage('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  // Debug: Log when messages state changes
-  useEffect(() => {
-    console.log('Messages state updated, count:', messages.length);
-    console.log('Latest message:', messages[messages.length - 1]);
-  }, [messages]);
-
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    const messagesContainer = document.getElementById('messages-container');
-    if (messagesContainer) {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-  }, [messages]);
-
-  // Cleanup animation frame on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (rafIdRef.current !== null) {
@@ -292,121 +175,322 @@ export function ElevenLabsAgent() {
     };
   }, []);
 
+  return {
+    startStreaming,
+    appendText,
+    stopStreaming,
+    getStreamingState,
+  };
+}
+
+// ============================================================================
+// Component: MessageBubble
+// ============================================================================
+
+interface MessageBubbleProps {
+  readonly message: ChatMessage;
+}
+
+function MessageBubble({ message }: MessageBubbleProps) {
+  const bubbleStyles = {
+    user: 'bg-blue-500 text-white',
+    system: 'bg-gray-200 text-gray-700 text-sm',
+    agent: 'bg-white text-gray-900 border border-gray-200',
+  };
+
+  const timestampStyles = {
+    user: 'text-blue-100',
+    system: 'text-gray-500',
+    agent: 'text-gray-500',
+  };
+
+  return (
+    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${bubbleStyles[message.role]}`}>
+        <p className="text-sm">
+          {message.content || (message.isStreaming ? '...' : '')}
+          {message.isStreaming && (
+            <span className="inline-block w-2 h-2 bg-gray-400 rounded-full ml-1 animate-pulse" />
+          )}
+        </p>
+        <p className={`text-xs mt-1 ${timestampStyles[message.role]}`}>
+          {message.timestamp.toLocaleTimeString()}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Component: ConnectionStatus
+// ============================================================================
+
+interface ConnectionStatusProps {
+  readonly status: Status;
+  readonly onStart: () => void;
+  readonly onEnd: () => void;
+  readonly disabled: boolean;
+}
+
+function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatusProps) {
+  const isConnected = status === 'connected';
+  const isConnecting = status === 'connecting';
+
+  return (
+    <div className="bg-white border-t border-gray-200 px-6 py-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
+            }`}
+          />
+          <span className="text-sm text-gray-600 capitalize">{status}</span>
+        </div>
+        <div className="flex space-x-2">
+          {!isConnected ? (
+            <button
+              onClick={onStart}
+              disabled={disabled || isConnecting}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {isConnecting ? 'Connecting...' : 'Start Session'}
+            </button>
+          ) : (
+            <button
+              onClick={onEnd}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              End Session
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Component: MessageInput
+// ============================================================================
+
+interface MessageInputProps {
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly onSend: () => void;
+  readonly disabled: boolean;
+}
+
+function MessageInput({ value, onChange, onSend, disabled }: MessageInputProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
+  return (
+    <div className="bg-white border-t border-gray-200 px-6 py-4">
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type your message..."
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={disabled}
+        />
+        <button
+          onClick={onSend}
+          disabled={!value.trim() || disabled}
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Component: ElevenLabsAgent (Main)
+// ============================================================================
+
+export function ElevenLabsAgent() {
+  const [inputValue, setInputValue] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    messages,
+    addMessage,
+    addStreamingMessage,
+    updateStreamingMessage,
+    finalizeStreamingMessage,
+  } = useAgentMessages();
+
+  const streaming = useStreamingUpdates(updateStreamingMessage);
+
+  // Callbacks for the ElevenLabs SDK
+  const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
+    setError(null);
+    addMessage('system', 'Connected to agent');
+  }, [addMessage]);
+
+  const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
+    addMessage('system', 'Disconnected from agent');
+  }, [addMessage]);
+
+  const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
+    (payload: MessagePayload) => {
+      if (payload.role === 'agent' && payload.message) {
+        addMessage('agent', payload.message);
+      }
+    },
+    [addMessage]
+  );
+
+  const handleError: NonNullable<Callbacks['onError']> = useCallback((message: string) => {
+    setError(message);
+  }, []);
+
+  const handleStatusChange: NonNullable<Callbacks['onStatusChange']> = useCallback(
+    ({ status }) => {
+      if (import.meta.env.DEV) {
+        console.log('Status changed:', status);
+      }
+    },
+    []
+  );
+
+  const handleAgentChatResponsePart: NonNullable<Callbacks['onAgentChatResponsePart']> = useCallback(
+    (responsePart) => {
+      if (!responsePart) return;
+
+      if (responsePart.type === 'start') {
+        const index = addStreamingMessage();
+        streaming.startStreaming(index);
+      } else if (responsePart.type === 'delta' && responsePart.text) {
+        streaming.appendText(responsePart.text);
+      } else if (responsePart.type === 'stop') {
+        const { index, text } = streaming.stopStreaming();
+        if (index !== null) {
+          finalizeStreamingMessage(index, text);
+        }
+      }
+    },
+    [addStreamingMessage, streaming, finalizeStreamingMessage]
+  );
+
+  // Client tools configuration
+  const clientTools = {
+    logMessage: (params: LogMessageParams): string => {
+      addMessage('system', `[Log] ${params.message}`);
+      return 'Message logged successfully';
+    },
+  };
+
+  const conversation = useConversation({
+    textOnly: true,
+    clientTools,
+    onConnect: handleConnect,
+    onDisconnect: handleDisconnect,
+    onMessage: handleMessage,
+    onError: handleError,
+    onStatusChange: handleStatusChange,
+    onAgentChatResponsePart: handleAgentChatResponsePart,
+  });
+
+  const handleStartSession = useCallback(async (): Promise<void> => {
+    if (!AGENT_ID) {
+      setError('Agent ID is not configured. Set VITE_ELEVENLABS_AGENT_ID in your environment.');
+      return;
+    }
+
+    try {
+      setError(null);
+      await conversation.startSession({
+        agentId: AGENT_ID,
+        connectionType: 'websocket',
+      });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }, [conversation]);
+
+  const handleEndSession = useCallback(async (): Promise<void> => {
+    try {
+      await conversation.endSession();
+    } catch (err) {
+      console.error('Failed to end session:', err);
+    }
+  }, [conversation]);
+
+  const handleSendMessage = useCallback((): void => {
+    const trimmedMessage = inputValue.trim();
+    if (!trimmedMessage || conversation.status !== 'connected') return;
+
+    addMessage('user', trimmedMessage);
+    conversation.sendUserMessage(trimmedMessage);
+    setInputValue('');
+  }, [inputValue, conversation, addMessage]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesContainerRef.current?.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [messages]);
+
+  const isConnected = conversation.status === 'connected';
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
         <h1 className="text-2xl font-bold text-gray-900">ElevenLabs Agent</h1>
         <p className="text-sm text-gray-600 mt-1">Text-only conversation interface</p>
-      </div>
+      </header>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4" role="alert">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {/* Messages Container */}
       <div
-        id="messages-container"
+        ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
       >
-        {messages.length === 0 && (
+        {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             <p>No messages yet. Start a session to begin chatting.</p>
           </div>
+        ) : (
+          messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)
         )}
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                msg.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : msg.role === 'system'
-                    ? 'bg-gray-200 text-gray-700 text-sm'
-                    : 'bg-white text-gray-900 border border-gray-200'
-              }`}
-            >
-              <p className="text-sm">
-                {msg.content || (msg.isStreaming ? '...' : '')}
-                {msg.isStreaming && (
-                  <span className="inline-block w-2 h-2 bg-gray-400 rounded-full ml-1 animate-pulse" />
-                )}
-              </p>
-              <p className={`text-xs mt-1 ${
-                msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-              }`}>
-                {msg.timestamp.toLocaleTimeString()}
-              </p>
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Connection Status */}
-      <div className="bg-white border-t border-gray-200 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                isConnected ? 'bg-green-500' : 'bg-gray-400'
-              }`}
-            />
-            <span className="text-sm text-gray-600">
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </span>
-          </div>
-          <div className="flex space-x-2">
-            {!isConnected ? (
-              <button
-                onClick={handleStartSession}
-                disabled={!agentId}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-              >
-                Start Session
-              </button>
-            ) : (
-              <button
-                onClick={handleEndSession}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                End Session
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <ConnectionStatus
+        status={conversation.status}
+        onStart={handleStartSession}
+        onEnd={handleEndSession}
+        disabled={!AGENT_ID}
+      />
 
       {/* Input Area */}
       {isConnected && (
-        <div className="bg-white border-t border-gray-200 px-6 py-4">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!isConnected}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!message.trim() || !isConnected}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              Send
-            </button>
-          </div>
-        </div>
+        <MessageInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSendMessage}
+          disabled={!isConnected}
+        />
       )}
     </div>
   );
