@@ -9,6 +9,7 @@ import { AuthProvider } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/Auth';
 import { LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm } from './components/Auth';
 import { ProfilePage } from './components/Profile';
+import { ElevenLabsAgent } from './components/ElevenLabs';
 import App from './App';
 import './index.css';
 
@@ -68,6 +69,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agent"
+            element={
+              <ProtectedRoute>
+                <ElevenLabsAgent />
               </ProtectedRoute>
             }
           />
