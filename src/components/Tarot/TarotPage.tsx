@@ -16,7 +16,6 @@ export function TarotPage() {
   const [drawCount, setDrawCount] = useState(3);
 
   const {
-    deck,
     drawnCards,
     isShuffled,
     isInitialized,
