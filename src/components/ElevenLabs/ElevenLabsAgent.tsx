@@ -1,18 +1,13 @@
 /**
  * ElevenLabs Agent Component
  * Text-only conversation interface using ElevenLabs Agents Platform
+ * 
+ * @see https://elevenlabs.io/docs/agents-platform/libraries/react
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Role, Status, Callbacks } from '@elevenlabs/client';
-
-// MessagePayload type from @elevenlabs/types (re-exported here for convenience)
-interface MessagePayload {
-  message: string;
-  source: 'user' | 'ai';
-  role: Role;
-}
 
 // ============================================================================
 // Types
@@ -40,7 +35,8 @@ const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
 // Utility Functions
 // ============================================================================
 
-const generateMessageId = (): string => `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+const generateMessageId = (): string => 
+  `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -54,6 +50,11 @@ const getErrorMessage = (error: unknown): string => {
 
 function useAgentMessages() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Track the current streaming message index using a ref for synchronous access
+  const streamingIndexRef = useRef<number | null>(null);
+  const streamingTextRef = useRef<string>('');
+  // Track if we handled the current response via streaming (to prevent duplicates from onMessage)
+  const handledViaStreamingRef = useRef<boolean>(false);
 
   const addMessage = useCallback((role: ChatMessage['role'], content: string): void => {
     setMessages((prev) => [
@@ -67,10 +68,14 @@ function useAgentMessages() {
     ]);
   }, []);
 
-  const addStreamingMessage = useCallback((): number => {
-    let newIndex = -1;
+  const startStreamingMessage = useCallback((): void => {
+    // Mark that we're handling this response via streaming
+    handledViaStreamingRef.current = true;
+    // Calculate the index synchronously before updating state
     setMessages((prev) => {
-      newIndex = prev.length;
+      const newIndex = prev.length;
+      streamingIndexRef.current = newIndex;
+      streamingTextRef.current = '';
       return [
         ...prev,
         {
@@ -82,104 +87,65 @@ function useAgentMessages() {
         },
       ];
     });
-    return newIndex;
   }, []);
 
-  const updateStreamingMessage = useCallback((index: number, content: string): void => {
+  const appendStreamingText = useCallback((text: string): void => {
+    streamingTextRef.current += text;
+    const currentIndex = streamingIndexRef.current;
+    const currentContent = streamingTextRef.current;
+    
+    if (currentIndex === null) return;
+
     setMessages((prev) => {
-      if (index < 0 || index >= prev.length || !prev[index].isStreaming) {
+      if (currentIndex >= prev.length || !prev[currentIndex].isStreaming) {
         return prev;
       }
       const updated = [...prev];
-      updated[index] = { ...updated[index], content };
+      updated[currentIndex] = { ...updated[currentIndex], content: currentContent };
       return updated;
     });
   }, []);
 
-  const finalizeStreamingMessage = useCallback((index: number, content?: string): void => {
+  const finalizeStreamingMessage = useCallback((): void => {
+    const currentIndex = streamingIndexRef.current;
+    const finalContent = streamingTextRef.current;
+    
+    if (currentIndex === null) return;
+
     setMessages((prev) => {
-      if (index < 0 || index >= prev.length) return prev;
+      if (currentIndex >= prev.length) return prev;
       const updated = [...prev];
-      updated[index] = {
-        ...updated[index],
-        content: content ?? updated[index].content,
+      updated[currentIndex] = {
+        ...updated[currentIndex],
+        content: finalContent,
         isStreaming: false,
       };
       return updated;
     });
+
+    streamingIndexRef.current = null;
+    streamingTextRef.current = '';
+  }, []);
+
+  const isStreaming = useCallback((): boolean => {
+    return streamingIndexRef.current !== null;
+  }, []);
+
+  // Check if the current response was handled via streaming (and reset the flag)
+  const wasHandledViaStreaming = useCallback((): boolean => {
+    const handled = handledViaStreamingRef.current;
+    handledViaStreamingRef.current = false;
+    return handled;
   }, []);
 
   return {
     messages,
     addMessage,
-    addStreamingMessage,
-    updateStreamingMessage,
+    startStreamingMessage,
+    appendStreamingText,
     finalizeStreamingMessage,
-  };
-}
-
-// ============================================================================
-// Custom Hook: useStreamingUpdates
-// ============================================================================
-
-function useStreamingUpdates(
-  onUpdate: (index: number, content: string) => void
-) {
-  const streamingIndexRef = useRef<number | null>(null);
-  const streamingTextRef = useRef<string>('');
-  const rafIdRef = useRef<number | null>(null);
-
-  const flushUpdate = useCallback(() => {
-    if (rafIdRef.current !== null) {
-      cancelAnimationFrame(rafIdRef.current);
-    }
-    rafIdRef.current = requestAnimationFrame(() => {
-      if (streamingIndexRef.current !== null) {
-        onUpdate(streamingIndexRef.current, streamingTextRef.current);
-      }
-      rafIdRef.current = null;
-    });
-  }, [onUpdate]);
-
-  const startStreaming = useCallback((index: number): void => {
-    streamingIndexRef.current = index;
-    streamingTextRef.current = '';
-  }, []);
-
-  const appendText = useCallback((text: string): void => {
-    streamingTextRef.current += text;
-    flushUpdate();
-  }, [flushUpdate]);
-
-  const stopStreaming = useCallback((): { index: number | null; text: string } => {
-    const result = {
-      index: streamingIndexRef.current,
-      text: streamingTextRef.current,
-    };
-    streamingIndexRef.current = null;
-    streamingTextRef.current = '';
-    return result;
-  }, []);
-
-  const getStreamingState = useCallback(() => ({
-    index: streamingIndexRef.current,
-    text: streamingTextRef.current,
-  }), []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    startStreaming,
-    appendText,
-    stopStreaming,
-    getStreamingState,
+    isStreaming,
+    wasHandledViaStreaming,
   };
 }
 
@@ -192,13 +158,13 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message }: MessageBubbleProps) {
-  const bubbleStyles = {
+  const bubbleStyles: Record<ChatMessage['role'], string> = {
     user: 'bg-blue-500 text-white',
     system: 'bg-gray-200 text-gray-700 text-sm',
     agent: 'bg-white text-gray-900 border border-gray-200',
   };
 
-  const timestampStyles = {
+  const timestampStyles: Record<ChatMessage['role'], string> = {
     user: 'text-blue-100',
     system: 'text-gray-500',
     agent: 'text-gray-500',
@@ -207,10 +173,10 @@ function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${bubbleStyles[message.role]}`}>
-        <p className="text-sm">
-          {message.content || (message.isStreaming ? '...' : '')}
+        <p className="text-sm whitespace-pre-wrap">
+          {message.content || (message.isStreaming ? '' : '')}
           {message.isStreaming && (
-            <span className="inline-block w-2 h-2 bg-gray-400 rounded-full ml-1 animate-pulse" />
+            <span className="inline-block w-2 h-4 bg-gray-500 ml-0.5 animate-pulse" />
           )}
         </p>
         <p className={`text-xs mt-1 ${timestampStyles[message.role]}`}>
@@ -325,12 +291,11 @@ export function ElevenLabsAgent() {
   const {
     messages,
     addMessage,
-    addStreamingMessage,
-    updateStreamingMessage,
+    startStreamingMessage,
+    appendStreamingText,
     finalizeStreamingMessage,
+    wasHandledViaStreaming,
   } = useAgentMessages();
-
-  const streaming = useStreamingUpdates(updateStreamingMessage);
 
   // Callbacks for the ElevenLabs SDK
   const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
@@ -342,13 +307,20 @@ export function ElevenLabsAgent() {
     addMessage('system', 'Disconnected from agent');
   }, [addMessage]);
 
+  // Handle full messages - skip if already handled via streaming
   const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
-    (payload: MessagePayload) => {
-      if (payload.role === 'agent' && payload.message) {
+    (payload) => {
+      if (payload.role === 'agent') {
+        // Check if this message was already handled via streaming
+        if (wasHandledViaStreaming()) {
+          // Skip - already displayed via streaming
+          return;
+        }
+        // Non-streamed response, add it
         addMessage('agent', payload.message);
       }
     },
-    [addMessage]
+    [addMessage, wasHandledViaStreaming]
   );
 
   const handleError: NonNullable<Callbacks['onError']> = useCallback((message: string) => {
@@ -364,23 +336,31 @@ export function ElevenLabsAgent() {
     []
   );
 
+  // Handle streaming response parts for real-time text display
   const handleAgentChatResponsePart: NonNullable<Callbacks['onAgentChatResponsePart']> = useCallback(
     (responsePart) => {
       if (!responsePart) return;
 
-      if (responsePart.type === 'start') {
-        const index = addStreamingMessage();
-        streaming.startStreaming(index);
-      } else if (responsePart.type === 'delta' && responsePart.text) {
-        streaming.appendText(responsePart.text);
-      } else if (responsePart.type === 'stop') {
-        const { index, text } = streaming.stopStreaming();
-        if (index !== null) {
-          finalizeStreamingMessage(index, text);
-        }
+      switch (responsePart.type) {
+        case 'start':
+          // Create a new streaming message placeholder
+          startStreamingMessage();
+          break;
+        
+        case 'delta':
+          // Append the text chunk to the streaming message
+          if (responsePart.text) {
+            appendStreamingText(responsePart.text);
+          }
+          break;
+        
+        case 'stop':
+          // Finalize the streaming message
+          finalizeStreamingMessage();
+          break;
       }
     },
-    [addStreamingMessage, streaming, finalizeStreamingMessage]
+    [startStreamingMessage, appendStreamingText, finalizeStreamingMessage]
   );
 
   // Client tools configuration
