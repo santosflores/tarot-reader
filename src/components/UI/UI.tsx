@@ -9,11 +9,13 @@ import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { useOnboardingStore } from './OnboardingTooltip';
+import { useOverlayStore } from '../ElevenLabs/overlayStore';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
   const [signingOut, setSigningOut] = useState(false);
   const requestShowHelp = useOnboardingStore((state) => state.requestShow);
+  const requestExpandOverlay = useOverlayStore((state) => state.requestExpand);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -82,6 +84,32 @@ export const UI = () => {
               Help
             </button>
           </div>
+          
+          {/* Microphone button - always visible */}
+          {!loading && user && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                onClick={requestExpandOverlay}
+                className="w-full flex items-center justify-center p-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors shadow-md"
+                title="Start voice conversation"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       )}
       

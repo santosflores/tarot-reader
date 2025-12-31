@@ -14,6 +14,7 @@ import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
+import { useOverlayStore } from './overlayStore';
 
 // ============================================================================
 // Types
@@ -291,12 +292,23 @@ export function ElevenLabsOverlay() {
     }
   }, [conversation]);
 
+  // Listen for external expansion requests
+  const { expandRequested, clearRequest } = useOverlayStore();
+
   // Auto-expand on connection
   useEffect(() => {
     if (isSessionConnected) {
       setIsExpanded(true);
     }
   }, [isSessionConnected]);
+
+  // Handle external expansion requests
+  useEffect(() => {
+    if (expandRequested) {
+      setIsExpanded(true);
+      clearRequest();
+    }
+  }, [expandRequested, clearRequest]);
 
   const isConnected = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
