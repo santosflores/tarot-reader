@@ -9,7 +9,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Role, Status, Callbacks } from '@elevenlabs/client';
 import type { TarotDeck } from '../../types/tarot';
-import { createTarotDeck, shuffleDeck as shuffleTarotDeck } from '../../utils/tarot';
+import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
+import { isMajorArcana } from '../../types/tarot';
 
 // ============================================================================
 // Types
@@ -25,6 +26,10 @@ interface ChatMessage {
 
 interface LogMessageParams {
   message: string;
+}
+
+interface DrawCardParams {
+  numberOfCards: number;
 }
 
 // ============================================================================
@@ -412,6 +417,53 @@ export function ElevenLabsAgent() {
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         addMessage('system', `❌ Failed to shuffle deck: ${errorMessage}`);
+        return `Error: ${errorMessage}`;
+      }
+    },
+    drawCard: (params: DrawCardParams): string => {
+      try {
+        const currentDeck = deckRef.current;
+        if (!currentDeck) {
+          const errorMessage = 'No deck has been initialized. Please initialize the deck first.';
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        const { numberOfCards } = params;
+        
+        if (numberOfCards < 1) {
+          const errorMessage = 'Number of cards must be at least 1';
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        if (numberOfCards > currentDeck.length) {
+          const errorMessage = `Cannot draw ${numberOfCards} cards. Only ${currentDeck.length} cards remaining in the deck.`;
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        const result = drawCards(currentDeck, numberOfCards);
+        deckRef.current = result.remaining;
+        setDeck(result.remaining);
+
+        // Format the drawn cards for display
+        const cardsList = result.drawn
+          .map((card, index) => {
+            const cardInfo = isMajorArcana(card)
+              ? `${card.name} (Major Arcana #${card.number})`
+              : `${card.name} (${card.suit})`;
+            return `${index + 1}. ${cardInfo}`;
+          })
+          .join('\n');
+
+        const message = `✨ Drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}:\n${cardsList}\n\nRemaining cards: ${result.remaining.length}`;
+        addMessage('system', message);
+
+        return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}. Cards drawn: ${result.drawn.map(c => c.name).join(', ')}. ${result.remaining.length} cards remaining in deck.`;
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        addMessage('system', `❌ Failed to draw cards: ${errorMessage}`);
         return `Error: ${errorMessage}`;
       }
     },
