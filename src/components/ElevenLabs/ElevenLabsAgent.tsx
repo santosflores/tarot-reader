@@ -305,8 +305,8 @@ export function ElevenLabsAgent() {
   const [isSessionConnected, setIsSessionConnected] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
-  // Get user ID from auth context
-  const { user } = useAuthContext();
+  // Get user ID and profile from auth context
+  const { user, profile } = useAuthContext();
   
   // Deck state - each session starts with a fresh deck
   // Use ref to ensure client tools always have access to current deck value
@@ -568,10 +568,17 @@ export function ElevenLabsAgent() {
       // Request microphone permission before starting the session
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      // Prepare dynamic variables
+      const dynamicVariables: Record<string, string> = {};
+      if (profile?.display_name) {
+        dynamicVariables.user_name = profile.display_name;
+      }
+      
       await conversation.startSession({
         agentId: AGENT_ID,
         connectionType: 'webrtc',
         userId: user?.id,
+        dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
       });
       
       // Ensure volume is set to maximum after session starts
@@ -586,7 +593,7 @@ export function ElevenLabsAgent() {
         setError(errorMessage);
       }
     }
-  }, [conversation, user]);
+  }, [conversation, user, profile]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
     try {
