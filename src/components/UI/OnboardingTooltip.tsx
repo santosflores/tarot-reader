@@ -58,9 +58,9 @@ export function OnboardingTooltip() {
         onClick={handleDismiss}
       />
       
-      {/* Tooltip card */}
-      <div className="fixed bottom-24 right-4 z-[195] animate-slide-up">
-        <div className="relative w-72 bg-gradient-to-br from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-2xl border border-purple-400/30 shadow-2xl shadow-purple-900/50 overflow-hidden">
+      {/* Tooltip card - centered on mobile, right-aligned on desktop */}
+      <div className="fixed bottom-28 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 md:bottom-24 z-[195] animate-slide-up">
+        <div className="relative w-[calc(100vw-2rem)] max-w-72 bg-gradient-to-br from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-2xl border border-purple-400/30 shadow-2xl shadow-purple-900/50 overflow-hidden">
           {/* Mystical glow effect */}
           <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent pointer-events-none" />
           
@@ -121,12 +121,12 @@ export function OnboardingTooltip() {
             </button>
           </div>
 
-          {/* Arrow pointing to mic button */}
-          <div className="absolute -bottom-3 right-8 w-6 h-6 bg-gradient-to-br from-purple-900/95 to-indigo-900/95 rotate-45 border-r border-b border-purple-400/30" />
+          {/* Arrow pointing to mic button - centered on mobile, right-aligned on desktop */}
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 w-6 h-6 bg-gradient-to-br from-purple-900/95 to-indigo-900/95 rotate-45 border-r border-b border-purple-400/30" />
         </div>
 
-        {/* Pulsing indicator pointing to the mic */}
-        <div className="absolute -bottom-8 right-5 flex items-center justify-center">
+        {/* Pulsing indicator pointing to the mic - centered on mobile, right-aligned on desktop */}
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-5 flex items-center justify-center">
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping" />
           <div className="absolute w-2 h-2 bg-purple-300 rounded-full" />
         </div>

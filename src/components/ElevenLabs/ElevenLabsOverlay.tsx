@@ -302,17 +302,17 @@ export function ElevenLabsOverlay() {
   const isConnecting = conversation.status === 'connecting';
 
   return (
-    <div className="absolute bottom-4 right-4 z-[200]">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 z-[200]">
       {/* Collapsed State - Floating Action Button */}
       {!isExpanded && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
+          className="w-16 h-16 md:w-14 md:h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105"
           title="Open Voice Agent"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6"
+            className="w-7 h-7 md:w-6 md:h-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -329,7 +329,7 @@ export function ElevenLabsOverlay() {
 
       {/* Expanded State - Overlay Panel */}
       {isExpanded && (
-        <div className="w-72 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+        <div className="w-[calc(100vw-2rem)] max-w-72 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
