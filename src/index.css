@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import mystical fonts */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-
 #root {
   width: 100vw;
   height: 100vh;
@@ -13,21 +10,13 @@
 
 body {
   margin: 0;
-  font-family: 'Cormorant Garamond', serif;
 }
 
 /* Mystical Tarot Background */
 .tarot-background {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: -1;
   overflow: hidden;
-  
-  /* Deep mystical gradient */
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(88, 28, 135, 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(30, 58, 138, 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(2, 6, 23, 1) 100%);
 }
 
 /* Animated stars layer */
@@ -59,6 +48,161 @@ body {
     radial-gradient(ellipse at 30% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
     radial-gradient(ellipse at 70% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
   animation: mystic-pulse 12s ease-in-out infinite alternate;
+}
+
+/* Aurora/energy wave effect */
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+}
+
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      transparent 0deg, 
+      rgba(139, 92, 246, 0.3) 60deg, 
+      transparent 120deg,
+      rgba(59, 130, 246, 0.2) 180deg,
+      transparent 240deg,
+      rgba(236, 72, 153, 0.2) 300deg,
+      transparent 360deg
+    );
+  animation: aurora-rotate 30s linear infinite;
+}
+
+.aurora::after {
+  animation-duration: 25s;
+  animation-direction: reverse;
+  opacity: 0.5;
+}
+
+@keyframes aurora-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Floating energy orbs */
+.energy-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.energy-orbs span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(20px);
+  animation: orb-float 20s ease-in-out infinite;
+}
+
+.energy-orbs span:nth-child(1) {
+  width: 150px;
+  height: 150px;
+  background: rgba(139, 92, 246, 0.3);
+  top: 20%;
+  left: 10%;
+  animation-duration: 25s;
+}
+
+.energy-orbs span:nth-child(2) {
+  width: 200px;
+  height: 200px;
+  background: rgba(59, 130, 246, 0.2);
+  top: 60%;
+  right: 15%;
+  animation-duration: 30s;
+  animation-delay: -5s;
+}
+
+.energy-orbs span:nth-child(3) {
+  width: 100px;
+  height: 100px;
+  background: rgba(236, 72, 153, 0.25);
+  bottom: 20%;
+  left: 30%;
+  animation-duration: 22s;
+  animation-delay: -10s;
+}
+
+.energy-orbs span:nth-child(4) {
+  width: 180px;
+  height: 180px;
+  background: rgba(255, 215, 0, 0.15);
+  top: 40%;
+  right: 40%;
+  animation-duration: 28s;
+  animation-delay: -15s;
+}
+
+@keyframes orb-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translate(30px, -40px) scale(1.1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translate(40px, 30px) scale(1.05);
+    opacity: 0.7;
+  }
+}
+
+/* Shimmer effect */
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.03) 55%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: shimmer-move 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer-move {
+  0% { background-position: -200% -200%; }
+  100% { background-position: 200% 200%; }
+}
+
+/* Breathing background pulse */
+.breathing-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+  animation: breathing 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes breathing {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.02);
+  }
 }
 
 /* Star twinkle animation */
@@ -126,16 +270,31 @@ body {
   box-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
 }
 
-.mystical-particles span:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
-.mystical-particles span:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 14s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
-.mystical-particles span:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 11s; }
-.mystical-particles span:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 16s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
-.mystical-particles span:nth-child(5) { left: 50%; animation-delay: 3s; animation-duration: 13s; }
-.mystical-particles span:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 15s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
-.mystical-particles span:nth-child(7) { left: 70%; animation-delay: 2s; animation-duration: 12s; }
-.mystical-particles span:nth-child(8) { left: 80%; animation-delay: 4s; animation-duration: 14s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
-.mystical-particles span:nth-child(9) { left: 90%; animation-delay: 1s; animation-duration: 11s; }
-.mystical-particles span:nth-child(10) { left: 95%; animation-delay: 3s; animation-duration: 16s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(1) { left: 5%; animation-delay: 0s; animation-duration: 12s; }
+.mystical-particles span:nth-child(2) { left: 10%; animation-delay: 2s; animation-duration: 14s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(3) { left: 15%; animation-delay: 4s; animation-duration: 11s; }
+.mystical-particles span:nth-child(4) { left: 20%; animation-delay: 1s; animation-duration: 16s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(5) { left: 25%; animation-delay: 3s; animation-duration: 13s; }
+.mystical-particles span:nth-child(6) { left: 30%; animation-delay: 5s; animation-duration: 15s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(7) { left: 35%; animation-delay: 2s; animation-duration: 12s; }
+.mystical-particles span:nth-child(8) { left: 40%; animation-delay: 4s; animation-duration: 14s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(9) { left: 45%; animation-delay: 1s; animation-duration: 11s; }
+.mystical-particles span:nth-child(10) { left: 50%; animation-delay: 3s; animation-duration: 16s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(11) { left: 55%; animation-delay: 0.5s; animation-duration: 13s; }
+.mystical-particles span:nth-child(12) { left: 60%; animation-delay: 2.5s; animation-duration: 15s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(13) { left: 65%; animation-delay: 4.5s; animation-duration: 12s; }
+.mystical-particles span:nth-child(14) { left: 70%; animation-delay: 1.5s; animation-duration: 14s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(15) { left: 75%; animation-delay: 3.5s; animation-duration: 11s; }
+.mystical-particles span:nth-child(16) { left: 80%; animation-delay: 5.5s; animation-duration: 16s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(17) { left: 85%; animation-delay: 2.2s; animation-duration: 13s; }
+.mystical-particles span:nth-child(18) { left: 88%; animation-delay: 4.2s; animation-duration: 15s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(19) { left: 92%; animation-delay: 1.2s; animation-duration: 12s; }
+.mystical-particles span:nth-child(20) { left: 96%; animation-delay: 3.2s; animation-duration: 14s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(21) { left: 8%; animation-delay: 6s; animation-duration: 17s; }
+.mystical-particles span:nth-child(22) { left: 22%; animation-delay: 7s; animation-duration: 13s; background: rgba(139, 92, 246, 0.6); box-shadow: 0 0 8px rgba(139, 92, 246, 0.8); }
+.mystical-particles span:nth-child(23) { left: 48%; animation-delay: 8s; animation-duration: 15s; }
+.mystical-particles span:nth-child(24) { left: 72%; animation-delay: 6.5s; animation-duration: 12s; background: rgba(139, 92, 246, 0.6); box-shadow: 0 0 8px rgba(139, 92, 246, 0.8); }
+.mystical-particles span:nth-child(25) { left: 98%; animation-delay: 7.5s; animation-duration: 14s; }
 
 @keyframes float-up {
   0% {

@@ -26,7 +26,7 @@ export const Experience = () => {
         enablePan={false}
       />
       <Character />
-      <Environment preset="sunset" />
+      <Environment preset="dawn" />
     </>
   );
 };

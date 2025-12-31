@@ -32,14 +32,36 @@ function App() {
 
   return (
     <ErrorBoundary>
-      {/* Mystical Tarot Background */}
-      <div className="tarot-background">
-        <div className="moon-glow" />
-        <div className="mystical-particles">
-          <span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span />
+      {/* Background Image with CSS Effects */}
+      <div className="fixed inset-0 -z-10">
+        {/* Base image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/images/bg.jpg)' }}
+        />
+        {/* CSS Effects overlay */}
+        <div className="tarot-background absolute inset-0" style={{ background: 'transparent' }}>
+          {/* Slow rotating aurora */}
+          <div className="aurora" />
+          {/* Floating energy orbs */}
+          <div className="energy-orbs">
+            <span /><span /><span /><span />
+          </div>
+          {/* Moon glow */}
+          <div className="moon-glow" />
+          {/* Rising particles */}
+          <div className="mystical-particles">
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+          </div>
+          {/* Breathing pulse */}
+          <div className="breathing-bg" />
+          {/* Vignette */}
+          <div className="vignette" />
         </div>
-        <div className="vignette" />
       </div>
       
       <UI />
