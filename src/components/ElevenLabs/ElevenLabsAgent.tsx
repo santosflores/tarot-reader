@@ -1,6 +1,6 @@
 /**
  * ElevenLabs Agent Component
- * Text-only conversation interface using ElevenLabs Agents Platform
+ * Voice conversation interface using ElevenLabs Agents Platform
  * 
  * @see https://elevenlabs.io/docs/agents-platform/libraries/react
  */
@@ -355,6 +355,16 @@ export function ElevenLabsAgent() {
     []
   );
 
+  // Handle mode changes (speaking/listening)
+  const handleModeChange: NonNullable<Callbacks['onModeChange']> = useCallback(
+    ({ mode }) => {
+      if (import.meta.env.DEV) {
+        console.log('Mode changed:', mode);
+      }
+    },
+    []
+  );
+
   // Handle streaming response parts for real-time text display
   const handleAgentChatResponsePart: NonNullable<Callbacks['onAgentChatResponsePart']> = useCallback(
     (responsePart) => {
@@ -470,13 +480,13 @@ export function ElevenLabsAgent() {
   };
 
   const conversation = useConversation({
-    textOnly: true,
     clientTools,
     onConnect: handleConnect,
     onDisconnect: handleDisconnect,
     onMessage: handleMessage,
     onError: handleError,
     onStatusChange: handleStatusChange,
+    onModeChange: handleModeChange,
     onAgentChatResponsePart: handleAgentChatResponsePart,
   });
 
@@ -488,12 +498,26 @@ export function ElevenLabsAgent() {
 
     try {
       setError(null);
+      
+      // Request microphone permission before starting the session
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
       await conversation.startSession({
         agentId: AGENT_ID,
-        connectionType: 'websocket',
+        connectionType: 'webrtc',
       });
+      
+      // Ensure volume is set to maximum after session starts
+      await conversation.setVolume({ volume: 0.8 });
+      
     } catch (err) {
-      setError(getErrorMessage(err));
+      const errorMessage = getErrorMessage(err);
+      // Provide user-friendly error for permission denial
+      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
+        setError('Microphone access is required for voice conversations. Please allow microphone access and try again.');
+      } else {
+        setError(errorMessage);
+      }
     }
   }, [conversation]);
 
@@ -529,7 +553,7 @@ export function ElevenLabsAgent() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <h1 className="text-2xl font-bold text-gray-900">ElevenLabs Agent</h1>
-        <p className="text-sm text-gray-600 mt-1">Text-only conversation interface</p>
+        <p className="text-sm text-gray-600 mt-1">Voice conversation interface</p>
       </header>
 
       {/* Error Display */}
