@@ -7,10 +7,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Callbacks, Mode, Status } from '@elevenlabs/client';
-import type { TarotDeck } from '../../types/tarot';
+import type { TarotDeck, TarotCard } from '../../types/tarot';
 import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
+import { useRevealedCard } from '../../hooks/useRevealedCard';
 
 // ============================================================================
 // Types
@@ -22,6 +23,10 @@ interface DrawCardParams {
 
 interface LogMessageParams {
   message: string;
+}
+
+interface RevealCardParams {
+  cardIndex: number;
 }
 
 // ============================================================================
@@ -91,6 +96,8 @@ export function ElevenLabsOverlay() {
   // Deck state - each session starts with a fresh deck
   const deckRef = useRef<TarotDeck | null>(null);
   const [, setDeck] = useState<TarotDeck | null>(null);
+  // Store drawn cards for revealCard tool
+  const drawnCardsRef = useRef<TarotCard[]>([]);
 
   // Integrate with lipsync audio system
   useElevenLabsAudio({
@@ -98,12 +105,16 @@ export function ElevenLabsOverlay() {
     mode: agentMode,
   });
 
+  // Get the addRevealedCard action from the store
+  const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
+
   // Callbacks for the ElevenLabs SDK
   const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
     setError(null);
     setIsSessionConnected(true);
     deckRef.current = null;
     setDeck(null);
+    drawnCardsRef.current = [];
   }, []);
 
   const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
@@ -174,6 +185,8 @@ export function ElevenLabsOverlay() {
         const result = drawCards(currentDeck, numberOfCards);
         deckRef.current = result.remaining;
         setDeck(result.remaining);
+        // Store drawn cards for revealCard tool
+        drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
 
         const cardNames = result.drawn.map(card => {
           if (isMajorArcana(card)) {
@@ -183,6 +196,33 @@ export function ElevenLabsOverlay() {
         }).join(', ');
 
         return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}: ${cardNames}. ${result.remaining.length} cards remaining.`;
+      } catch (error) {
+        return `Error: ${getErrorMessage(error)}`;
+      }
+    },
+    revealCard: (params: RevealCardParams): string => {
+      try {
+        const { cardIndex } = params;
+        const drawnCards = drawnCardsRef.current;
+        
+        if (drawnCards.length === 0) {
+          return 'Error: No cards have been drawn yet. Please draw cards first.';
+        }
+
+        if (cardIndex < 0 || cardIndex >= drawnCards.length) {
+          return `Error: Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
+        }
+
+        const card = drawnCards[cardIndex];
+
+        // Add the card to the revealed cards store to display the overlay
+        addRevealedCard(card);
+
+        const cardInfo = isMajorArcana(card)
+          ? `${card.name} (Major Arcana #${card.number})`
+          : `${card.name} (${card.suit})`;
+        
+        return `Successfully revealed card: ${cardInfo}`;
       } catch (error) {
         return `Error: ${getErrorMessage(error)}`;
       }

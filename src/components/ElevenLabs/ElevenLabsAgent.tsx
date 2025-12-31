@@ -9,10 +9,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Role, Status, Callbacks, Mode } from '@elevenlabs/client';
-import type { TarotDeck } from '../../types/tarot';
+import type { TarotDeck, TarotCard } from '../../types/tarot';
 import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
+import { useRevealedCard } from '../../hooks/useRevealedCard';
 
 // ============================================================================
 // Types
@@ -32,6 +33,10 @@ interface LogMessageParams {
 
 interface DrawCardParams {
   numberOfCards: number;
+}
+
+interface RevealCardParams {
+  cardIndex: number;
 }
 
 // ============================================================================
@@ -302,6 +307,8 @@ export function ElevenLabsAgent() {
   // Use ref to ensure client tools always have access to current deck value
   const deckRef = useRef<TarotDeck | null>(null);
   const [deck, setDeck] = useState<TarotDeck | null>(null);
+  // Store drawn cards for revealCard tool
+  const drawnCardsRef = useRef<TarotCard[]>([]);
 
   const {
     messages,
@@ -318,6 +325,9 @@ export function ElevenLabsAgent() {
     mode: agentMode,
   });
 
+  // Get the addRevealedCard action from the store
+  const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
+
   // Keep ref in sync with state
   useEffect(() => {
     deckRef.current = deck;
@@ -330,6 +340,7 @@ export function ElevenLabsAgent() {
     // Reset deck for new session - each session starts fresh
     deckRef.current = null;
     setDeck(null);
+    drawnCardsRef.current = [];
     addMessage('system', 'Connected to agent');
   }, [addMessage]);
 
@@ -470,6 +481,8 @@ export function ElevenLabsAgent() {
         const result = drawCards(currentDeck, numberOfCards);
         deckRef.current = result.remaining;
         setDeck(result.remaining);
+        // Store drawn cards for revealCard tool
+        drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
 
         // Format the drawn cards for display
         const cardsList = result.drawn
@@ -488,6 +501,40 @@ export function ElevenLabsAgent() {
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         addMessage('system', `❌ Failed to draw cards: ${errorMessage}`);
+        return `Error: ${errorMessage}`;
+      }
+    },
+    revealCard: (params: RevealCardParams): string => {
+      try {
+        const { cardIndex } = params;
+        const drawnCards = drawnCardsRef.current;
+        
+        if (drawnCards.length === 0) {
+          const errorMessage = 'No cards have been drawn yet. Please draw cards first.';
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        if (cardIndex < 0 || cardIndex >= drawnCards.length) {
+          const errorMessage = `Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        const card = drawnCards[cardIndex];
+
+        // Add the card to the revealed cards store to display the overlay
+        addRevealedCard(card);
+
+        const cardInfo = isMajorArcana(card)
+          ? `${card.name} (Major Arcana #${card.number})`
+          : `${card.name} (${card.suit})`;
+        
+        addMessage('system', `🔮 Revealing card: ${cardInfo}`);
+        return `Successfully revealed card: ${cardInfo}`;
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        addMessage('system', `❌ Failed to reveal card: ${errorMessage}`);
         return `Error: ${errorMessage}`;
       }
     },

@@ -9,6 +9,7 @@ import { UI } from './components/UI/UI';
 import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ElevenLabsOverlay } from './components/ElevenLabs';
+import { RevealedCardOverlay } from './components/Tarot/RevealedCardOverlay';
 import { useChatbot } from './hooks/useChatbot';
 import { SCENE_CONSTANTS } from './config/constants';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
@@ -35,6 +36,8 @@ function App() {
       <UI />
       {/* Voice Agent Overlay - positioned above the 3D scene */}
       <ElevenLabsOverlay />
+      {/* Revealed Card Overlay - displays tarot card from revealCard tool */}
+      <RevealedCardOverlay />
       <Canvas
         shadows
         camera={{
