@@ -199,3 +199,57 @@ export function findCardByName(deck: TarotDeck, name: string): TarotCard | null 
   const normalizedName = name.toLowerCase().trim();
   return deck.find((card) => card.name.toLowerCase() === normalizedName) ?? null;
 }
+
+/**
+ * Special filename mappings for cards with non-standard filenames
+ * Maps card names to their actual image filenames (without extension)
+ */
+const CARD_FILENAME_OVERRIDES: Record<string, string> = {
+  'The Hierophant': 'the_heirophant', // Note: filename has typo
+};
+
+/**
+ * Maps digit ranks to their written-out word equivalents for filenames
+ */
+const RANK_NUMBER_TO_WORD: Record<string, string> = {
+  '2': 'two',
+  '3': 'three',
+  '4': 'four',
+  '5': 'five',
+  '6': 'six',
+  '7': 'seven',
+  '8': 'eight',
+  '9': 'nine',
+  '10': 'ten',
+};
+
+/**
+ * Gets the image path for a tarot card
+ * Converts card name to the corresponding image filename in /images/tarot/
+ * @param card - The tarot card to get the image path for
+ * @returns The path to the card's image (e.g., "/images/tarot/the_fool.png")
+ */
+export function getCardImagePath(card: TarotCard): string {
+  // Check for filename overrides first
+  if (CARD_FILENAME_OVERRIDES[card.name]) {
+    return `/images/tarot/${CARD_FILENAME_OVERRIDES[card.name]}.png`;
+  }
+
+  let cardName = card.name;
+
+  // For Minor Arcana cards with numeric ranks, convert digit to word
+  // e.g., "9 of Cups" → "Nine of Cups"
+  if (card.arcana === 'minor') {
+    const numericRank = card.rank;
+    if (RANK_NUMBER_TO_WORD[numericRank]) {
+      cardName = cardName.replace(numericRank, RANK_NUMBER_TO_WORD[numericRank]);
+    }
+  }
+
+  // Convert card name to filename format:
+  // - Convert to lowercase
+  // - Replace spaces with underscores
+  const filename = cardName.toLowerCase().replace(/\s+/g, '_');
+
+  return `/images/tarot/${filename}.png`;
+}

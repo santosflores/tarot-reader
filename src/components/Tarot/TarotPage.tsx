@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTarotDeck } from '../../hooks/useTarotDeck';
 import { isMajorArcana } from '../../types/tarot';
+import { getCardImagePath } from '../../utils/tarot';
 
 /**
  * Tarot Page - Deck manipulation interface
@@ -192,8 +193,28 @@ export function TarotPage() {
                   className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl p-4 hover:border-purple-500/40 transition-all duration-200 hover:shadow-lg hover:shadow-purple-900/20"
                 >
                   <div className="text-center">
-                    <div className="text-3xl mb-2">
-                      {isMajorArcana(card) ? '⭐' : '🌙'}
+                    {/* Card Image */}
+                    <div className="mb-3">
+                      <img
+                        src={getCardImagePath(card)}
+                        alt={card.name}
+                        className="w-full h-auto rounded-lg shadow-lg shadow-purple-900/30 opacity-0 transition-opacity duration-500 ease-out"
+                        onLoad={(e) => {
+                          // Fade in when image loads
+                          e.currentTarget.classList.remove('opacity-0');
+                          e.currentTarget.classList.add('opacity-100');
+                        }}
+                        onError={(e) => {
+                          // Fallback to emoji if image fails to load
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling;
+                          if (fallback) fallback.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden text-3xl py-8">
+                        {isMajorArcana(card) ? '⭐' : '🌙'}
+                      </div>
                     </div>
                     <h3 className="text-lg font-semibold text-white mb-1">
                       {card.name}

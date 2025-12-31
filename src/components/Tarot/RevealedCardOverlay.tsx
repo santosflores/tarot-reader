@@ -7,6 +7,7 @@
 import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { isMajorArcana } from '../../types/tarot';
 import type { TarotCard } from '../../types/tarot';
+import { getCardImagePath } from '../../utils/tarot';
 
 /**
  * Individual card component
@@ -46,9 +47,28 @@ function CardDisplay({ card, onClose }: CardDisplayProps) {
 
       {/* Card Content */}
       <div className="text-center pt-2">
-        {/* Card Icon */}
-        <div className="text-4xl mb-2">
-          {isMajor ? '⭐' : '🌙'}
+        {/* Card Image */}
+        <div className="mb-3">
+          <img
+            src={getCardImagePath(card)}
+            alt={card.name}
+            className="w-32 h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/30 opacity-0 transition-opacity duration-500 ease-out"
+            onLoad={(e) => {
+              // Fade in when image loads
+              e.currentTarget.classList.remove('opacity-0');
+              e.currentTarget.classList.add('opacity-100');
+            }}
+            onError={(e) => {
+              // Fallback to emoji if image fails to load
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling;
+              if (fallback) fallback.classList.remove('hidden');
+            }}
+          />
+          <div className="hidden text-4xl">
+            {isMajor ? '⭐' : '🌙'}
+          </div>
         </div>
 
         {/* Card Name */}
