@@ -22,7 +22,7 @@ export const UI = () => {
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
   return (
-    <div className="absolute top-2.5 left-2.5 z-[100] bg-white/90 p-[15px] rounded-lg shadow-lg w-[300px] max-h-[calc(100vh-20px)] overflow-y-auto">
+    <div className="absolute top-2.5 left-2.5 z-[100] bg-white p-[15px] rounded-lg shadow-lg w-[300px] max-h-[calc(100vh-20px)] overflow-y-auto">
       {/* User Section */}
       {!loading && user && (
         <div className="mb-4 pb-4 border-b border-gray-200">
@@ -60,8 +60,13 @@ export const UI = () => {
         </div>
       )}
       
-      <SupabaseTest />
-      <ControlsTabs />
+      {/* Show SupabaseTest and Controls only for specific user */}
+      {user?.email === 'santosflores@gmail.com' && (
+        <>
+          <SupabaseTest />
+          <ControlsTabs />
+        </>
+      )}
     </div>
   );
 };

@@ -12,6 +12,8 @@ import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
+import { useAuthContext } from '../../hooks/useAuthContext';
+import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
 
 // ============================================================================
 // Types
@@ -93,6 +95,9 @@ export function ElevenLabsOverlay() {
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
   
+  // Get user ID and profile from auth context
+  const { user, profile } = useAuthContext();
+  
   // Deck state - each session starts with a fresh deck
   const deckRef = useRef<TarotDeck | null>(null);
   const [, setDeck] = useState<TarotDeck | null>(null);
@@ -103,6 +108,14 @@ export function ElevenLabsOverlay() {
   useElevenLabsAudio({
     isConnected: isSessionConnected,
     mode: agentMode,
+  });
+
+  // Background music - plays immediately on page load, lowers volume when session is active
+  useBackgroundMusic({
+    isActive: true, // Always active - plays immediately
+    hasActiveSession: isSessionConnected, // Lower volume when session is active
+    normalVolume: 0.3,
+    sessionVolume: 0.15, // Volume when session is active
   });
 
   // Get the addRevealedCard action from the store
@@ -246,9 +259,18 @@ export function ElevenLabsOverlay() {
     try {
       setError(null);
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Prepare dynamic variables
+      const dynamicVariables: Record<string, string> = {};
+      if (profile?.display_name) {
+        dynamicVariables.user_name = profile.display_name;
+      }
+      
       await conversation.startSession({
         agentId: AGENT_ID,
         connectionType: 'webrtc',
+        userId: user?.id,
+        dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
       });
       await conversation.setVolume({ volume: 0.8 });
     } catch (err) {
@@ -259,7 +281,7 @@ export function ElevenLabsOverlay() {
         setError(errorMessage);
       }
     }
-  }, [conversation]);
+  }, [conversation, user, profile]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
     try {

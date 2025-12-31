@@ -11,7 +11,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ElevenLabsOverlay } from './components/ElevenLabs';
 import { RevealedCardOverlay } from './components/Tarot/RevealedCardOverlay';
 import { useChatbot } from './hooks/useChatbot';
-import { SCENE_CONSTANTS } from './config/constants';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
 import { safeAsync } from './utils/errors';
 
@@ -33,6 +32,38 @@ function App() {
 
   return (
     <ErrorBoundary>
+      {/* Background Image with CSS Effects */}
+      <div className="fixed inset-0 -z-10">
+        {/* Base image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/images/bg.jpg)' }}
+        />
+        {/* CSS Effects overlay */}
+        <div className="tarot-background absolute inset-0" style={{ background: 'transparent' }}>
+          {/* Slow rotating aurora */}
+          <div className="aurora" />
+          {/* Floating energy orbs */}
+          <div className="energy-orbs">
+            <span /><span /><span /><span />
+          </div>
+          {/* Moon glow */}
+          <div className="moon-glow" />
+          {/* Rising particles */}
+          <div className="mystical-particles">
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+          </div>
+          {/* Breathing pulse */}
+          <div className="breathing-bg" />
+          {/* Vignette */}
+          <div className="vignette" />
+        </div>
+      </div>
+      
       <UI />
       {/* Voice Agent Overlay - positioned above the 3D scene */}
       <ElevenLabsOverlay />
@@ -40,12 +71,12 @@ function App() {
       <RevealedCardOverlay />
       <Canvas
         shadows
+        style={{ background: 'transparent' }}
         camera={{
           position: DEFAULT_CAMERA_POSITION,
           fov: DEFAULT_CAMERA_FOV,
         }}
       >
-        <color attach="background" args={[SCENE_CONSTANTS.BACKGROUND_COLOR]} />
         <Experience />
       </Canvas>
     </ErrorBoundary>

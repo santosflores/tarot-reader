@@ -38,6 +38,7 @@ export const MODEL_PATHS = {
  */
 export const AUDIO_PATHS = {
   WELCOME: 'audios/welcome.mp3',
+  BACKGROUND_MUSIC: 'audios/music/background.mp3',
 } as const;
 
 /**
