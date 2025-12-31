@@ -2,11 +2,162 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import mystical fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
 #root {
   width: 100vw;
   height: 100vh;
+  position: relative;
 }
 
 body {
   margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* Mystical Tarot Background */
+.tarot-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  
+  /* Deep mystical gradient */
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(88, 28, 135, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(30, 58, 138, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(2, 6, 23, 1) 100%);
+}
+
+/* Animated stars layer */
+.tarot-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 215, 0, 0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(168, 85, 247, 0.8), transparent),
+    radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(2px 2px at 200px 60px, rgba(255, 215, 0, 0.5), transparent),
+    radial-gradient(1px 1px at 250px 20px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(2px 2px at 280px 90px, rgba(168, 85, 247, 0.6), transparent),
+    radial-gradient(1px 1px at 320px 50px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 360px 30px, rgba(255, 215, 0, 0.7), transparent);
+  background-size: 400px 100px;
+  animation: twinkle 8s ease-in-out infinite;
+}
+
+/* Mystical fog/mist overlay */
+.tarot-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 30% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+  animation: mystic-pulse 12s ease-in-out infinite alternate;
+}
+
+/* Star twinkle animation */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Mystical pulse animation */
+@keyframes mystic-pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* Moon glow effect */
+.moon-glow {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.3) 40%, transparent 70%);
+  box-shadow: 
+    0 0 60px 30px rgba(255, 255, 255, 0.15),
+    0 0 100px 60px rgba(168, 85, 247, 0.1),
+    0 0 140px 90px rgba(59, 130, 246, 0.05);
+  animation: moon-float 20s ease-in-out infinite;
+}
+
+@keyframes moon-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.02);
+  }
+}
+
+/* Floating particles */
+.mystical-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mystical-particles span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(168, 85, 247, 0.6);
+  border-radius: 50%;
+  animation: float-up 15s linear infinite;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
+}
+
+.mystical-particles span:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
+.mystical-particles span:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 14s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 11s; }
+.mystical-particles span:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 16s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(5) { left: 50%; animation-delay: 3s; animation-duration: 13s; }
+.mystical-particles span:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 15s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+.mystical-particles span:nth-child(7) { left: 70%; animation-delay: 2s; animation-duration: 12s; }
+.mystical-particles span:nth-child(8) { left: 80%; animation-delay: 4s; animation-duration: 14s; background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
+.mystical-particles span:nth-child(9) { left: 90%; animation-delay: 1s; animation-duration: 11s; }
+.mystical-particles span:nth-child(10) { left: 95%; animation-delay: 3s; animation-duration: 16s; background: rgba(255, 215, 0, 0.5); box-shadow: 0 0 6px rgba(255, 215, 0, 0.7); }
+
+@keyframes float-up {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Vignette effect */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
 }
