@@ -187,3 +187,15 @@ export function getCardShortId(card: TarotCard): string {
   }
   return `${card.suit}-${card.rank}`;
 }
+
+/**
+ * Finds a card by name in a deck
+ * Performs case-insensitive matching
+ * @param deck - The deck to search in
+ * @param name - The card name to search for
+ * @returns The matching card or null if not found
+ */
+export function findCardByName(deck: TarotDeck, name: string): TarotCard | null {
+  const normalizedName = name.toLowerCase().trim();
+  return deck.find((card) => card.name.toLowerCase() === normalizedName) ?? null;
+}
