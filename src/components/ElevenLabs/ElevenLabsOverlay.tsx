@@ -13,6 +13,7 @@ import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { useAuthContext } from '../../hooks/useAuthContext';
+import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
 
 // ============================================================================
 // Types
@@ -107,6 +108,14 @@ export function ElevenLabsOverlay() {
   useElevenLabsAudio({
     isConnected: isSessionConnected,
     mode: agentMode,
+  });
+
+  // Background music - plays immediately on page load, lowers volume when session is active
+  useBackgroundMusic({
+    isActive: true, // Always active - plays immediately
+    hasActiveSession: isSessionConnected, // Lower volume when session is active
+    normalVolume: 0.3,
+    sessionVolume: 0.15, // Volume when session is active
   });
 
   // Get the addRevealedCard action from the store
