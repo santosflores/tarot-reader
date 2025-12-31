@@ -8,10 +8,6 @@
   position: relative;
 }
 
-body {
-  margin: 0;
-}
-
 /* Mystical Tarot Background */
 .tarot-background {
   position: absolute;
