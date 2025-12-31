@@ -1,6 +1,6 @@
 /**
  * App component
- * Root application component
+ * Root application component with 3D character and voice agent integration
  */
 
 import { useEffect, useRef } from 'react';
@@ -8,6 +8,7 @@ import { Canvas } from '@react-three/fiber';
 import { UI } from './components/UI/UI';
 import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ElevenLabsOverlay } from './components/ElevenLabs';
 import { useChatbot } from './hooks/useChatbot';
 import { SCENE_CONSTANTS } from './config/constants';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
@@ -32,6 +33,8 @@ function App() {
   return (
     <ErrorBoundary>
       <UI />
+      {/* Voice Agent Overlay - positioned above the 3D scene */}
+      <ElevenLabsOverlay />
       <Canvas
         shadows
         camera={{

@@ -1,16 +1,18 @@
 /**
  * ElevenLabs Agent Component
  * Voice conversation interface using ElevenLabs Agents Platform
+ * Integrates with lipsync system for 3D character mouth animation
  * 
  * @see https://elevenlabs.io/docs/agents-platform/libraries/react
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
-import type { Role, Status, Callbacks } from '@elevenlabs/client';
+import type { Role, Status, Callbacks, Mode } from '@elevenlabs/client';
 import type { TarotDeck } from '../../types/tarot';
 import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
+import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 
 // ============================================================================
 // Types
@@ -293,6 +295,8 @@ function MessageInput({ value, onChange, onSend, disabled }: MessageInputProps) 
 export function ElevenLabsAgent() {
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [agentMode, setAgentMode] = useState<Mode | null>(null);
+  const [isSessionConnected, setIsSessionConnected] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   // Deck state - each session starts with a fresh deck
   // Use ref to ensure client tools always have access to current deck value
@@ -308,6 +312,12 @@ export function ElevenLabsAgent() {
     wasHandledViaStreaming,
   } = useAgentMessages();
 
+  // Integrate with lipsync audio system
+  useElevenLabsAudio({
+    isConnected: isSessionConnected,
+    mode: agentMode,
+  });
+
   // Keep ref in sync with state
   useEffect(() => {
     deckRef.current = deck;
@@ -316,6 +326,7 @@ export function ElevenLabsAgent() {
   // Callbacks for the ElevenLabs SDK
   const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
     setError(null);
+    setIsSessionConnected(true);
     // Reset deck for new session - each session starts fresh
     deckRef.current = null;
     setDeck(null);
@@ -323,6 +334,8 @@ export function ElevenLabsAgent() {
   }, [addMessage]);
 
   const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
+    setIsSessionConnected(false);
+    setAgentMode(null);
     addMessage('system', 'Disconnected from agent');
   }, [addMessage]);
 
@@ -355,9 +368,10 @@ export function ElevenLabsAgent() {
     []
   );
 
-  // Handle mode changes (speaking/listening)
+  // Handle mode changes (speaking/listening) - update state for lipsync
   const handleModeChange: NonNullable<Callbacks['onModeChange']> = useCallback(
     ({ mode }) => {
+      setAgentMode(mode);
       if (import.meta.env.DEV) {
         console.log('Mode changed:', mode);
       }
