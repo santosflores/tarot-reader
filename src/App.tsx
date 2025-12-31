@@ -10,6 +10,7 @@ import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ElevenLabsOverlay } from './components/ElevenLabs';
 import { RevealedCardOverlay } from './components/Tarot/RevealedCardOverlay';
+import { OnboardingTooltip } from './components/UI/OnboardingTooltip';
 import { useChatbot } from './hooks/useChatbot';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
 import { safeAsync } from './utils/errors';
@@ -65,6 +66,8 @@ function App() {
       </div>
       
       <UI />
+      {/* Onboarding tooltip for first-time users */}
+      <OnboardingTooltip />
       {/* Voice Agent Overlay - positioned above the 3D scene */}
       <ElevenLabsOverlay />
       {/* Revealed Card Overlay - displays tarot card from revealCard tool */}

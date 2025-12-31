@@ -8,10 +8,12 @@ import { Link } from 'react-router-dom';
 import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
 import { useAuthContext } from '../../hooks/useAuthContext';
+import { useOnboardingStore } from './OnboardingTooltip';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
   const [signingOut, setSigningOut] = useState(false);
+  const requestShowHelp = useOnboardingStore((state) => state.requestShow);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -51,12 +53,35 @@ export const UI = () => {
               {signingOut ? 'Signing out...' : 'Sign out'}
             </button>
           </div>
-          <Link
-            to="/profile"
-            className="block w-full text-center px-3 py-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-md transition-colors"
-          >
-            Edit Profile
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to="/profile"
+              className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-md transition-colors"
+            >
+              Edit Profile
+            </Link>
+            <button
+              onClick={requestShowHelp}
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              title="How to use"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-3.5 h-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Help
+            </button>
+          </div>
         </div>
       )}
       
