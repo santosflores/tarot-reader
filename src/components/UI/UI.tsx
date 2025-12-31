@@ -60,8 +60,13 @@ export const UI = () => {
         </div>
       )}
       
-      <SupabaseTest />
-      <ControlsTabs />
+      {/* Show SupabaseTest and Controls only for specific user */}
+      {user?.email === 'santosflores@gmail.com' && (
+        <>
+          <SupabaseTest />
+          <ControlsTabs />
+        </>
+      )}
     </div>
   );
 };
