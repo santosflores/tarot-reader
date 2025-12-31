@@ -73,14 +73,36 @@ export interface LipsyncManager {
 }
 
 /**
+ * WebRTC Lipsync Analyzer interface
+ * Custom analyzer for WebRTC streams
+ */
+export interface WebRTCLipsyncManager {
+  viseme: string;
+  processAudio: () => void;
+  connectStream: (stream: MediaStream) => void;
+  disconnect: () => void;
+  isConnected: () => boolean;
+}
+
+/**
+ * Audio source type - either file-based or WebRTC stream
+ */
+export type AudioSourceType = 'file' | 'webrtc' | null;
+
+/**
  * Chatbot/Audio store state
  */
 export interface ChatbotState {
   audioPlayer: HTMLAudioElement | null;
+  webrtcAudioPlayer: HTMLAudioElement | null;
   lipsyncManager: LipsyncManager | null;
+  webrtcLipsyncManager: WebRTCLipsyncManager | null;
   isAudioPlaying: boolean;
+  audioSourceType: AudioSourceType;
   setupAudioPlayer: () => void;
   playAudio: (url: string) => void;
+  connectWebRTCAudio: (mediaStream: MediaStream) => void;
+  disconnectWebRTCAudio: () => void;
   cleanup: () => void;
 }
 
