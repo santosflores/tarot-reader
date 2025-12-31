@@ -105,8 +105,8 @@ export function ElevenLabsOverlay() {
     mode: agentMode,
   });
 
-  // Get the setRevealedCard action from the store
-  const setRevealedCard = useRevealedCard((state) => state.setRevealedCard);
+  // Get the addRevealedCard action from the store
+  const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
   // Callbacks for the ElevenLabs SDK
   const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
@@ -215,8 +215,8 @@ export function ElevenLabsOverlay() {
 
         const card = drawnCards[cardIndex];
 
-        // Set the card in the revealed card store to display the overlay
-        setRevealedCard(card);
+        // Add the card to the revealed cards store to display the overlay
+        addRevealedCard(card);
 
         const cardInfo = isMajorArcana(card)
           ? `${card.name} (Major Arcana #${card.number})`
