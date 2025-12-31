@@ -10,9 +10,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Role, Status, Callbacks, Mode } from '@elevenlabs/client';
 import type { TarotDeck } from '../../types/tarot';
-import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
+import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards, findCardByName } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
+import { useRevealedCard } from '../../hooks/useRevealedCard';
 
 // ============================================================================
 // Types
@@ -32,6 +33,10 @@ interface LogMessageParams {
 
 interface DrawCardParams {
   numberOfCards: number;
+}
+
+interface RevealCardParams {
+  cardName: string;
 }
 
 // ============================================================================
@@ -318,6 +323,9 @@ export function ElevenLabsAgent() {
     mode: agentMode,
   });
 
+  // Get the setRevealedCard action from the store
+  const setRevealedCard = useRevealedCard((state) => state.setRevealedCard);
+
   // Keep ref in sync with state
   useEffect(() => {
     deckRef.current = deck;
@@ -488,6 +496,41 @@ export function ElevenLabsAgent() {
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         addMessage('system', `❌ Failed to draw cards: ${errorMessage}`);
+        return `Error: ${errorMessage}`;
+      }
+    },
+    revealCard: (params: RevealCardParams): string => {
+      try {
+        const { cardName } = params;
+        
+        if (!cardName || !cardName.trim()) {
+          const errorMessage = 'Card name is required';
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        // Create a reference deck to look up the card
+        const referenceDeck = createTarotDeck();
+        const card = findCardByName(referenceDeck, cardName);
+
+        if (!card) {
+          const errorMessage = `Card "${cardName}" not found. Please provide a valid card name.`;
+          addMessage('system', `❌ ${errorMessage}`);
+          return `Error: ${errorMessage}`;
+        }
+
+        // Set the card in the revealed card store to display the overlay
+        setRevealedCard(card);
+
+        const cardInfo = isMajorArcana(card)
+          ? `${card.name} (Major Arcana #${card.number})`
+          : `${card.name} (${card.suit})`;
+        
+        addMessage('system', `🔮 Revealing card: ${cardInfo}`);
+        return `Successfully revealed card: ${cardInfo}`;
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        addMessage('system', `❌ Failed to reveal card: ${errorMessage}`);
         return `Error: ${errorMessage}`;
       }
     },
