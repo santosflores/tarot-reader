@@ -9,8 +9,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Role, Status, Callbacks, Mode } from '@elevenlabs/client';
-import type { TarotDeck } from '../../types/tarot';
-import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards, findCardByName } from '../../utils/tarot';
+import type { TarotDeck, TarotCard } from '../../types/tarot';
+import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
@@ -36,7 +36,7 @@ interface DrawCardParams {
 }
 
 interface RevealCardParams {
-  cardName: string;
+  cardIndex: number;
 }
 
 // ============================================================================
@@ -307,6 +307,8 @@ export function ElevenLabsAgent() {
   // Use ref to ensure client tools always have access to current deck value
   const deckRef = useRef<TarotDeck | null>(null);
   const [deck, setDeck] = useState<TarotDeck | null>(null);
+  // Store drawn cards for revealCard tool
+  const drawnCardsRef = useRef<TarotCard[]>([]);
 
   const {
     messages,
@@ -338,6 +340,7 @@ export function ElevenLabsAgent() {
     // Reset deck for new session - each session starts fresh
     deckRef.current = null;
     setDeck(null);
+    drawnCardsRef.current = [];
     addMessage('system', 'Connected to agent');
   }, [addMessage]);
 
@@ -478,6 +481,8 @@ export function ElevenLabsAgent() {
         const result = drawCards(currentDeck, numberOfCards);
         deckRef.current = result.remaining;
         setDeck(result.remaining);
+        // Store drawn cards for revealCard tool
+        drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
 
         // Format the drawn cards for display
         const cardsList = result.drawn
@@ -501,23 +506,22 @@ export function ElevenLabsAgent() {
     },
     revealCard: (params: RevealCardParams): string => {
       try {
-        const { cardName } = params;
+        const { cardIndex } = params;
+        const drawnCards = drawnCardsRef.current;
         
-        if (!cardName || !cardName.trim()) {
-          const errorMessage = 'Card name is required';
+        if (drawnCards.length === 0) {
+          const errorMessage = 'No cards have been drawn yet. Please draw cards first.';
           addMessage('system', `❌ ${errorMessage}`);
           return `Error: ${errorMessage}`;
         }
 
-        // Create a reference deck to look up the card
-        const referenceDeck = createTarotDeck();
-        const card = findCardByName(referenceDeck, cardName);
-
-        if (!card) {
-          const errorMessage = `Card "${cardName}" not found. Please provide a valid card name.`;
+        if (cardIndex < 0 || cardIndex >= drawnCards.length) {
+          const errorMessage = `Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
           addMessage('system', `❌ ${errorMessage}`);
           return `Error: ${errorMessage}`;
         }
+
+        const card = drawnCards[cardIndex];
 
         // Set the card in the revealed card store to display the overlay
         setRevealedCard(card);
