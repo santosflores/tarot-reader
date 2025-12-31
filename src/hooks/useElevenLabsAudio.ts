@@ -127,8 +127,10 @@ export function useElevenLabsAudio({
     }
   }, [connectWebRTCAudio]);
 
-  // Prepare for capture - call this BEFORE starting the session
+  // Prepare for capture - patches RTCPeerConnection and sets up callback
   const prepareCapture = useCallback(() => {
+    // Reset state for new session
+    hasConnectedRef.current = false;
     onAudioTrackCallback = handleAudioTrack;
     patchRTCPeerConnection();
     
@@ -137,8 +139,8 @@ export function useElevenLabsAudio({
     }
   }, [handleAudioTrack]);
 
-  // Stop capturing
-  const stopCapture = useCallback(() => {
+  // Cleanup audio connection (but keep patch active for next session)
+  const cleanupSession = useCallback(() => {
     hasConnectedRef.current = false;
     
     if (audioStreamRef.current) {
@@ -146,28 +148,42 @@ export function useElevenLabsAudio({
       audioStreamRef.current = null;
     }
     
-    restoreRTCPeerConnection();
-    
     if (import.meta.env.DEV) {
-      console.log('[useElevenLabsAudio] Stopped audio capture');
+      console.log('[useElevenLabsAudio] Session cleaned up (patch still active)');
     }
   }, [disconnectWebRTCAudio]);
 
-  // Patch RTCPeerConnection on mount to capture connections created by SDK
+  // Full cleanup including RTCPeerConnection restore (only on unmount)
+  const stopCapture = useCallback(() => {
+    cleanupSession();
+    restoreRTCPeerConnection();
+    
+    if (import.meta.env.DEV) {
+      console.log('[useElevenLabsAudio] Stopped audio capture and restored RTCPeerConnection');
+    }
+  }, [cleanupSession]);
+
+  // Patch RTCPeerConnection on mount, restore only on unmount
   useEffect(() => {
     prepareCapture();
     
     return () => {
       stopCapture();
     };
-  }, [prepareCapture, stopCapture]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount/unmount
 
-  // Cleanup when disconnected
+  // Update callback when handleAudioTrack changes
+  useEffect(() => {
+    onAudioTrackCallback = handleAudioTrack;
+  }, [handleAudioTrack]);
+
+  // Cleanup session when disconnected (but keep patch active)
   useEffect(() => {
     if (!isConnected && hasConnectedRef.current) {
-      stopCapture();
+      cleanupSession();
     }
-  }, [isConnected, stopCapture]);
+  }, [isConnected, cleanupSession]);
 
   // Update audio playing state based on agent mode
   useEffect(() => {
