@@ -302,7 +302,12 @@ export function ElevenLabsOverlay() {
   const isConnecting = conversation.status === 'connecting';
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-4 z-[200]">
+    <div 
+      className="absolute left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-4 z-[200]"
+      style={{
+        bottom: 'calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
       {/* Collapsed State - Floating Action Button */}
       {!isExpanded && (
         <button

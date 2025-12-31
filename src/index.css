@@ -316,3 +316,15 @@
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
   pointer-events: none;
 }
+
+/* Mobile-safe bottom spacing for microphone button */
+:root {
+  --mic-bottom-mobile: 2rem;
+  --mic-bottom-desktop: 1rem;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --mic-bottom-mobile: 1rem;
+  }
+}
