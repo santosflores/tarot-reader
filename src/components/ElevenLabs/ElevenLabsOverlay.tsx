@@ -12,6 +12,7 @@ import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../
 import { isMajorArcana } from '../../types/tarot';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
+import { useAuthContext } from '../../hooks/useAuthContext';
 
 // ============================================================================
 // Types
@@ -92,6 +93,9 @@ export function ElevenLabsOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
+  
+  // Get user ID from auth context
+  const { user } = useAuthContext();
   
   // Deck state - each session starts with a fresh deck
   const deckRef = useRef<TarotDeck | null>(null);
@@ -249,6 +253,7 @@ export function ElevenLabsOverlay() {
       await conversation.startSession({
         agentId: AGENT_ID,
         connectionType: 'webrtc',
+        userId: user?.id,
       });
       await conversation.setVolume({ volume: 0.8 });
     } catch (err) {
@@ -259,7 +264,7 @@ export function ElevenLabsOverlay() {
         setError(errorMessage);
       }
     }
-  }, [conversation]);
+  }, [conversation, user]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
     try {
