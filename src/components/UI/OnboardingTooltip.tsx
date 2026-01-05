@@ -60,7 +60,7 @@ export function OnboardingTooltip() {
       
       {/* Tooltip card - always centered */}
       <div className="fixed bottom-28 inset-x-0 flex justify-center z-[195] animate-slide-up">
-        <div className="relative w-[calc(100vw-2rem)] max-w-72 mx-auto bg-gradient-to-br from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-2xl border border-purple-400/30 shadow-2xl shadow-purple-900/50 overflow-hidden">
+        <div className="relative w-[80vw] mx-auto bg-gradient-to-br from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-2xl border border-purple-400/30 shadow-2xl shadow-purple-900/50 overflow-hidden">
           {/* Mystical glow effect */}
           <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent pointer-events-none" />
           
