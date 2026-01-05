@@ -108,7 +108,12 @@ export function RevealedCardOverlay() {
   }
 
   return (
-    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[150]">
+    <div 
+      className="fixed left-1/2 transform -translate-x-1/2 z-[150] pointer-events-none"
+      style={{
+        bottom: 'calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px) + 120px)',
+      }}
+    >
       {/* Clear All Button (shown when multiple cards) */}
       {revealedCards.length > 1 && (
         <div className="flex justify-center mb-2">
@@ -122,7 +127,7 @@ export function RevealedCardOverlay() {
       )}
 
       {/* Cards Container */}
-      <div className="flex gap-3 flex-wrap justify-center max-w-[90vw]">
+      <div className="flex gap-3 flex-wrap justify-center max-w-[90vw] pointer-events-auto">
         {revealedCards.map((card) => (
           <CardDisplay
             key={card.id}
