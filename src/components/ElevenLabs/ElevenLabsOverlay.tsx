@@ -4,7 +4,7 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Callbacks, Mode, Status } from '@elevenlabs/client';
 import type { TarotDeck, TarotCard } from '../../types/tarot';
@@ -14,7 +14,6 @@ import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
-import { useOverlayStore } from './overlayStore';
 
 // ============================================================================
 // Types
@@ -49,49 +48,10 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 // ============================================================================
-// Component: StatusIndicator
-// ============================================================================
-
-interface StatusIndicatorProps {
-  status: Status;
-  mode: Mode | null;
-}
-
-function StatusIndicator({ status, mode }: StatusIndicatorProps) {
-  const isConnected = status === 'connected';
-  const isConnecting = status === 'connecting';
-  const isSpeaking = mode === 'speaking';
-
-  let statusColor = 'bg-gray-400';
-  let statusText = 'Disconnected';
-
-  if (isConnecting) {
-    statusColor = 'bg-yellow-500 animate-pulse';
-    statusText = 'Connecting...';
-  } else if (isConnected) {
-    if (isSpeaking) {
-      statusColor = 'bg-purple-500 animate-pulse';
-      statusText = 'Speaking';
-    } else {
-      statusColor = 'bg-green-500';
-      statusText = 'Listening';
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`w-2.5 h-2.5 rounded-full ${statusColor}`} />
-      <span className="text-xs text-gray-600">{statusText}</span>
-    </div>
-  );
-}
-
-// ============================================================================
 // Component: ElevenLabsOverlay (Main)
 // ============================================================================
 
 export function ElevenLabsOverlay() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
@@ -292,26 +252,44 @@ export function ElevenLabsOverlay() {
     }
   }, [conversation]);
 
-  // Listen for external expansion requests
-  const { expandRequested, clearRequest } = useOverlayStore();
-
-  // Auto-expand on connection
-  useEffect(() => {
-    if (isSessionConnected) {
-      setIsExpanded(true);
-    }
-  }, [isSessionConnected]);
-
-  // Handle external expansion requests
-  useEffect(() => {
-    if (expandRequested) {
-      setIsExpanded(true);
-      clearRequest();
-    }
-  }, [expandRequested, clearRequest]);
-
   const isConnected = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
+  const isSpeaking = agentMode === 'speaking';
+
+  // Determine ring color and animation based on state
+  const getRingClasses = () => {
+    if (error) {
+      return 'ring-red-500 ring-8 animate-pulse';
+    }
+    if (isConnecting) {
+      return 'ring-yellow-500 ring-8 animate-pulse';
+    }
+    if (isConnected) {
+      if (isSpeaking) {
+        return 'ring-purple-500 ring-8 animate-pulse';
+      }
+      return 'ring-green-500 ring-8';
+    }
+    return 'ring-transparent ring-0';
+  };
+
+  const getButtonTitle = () => {
+    if (error) return 'Error: ' + error;
+    if (isConnecting) return 'Connecting...';
+    if (isConnected) {
+      if (isSpeaking) return 'Agent is speaking';
+      return 'Listening - Click to end session';
+    }
+    return 'Click to start conversation';
+  };
+
+  const handleButtonClick = () => {
+    if (isConnected) {
+      handleEndSession();
+    } else {
+      handleStartSession();
+    }
+  };
 
   return (
     <div 
@@ -320,165 +298,105 @@ export function ElevenLabsOverlay() {
         bottom: 'calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* Collapsed State - Floating Action Button */}
-      {!isExpanded && (
+      {/* Floating Action Button with Glowing Ring */}
+      <div className="relative mb-[10px]">
+        {/* Outer Glowing Ring - More visible */}
+        <div
+          className={`absolute -inset-4 rounded-full transition-all duration-300 ${
+            error
+              ? 'bg-red-500/30 animate-pulse'
+              : isConnecting
+              ? 'bg-yellow-500/30 animate-pulse'
+              : isConnected
+              ? isSpeaking
+                ? 'bg-purple-500/30 animate-pulse'
+                : 'bg-green-500/30'
+              : 'bg-transparent'
+          }`}
+          style={{
+            boxShadow: error
+              ? '0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)'
+              : isConnecting
+              ? '0 0 30px rgba(234, 179, 8, 0.8), 0 0 60px rgba(234, 179, 8, 0.4)'
+              : isConnected
+              ? isSpeaking
+                ? '0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(168, 85, 247, 0.4)'
+                : '0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4)'
+              : 'none',
+          }}
+        />
+        
+        {/* Inner Glowing Ring */}
+        <div
+          className={`absolute inset-0 rounded-full transition-all duration-300 ${getRingClasses()}`}
+          style={{
+            boxShadow: error
+              ? '0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5)'
+              : isConnecting
+              ? '0 0 20px rgba(234, 179, 8, 0.9), 0 0 40px rgba(234, 179, 8, 0.5)'
+              : isConnected
+              ? isSpeaking
+                ? '0 0 20px rgba(168, 85, 247, 0.9), 0 0 40px rgba(168, 85, 247, 0.5)'
+                : '0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5)'
+              : 'none',
+          }}
+        />
+        
+        {/* Button */}
         <button
-          onClick={() => setIsExpanded(true)}
-          className="w-20 h-20 lg:w-20 lg:h-20 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 mb-[10px]"
-          title="Open Voice Agent"
+          onClick={handleButtonClick}
+          disabled={isConnecting && !AGENT_ID}
+          className={`relative w-20 h-20 lg:w-20 lg:h-20 ${
+            isConnected
+              ? 'bg-red-600 hover:bg-red-700'
+              : 'bg-purple-600 hover:bg-purple-700'
+          } text-white rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+            isConnecting ? 'animate-pulse' : ''
+          }`}
+          style={{
+            boxShadow: isConnected
+              ? isSpeaking
+                ? '0 0 15px rgba(168, 85, 247, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)'
+                : '0 0 15px rgba(34, 197, 94, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)'
+              : undefined,
+          }}
+          title={getButtonTitle()}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-9 h-9 lg:w-8 lg:h-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-            />
-          </svg>
-        </button>
-      )}
-
-      {/* Expanded State - Overlay Panel */}
-      {isExpanded && (
-        <div className="w-[calc(100vw-2rem)] max-w-72 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                />
-              </svg>
-              <span className="font-medium text-sm">Voice Agent</span>
-            </div>
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
-              title="Minimize"
+          {isConnecting ? (
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : isConnected ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-9 h-9 lg:w-8 lg:h-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-4">
-            {/* Status */}
-            <div className="mb-4">
-              <StatusIndicator status={conversation.status} mode={agentMode} />
-            </div>
-
-            {/* Error Display */}
-            {error && (
-              <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-xs text-red-600">{error}</p>
-              </div>
-            )}
-
-            {/* Speaking Indicator */}
-            {isConnected && agentMode === 'speaking' && (
-              <div className="mb-4 flex items-center justify-center gap-1">
-                <div className="w-1 h-4 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
-                <div className="w-1 h-6 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
-                <div className="w-1 h-8 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-                <div className="w-1 h-6 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '450ms' }} />
-                <div className="w-1 h-4 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '600ms' }} />
-              </div>
-            )}
-
-            {/* Connection Button */}
-            <div className="flex gap-2">
-              {!isConnected ? (
-                <button
-                  onClick={handleStartSession}
-                  disabled={!AGENT_ID || isConnecting}
-                  className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isConnecting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                      </svg>
-                      Start Conversation
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleEndSession}
-                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  End Session
-                </button>
-              )}
-            </div>
-
-            {/* Listening Hint */}
-            {isConnected && agentMode === 'listening' && (
-              <p className="mt-3 text-xs text-gray-500 text-center">
-                Listening... Speak to the agent
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 8l-8 8m0-8l8 8"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-9 h-9 lg:w-8 lg:h-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
