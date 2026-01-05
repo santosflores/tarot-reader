@@ -293,7 +293,7 @@ export function ElevenLabsOverlay() {
 
   return (
     <div 
-      className="fixed left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-4 z-[200]"
+      className="fixed left-1/2 -translate-x-1/2 z-[200]"
       style={{
         bottom: 'calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))',
       }}
