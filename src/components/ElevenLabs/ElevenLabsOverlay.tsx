@@ -6,7 +6,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useConversation } from '@elevenlabs/react';
-import type { Callbacks, Mode, Status } from '@elevenlabs/client';
+import type { Callbacks, Mode } from '@elevenlabs/client';
 import type { TarotDeck, TarotCard } from '../../types/tarot';
 import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
 import { isMajorArcana } from '../../types/tarot';
@@ -79,8 +79,8 @@ export function ElevenLabsOverlay() {
   useBackgroundMusic({
     isActive: true, // Always active - plays immediately
     hasActiveSession: isSessionConnected, // Lower volume when session is active
-    normalVolume: 0.3,
-    sessionVolume: 0.15, // Volume when session is active
+    normalVolume: 0.05,
+    sessionVolume: 0.02, // Volume when session is active
   });
 
   // Get the addRevealedCard action from the store
