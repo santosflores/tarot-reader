@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { Lipsync } from 'wawa-lipsync';
-import type { ChatbotState, LipsyncManager, AudioSourceType } from '../types';
+import type { ChatbotState, LipsyncManager } from '../types';
 import { logError } from '../utils/errors';
 import { createWebRTCLipsyncAnalyzer } from '../utils/webrtcLipsync';
 
