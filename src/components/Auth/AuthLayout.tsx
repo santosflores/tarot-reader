@@ -42,6 +42,23 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             )}
           </div>
 
+          {/* Demo Credentials Banner */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-400/30 rounded-lg backdrop-blur-sm">
+            <p className="text-xs font-semibold text-amber-200/90 mb-2 uppercase tracking-wide">
+              🧪 Demo Credentials
+            </p>
+            <div className="text-xs text-purple-200/80 space-y-1">
+              <p>
+                <span className="text-purple-300/70">User:</span>{' '}
+                <span className="font-mono text-amber-200">test@test.com</span>
+              </p>
+              <p>
+                <span className="text-purple-300/70">Pass:</span>{' '}
+                <span className="font-mono text-amber-200">test123</span>
+              </p>
+            </div>
+          </div>
+
           {children}
         </div>
 
