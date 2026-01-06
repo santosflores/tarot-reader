@@ -40,7 +40,7 @@ export function CollapsibleSection({
   };
 
   return (
-    <div className={`mb-4 border-b pb-4 ${className}`}>
+    <div className={`border-b ${className}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors"

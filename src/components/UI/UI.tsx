@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
 import { TarotSimulator } from './components/TarotSimulator';
+import { ConversationsList } from './components/ConversationsList';
 import { useAuthContext } from '../../hooks/useAuthContext';
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
@@ -55,6 +56,7 @@ export const UI = () => {
                 Edit Profile
               </Link>
             </div>
+            <ConversationsList />
             <button
               onClick={handleSignOut}
               disabled={signingOut}
