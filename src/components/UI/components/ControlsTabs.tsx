@@ -30,17 +30,17 @@ export function ControlsTabs() {
   const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
 
   return (
-    <CollapsibleSection title="Controls" icon="⚙️" defaultExpanded={true}>
+    <CollapsibleSection title="Controls" icon="⚙️" defaultExpanded={false} className="mb-4">
       {/* Tab Buttons */}
-      <div className="flex gap-1 mb-3 border-b border-gray-200">
+      <div className="flex gap-1 mb-3 border-b border-purple-400/30">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-2 py-1.5 text-xs font-medium transition-colors border-b-2 ${
+            className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all border-b-2 ${
               activeTab === tab.id
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-purple-400 text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 bg-purple-900/30'
+                : 'border-transparent text-purple-300/80 hover:text-purple-200 hover:bg-purple-900/20'
             }`}
           >
             <span className="flex items-center justify-center gap-1">

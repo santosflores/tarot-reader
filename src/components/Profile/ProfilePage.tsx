@@ -107,7 +107,7 @@ export function ProfilePage() {
       title="Edit Profile"
       subtitle="Update your profile information"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5 overflow-x-hidden max-w-full">
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-300 text-sm">
             {error}
@@ -129,7 +129,7 @@ export function ProfilePage() {
             type="email"
             value={user.email || ''}
             disabled
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white/60 cursor-not-allowed"
+            className="w-full min-w-0 px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white/60 cursor-not-allowed"
           />
           <p className="mt-1 text-xs text-purple-300/50">
             Email cannot be changed
@@ -146,7 +146,7 @@ export function ProfilePage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             autoComplete="name"
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full min-w-0 px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
             placeholder="How shall we call you?"
           />
         </div>
@@ -160,7 +160,7 @@ export function ProfilePage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all resize-none"
+            className="w-full min-w-0 px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all resize-none"
             placeholder="Tell us about yourself..."
           />
         </div>
@@ -174,7 +174,7 @@ export function ProfilePage() {
             type="date"
             value={birthdate}
             onChange={(e) => setBirthdate(e.target.value)}
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full min-w-0 px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
           />
         </div>
 

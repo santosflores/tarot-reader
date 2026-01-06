@@ -303,7 +303,7 @@ export function RevealedCardOverlay() {
       {hasCards && !isOpen && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`fixed right-4 top-20 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${
+          className={`fixed right-4 top-4 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${
             shouldPopIcon ? 'animate-pop' : ''
           }`}
           title={`Show cards (${revealedCards.length})`}

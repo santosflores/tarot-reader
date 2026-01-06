@@ -28,10 +28,10 @@ export const AudioPlayer = memo(() => {
 
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-semibold mb-2">Audio Controls</h3>
+      <h3 className="text-sm font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200">Audio Controls</h3>
       <button
         onClick={handleWelcomeAudio}
-        className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors text-sm font-medium"
+        className="w-full px-4 py-2 bg-slate-800/90 hover:bg-blue-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-blue-300/50 text-purple-200 hover:text-white rounded-lg transition-all hover:scale-[1.02] shadow-lg text-sm font-medium"
       >
         Play Audio
       </button>

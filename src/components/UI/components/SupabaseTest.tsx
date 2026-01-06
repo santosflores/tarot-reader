@@ -66,9 +66,9 @@ export const SupabaseTest = () => {
   };
 
   const statusColors = {
-    checking: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    connected: "bg-green-100 text-green-800 border-green-300",
-    error: "bg-red-100 text-red-800 border-red-300",
+    checking: "bg-amber-900/30 text-amber-200 border-amber-400/40 backdrop-blur-sm",
+    connected: "bg-green-900/30 text-green-200 border-green-400/40 backdrop-blur-sm",
+    error: "bg-red-900/30 text-red-200 border-red-400/40 backdrop-blur-sm",
   };
 
   const statusIcons = {
@@ -96,6 +96,7 @@ export const SupabaseTest = () => {
       icon="🔌"
       defaultExpanded={false}
       statusIndicator={getStatusIndicator()}
+      className="mb-0"
     >
       <div className={`p-2 rounded border text-xs ${statusColors[status]}`}>
         <div className="flex items-center gap-2">
@@ -112,12 +113,12 @@ export const SupabaseTest = () => {
 
       <button
         onClick={testConnection}
-        className="mt-2 w-full px-3 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        className="mt-2 w-full px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-blue-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-blue-300/50 text-gray-300 hover:text-white rounded-lg transition-all hover:scale-[1.02] shadow-lg"
       >
         🔄 Test Connection
       </button>
 
-      <div className="mt-2 text-[10px] text-gray-500">
+      <div className="mt-2 text-[10px] text-purple-300/70">
         <div>URL: {import.meta.env.VITE_SUPABASE_URL || "Not set"}</div>
         <div>
           Key:{" "}

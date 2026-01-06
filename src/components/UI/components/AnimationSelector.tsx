@@ -19,18 +19,18 @@ export const AnimationSelector = memo(() => {
 
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-semibold mb-2">Animation Controls</h3>
+      <h3 className="text-sm font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200">Animation Controls</h3>
       <div className="mb-2">
-        <label className="block text-xs mb-1">
-          Current Animation: <span className="font-medium">{currentAnimation}</span>
+        <label className="block text-xs mb-1 text-purple-200/90">
+          Current Animation: <span className="font-medium text-purple-100">{currentAnimation}</span>
         </label>
         <select
           value={currentAnimation}
           onChange={handleAnimationChange}
-          className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-white"
+          className="w-full px-2 py-1 text-sm border border-purple-400/30 rounded-lg bg-slate-800/90 backdrop-blur-sm text-purple-200 focus:border-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
         >
           {availableAnimations.map((animation) => (
-            <option key={animation} value={animation}>
+            <option key={animation} value={animation} className="bg-slate-800 text-purple-200">
               {animation}
             </option>
           ))}
