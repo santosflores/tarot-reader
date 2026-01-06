@@ -33,8 +33,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      {/* Background Image with CSS Effects */}
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 overflow-hidden">
+        {/* Background Image with CSS Effects */}
+        <div className="fixed inset-0 -z-10">
         {/* Base image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -82,6 +83,7 @@ function App() {
       >
         <Experience />
       </Canvas>
+      </div>
     </ErrorBoundary>
   );
 }
