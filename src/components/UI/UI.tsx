@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
+import { TarotSimulator } from './components/TarotSimulator';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { useOnboardingStore } from './OnboardingTooltip';
 
@@ -91,6 +92,7 @@ export const UI = () => {
         {/* Show SupabaseTest and Controls only for specific user */}
         {user?.email === 'santosflores@gmail.com' && (
           <>
+            <TarotSimulator />
             <SupabaseTest />
             <ControlsTabs />
           </>

@@ -15,20 +15,47 @@ import { getCardImagePath } from '../../utils/tarot';
  */
 interface MainSceneCardProps {
   card: TarotCard;
-  onAnimateToDrawer: () => void;
+  onClose: () => void;
+  isFadingOut?: boolean;
+  isFadingIn?: boolean;
 }
 
-function MainSceneCard({ card, onAnimateToDrawer }: MainSceneCardProps) {
+function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false }: MainSceneCardProps) {
   const isMajor = isMajorArcana(card);
 
   return (
     <div 
-      className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[160] pointer-events-auto animate-card-reveal"
+      className={`fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[160] pointer-events-auto transition-opacity duration-300 ${
+        isFadingOut ? 'opacity-0' : isFadingIn ? 'opacity-100' : 'opacity-100'
+      }`}
       style={{
-        animation: 'cardReveal 0.5s ease-out forwards',
+        animation: isFadingIn ? 'cardReveal 0.5s ease-out forwards' : 'none',
       }}
     >
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 shadow-2xl shadow-purple-900/40 min-w-[280px] max-w-[320px]">
+      <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 shadow-2xl shadow-purple-900/40 min-w-[280px] max-w-[320px] relative">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors"
+          title="Close"
+          aria-label="Close card"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {/* Card Content */}
         <div className="text-center">
           {/* Card Image */}
@@ -164,61 +191,82 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
 export function RevealedCardOverlay() {
   const [isOpen, setIsOpen] = useState(false);
   const [mainSceneCard, setMainSceneCard] = useState<TarotCard | null>(null);
-  const [animatingCard, setAnimatingCard] = useState<TarotCard | null>(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isFadingIn, setIsFadingIn] = useState(false);
+  const [shouldPopIcon, setShouldPopIcon] = useState(false);
   const revealedCards = useRevealedCard((state) => state.revealedCards);
   const removeRevealedCard = useRevealedCard((state) => state.removeRevealedCard);
   const clearRevealedCards = useRevealedCard((state) => state.clearRevealedCards);
   const prevCardCountRef = useRef(0);
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentCardRef = useRef<TarotCard | null>(null);
 
-  // Handle new card reveal - show in main scene first
+  // Handle new card reveal - show in main scene with fade transition
   useEffect(() => {
     if (revealedCards.length > prevCardCountRef.current) {
       const newCard = revealedCards[revealedCards.length - 1];
+      const hasCurrentCard = currentCardRef.current !== null;
       
-      // Clear any existing timeout
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-
-      // Show card in main scene
-      setMainSceneCard(newCard);
-      
-      // After 3 seconds, animate card to drawer
-      animationTimeoutRef.current = setTimeout(() => {
-        setAnimatingCard(newCard);
-        // After animation completes, clear main scene card
+      // If there's already a card showing, fade it out first
+      if (hasCurrentCard) {
+        setIsFadingOut(true);
+        // After fadeout completes, show new card with fade in
         setTimeout(() => {
-          setMainSceneCard((current) => current?.id === newCard.id ? null : current);
-          setAnimatingCard(null);
-        }, 800); // Match animation duration
-      }, 3000);
+          currentCardRef.current = newCard;
+          setMainSceneCard(newCard);
+          setIsFadingOut(false);
+          setIsFadingIn(true);
+          // Reset fade in flag after animation
+          setTimeout(() => setIsFadingIn(false), 500);
+        }, 300); // Match fadeout duration
+      } else {
+        // No card currently showing, just fade in the new one
+        currentCardRef.current = newCard;
+        setMainSceneCard(newCard);
+        setIsFadingIn(true);
+        setTimeout(() => setIsFadingIn(false), 500);
+      }
+      
+      // Pop the drawer icon when first card is added
+      if (prevCardCountRef.current === 0) {
+        setShouldPopIcon(true);
+        setTimeout(() => setShouldPopIcon(false), 600);
+      }
     }
     prevCardCountRef.current = revealedCards.length;
   }, [revealedCards.length, revealedCards]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleCardClick = (card: TarotCard) => {
-    setMainSceneCard(card);
-    // Auto-hide after 3 seconds
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
+    // If clicking the same card, do nothing
+    if (currentCardRef.current?.id === card.id) {
+      return;
     }
-    animationTimeoutRef.current = setTimeout(() => {
-      setAnimatingCard(card);
+    
+    // If there's already a card showing, fade it out first
+    if (currentCardRef.current) {
+      setIsFadingOut(true);
       setTimeout(() => {
-        setMainSceneCard(null);
-        setAnimatingCard(null);
-      }, 800);
-    }, 3000);
+        currentCardRef.current = card;
+        setMainSceneCard(card);
+        setIsFadingOut(false);
+        setIsFadingIn(true);
+        setTimeout(() => setIsFadingIn(false), 500);
+      }, 300);
+    } else {
+      // No card currently showing, just fade in
+      currentCardRef.current = card;
+      setMainSceneCard(card);
+      setIsFadingIn(true);
+      setTimeout(() => setIsFadingIn(false), 500);
+    }
+  };
+
+  const handleCloseCard = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      currentCardRef.current = null;
+      setMainSceneCard(null);
+      setIsFadingOut(false);
+    }, 300);
   };
 
   const hasCards = revealedCards.length > 0;
@@ -229,42 +277,19 @@ export function RevealedCardOverlay() {
       {mainSceneCard && (
         <MainSceneCard
           card={mainSceneCard}
-          onAnimateToDrawer={() => {
-            setAnimatingCard(mainSceneCard);
-            setTimeout(() => {
-              setMainSceneCard(null);
-              setAnimatingCard(null);
-            }, 800);
-          }}
+          onClose={handleCloseCard}
+          isFadingOut={isFadingOut}
+          isFadingIn={isFadingIn}
         />
-      )}
-
-      {/* Animating Card - moving from main scene to drawer */}
-      {animatingCard && (
-        <div
-          className="fixed z-[155] pointer-events-none"
-          style={{
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            animation: 'cardToDrawer 0.8s ease-in-out forwards',
-          }}
-        >
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-4 shadow-2xl shadow-purple-900/40 w-48">
-            <img
-              src={getCardImagePath(animatingCard)}
-              alt={animatingCard.name}
-              className="w-full h-auto rounded-lg"
-            />
-          </div>
-        </div>
       )}
 
       {/* Toggle Button - Always visible when cards exist */}
       {hasCards && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="fixed right-4 top-20 z-[150] w-12 h-12 bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-110 hover:bg-slate-800/90"
+          className={`fixed right-4 top-20 z-[150] w-12 h-12 bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-110 hover:bg-slate-800/90 ${
+            shouldPopIcon ? 'animate-pop' : ''
+          }`}
           title={isOpen ? 'Hide cards' : `Show cards (${revealedCards.length})`}
         >
           <svg
@@ -395,19 +420,17 @@ export function RevealedCardOverlay() {
           }
         }
 
-        @keyframes cardToDrawer {
-          0% {
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
+        @keyframes pop {
+          0%, 100% {
+            transform: scale(1);
           }
-          100% {
-            left: calc(100% - 10rem);
-            top: 5rem;
-            transform: translate(-50%, -50%) scale(0.3);
-            opacity: 0.8;
+          50% {
+            transform: scale(1.2);
           }
+        }
+
+        .animate-pop {
+          animation: pop 0.6s ease-out;
         }
       `}</style>
     </>
