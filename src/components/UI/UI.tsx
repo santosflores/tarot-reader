@@ -96,33 +96,37 @@ export const UI = () => {
         {/* Drawer Content */}
         <div className="relative overflow-y-auto h-[calc(100vh-100px)] p-5">
           {!loading && user && (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Link
-                  to="/profile"
-                  className="text-center px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-purple-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-purple-200 hover:text-white rounded-lg transition-all hover:scale-[1.02] shadow-lg"
+            <>
+              <div className="flex flex-col gap-4 mb-4">
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to="/profile"
+                    className="text-center px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-purple-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-purple-200 hover:text-white rounded-lg transition-all hover:scale-[1.02] shadow-lg"
+                  >
+                    Edit Profile
+                  </Link>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  disabled={signingOut}
+                  className="px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white rounded-lg transition-all disabled:opacity-50 hover:scale-[1.02] shadow-lg"
                 >
-                  Edit Profile
-                </Link>
+                  {signingOut ? 'Signing out...' : 'Sign out'}
+                </button>
               </div>
+              
+              {/* Conversations - shown to everyone */}
               <ConversationsList />
-              <button
-                onClick={handleSignOut}
-                disabled={signingOut}
-                className="px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white rounded-lg transition-all disabled:opacity-50 hover:scale-[1.02] shadow-lg"
-              >
-                {signingOut ? 'Signing out...' : 'Sign out'}
-              </button>
-            </div>
-          )}
-          
-          {/* Show SupabaseTest and Controls only for specific user */}
-          {user?.email === 'santosflores@gmail.com' && (
-            <div className="mt-4 flex flex-col gap-4">
-              <TarotSimulator />
-              <SupabaseTest />
-              <ControlsTabs />
-            </div>
+              
+              {/* Show TarotSimulator, SupabaseTest and Controls only for specific user */}
+              {user.email === 'santosflores@gmail.com' && (
+                <div className="mt-4 flex flex-col gap-4">
+                  <TarotSimulator />
+                  <SupabaseTest />
+                  <ControlsTabs />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

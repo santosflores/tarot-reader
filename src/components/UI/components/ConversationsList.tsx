@@ -151,7 +151,7 @@ export function ConversationsList() {
   };
 
   return (
-    <CollapsibleSection title="Conversations" icon="💬" defaultExpanded={false}>
+    <CollapsibleSection title="Conversations" icon="💬" defaultExpanded={false} className="mt-4">
       <div className="space-y-3">
         {loading && (
           <div className="flex items-center justify-center py-6">
