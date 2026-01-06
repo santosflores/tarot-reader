@@ -96,6 +96,7 @@ export const SupabaseTest = () => {
       icon="🔌"
       defaultExpanded={false}
       statusIndicator={getStatusIndicator()}
+      className="mb-0"
     >
       <div className={`p-2 rounded border text-xs ${statusColors[status]}`}>
         <div className="flex items-center gap-2">

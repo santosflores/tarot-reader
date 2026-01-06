@@ -30,7 +30,7 @@ export function ControlsTabs() {
   const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
 
   return (
-    <CollapsibleSection title="Controls" icon="⚙️" defaultExpanded={false}>
+    <CollapsibleSection title="Controls" icon="⚙️" defaultExpanded={false} className="mb-4">
       {/* Tab Buttons */}
       <div className="flex gap-1 mb-3 border-b border-purple-400/30">
         {tabs.map((tab) => (

@@ -120,7 +120,7 @@ export const UI = () => {
               
               {/* Show TarotSimulator, SupabaseTest and Controls only for specific user */}
               {user.email === 'santosflores@gmail.com' && (
-                <div className="mt-4 flex flex-col gap-4">
+                <div className="mt-0 flex flex-col gap-0">
                   <TarotSimulator />
                   <SupabaseTest />
                   <ControlsTabs />
