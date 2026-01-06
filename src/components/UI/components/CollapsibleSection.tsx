@@ -40,7 +40,7 @@ export function CollapsibleSection({
   };
 
   return (
-    <div className={`border-t border-b border-purple-400/30 pt-4 pb-4 ${className}`}>
+    <div className={`border-t border-b border-purple-400/30 pt-4 pb-4 pl-0 ${className}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 hover:from-purple-100 hover:via-white hover:to-indigo-100 transition-all"
@@ -62,7 +62,7 @@ export function CollapsibleSection({
           )}
         </span>
         <svg
-          className={`w-4 h-4 text-purple-300 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-purple-300 transition-transform flex-shrink-0 mr-2 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -70,7 +70,7 @@ export function CollapsibleSection({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {isExpanded && <div className="mt-3">{children}</div>}
+      {isExpanded && <div className="mt-3 pl-3 pr-3">{children}</div>}
     </div>
   );
 }
