@@ -60,11 +60,11 @@ export const CameraControls = memo(() => {
 
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-semibold mb-2">Camera Controls</h3>
+      <h3 className="text-sm font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200">Camera Controls</h3>
 
       <div className="mb-2">
-        <label className="block text-xs mb-1">
-          X: <span className="font-medium">{formattedX}</span>
+        <label className="block text-xs mb-1 text-purple-200/90">
+          X: <span className="font-medium text-purple-100">{formattedX}</span>
         </label>
         <input
           type="range"
@@ -73,13 +73,13 @@ export const CameraControls = memo(() => {
           step="0.1"
           value={cameraPosition[0]}
           onChange={handleXChange}
-          className="w-full"
+          className="w-full accent-purple-500"
         />
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs mb-1">
-          Y: <span className="font-medium">{formattedY}</span>
+        <label className="block text-xs mb-1 text-purple-200/90">
+          Y: <span className="font-medium text-purple-100">{formattedY}</span>
         </label>
         <input
           type="range"
@@ -88,13 +88,13 @@ export const CameraControls = memo(() => {
           step="0.1"
           value={cameraPosition[1]}
           onChange={handleYChange}
-          className="w-full"
+          className="w-full accent-purple-500"
         />
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs mb-1">
-          Z: <span className="font-medium">{formattedZ}</span>
+        <label className="block text-xs mb-1 text-purple-200/90">
+          Z: <span className="font-medium text-purple-100">{formattedZ}</span>
         </label>
         <input
           type="range"
@@ -103,13 +103,13 @@ export const CameraControls = memo(() => {
           step="0.1"
           value={cameraPosition[2]}
           onChange={handleZChange}
-          className="w-full"
+          className="w-full accent-purple-500"
         />
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs mb-1">
-          FOV: <span className="font-medium">{cameraFov}</span>
+        <label className="block text-xs mb-1 text-purple-200/90">
+          FOV: <span className="font-medium text-purple-100">{cameraFov}</span>
         </label>
         <input
           type="range"
@@ -118,13 +118,13 @@ export const CameraControls = memo(() => {
           step="1"
           value={cameraFov}
           onChange={handleFovChange}
-          className="w-full"
+          className="w-full accent-purple-500"
         />
       </div>
 
       <button
         onClick={handleReset}
-        className="mt-2 text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+        className="mt-2 text-xs px-2 py-1 bg-slate-800/90 hover:bg-purple-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white rounded-lg transition-all hover:scale-[1.02] shadow-lg"
       >
         Reset Position
       </button>

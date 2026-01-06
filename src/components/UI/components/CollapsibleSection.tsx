@@ -40,17 +40,17 @@ export function CollapsibleSection({
   };
 
   return (
-    <div className={`border-b ${className}`}>
+    <div className={`border-b border-purple-400/30 pb-4 mb-4 ${className}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+        className="w-full flex items-center justify-between text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 hover:from-purple-100 hover:via-white hover:to-indigo-100 transition-all"
       >
         <span className="flex items-center gap-2">
-          {icon && <span>{icon}</span>}
+          {icon && <span className="text-lg drop-shadow-lg">{icon}</span>}
           <span>{title}</span>
           {!isExpanded && statusIndicator && (
             <span
-              className={`w-2 h-2 rounded-full ${getStatusColor(statusIndicator)}`}
+              className={`w-2 h-2 rounded-full ${getStatusColor(statusIndicator)} shadow-lg`}
               title={
                 statusIndicator === 'success'
                   ? 'Connected'
@@ -62,7 +62,7 @@ export function CollapsibleSection({
           )}
         </span>
         <svg
-          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-purple-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -70,7 +70,7 @@ export function CollapsibleSection({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {isExpanded && <div className="mt-2">{children}</div>}
+      {isExpanded && <div className="mt-3">{children}</div>}
     </div>
   );
 }
