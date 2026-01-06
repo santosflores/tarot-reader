@@ -35,35 +35,35 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
       {/* Outer glow effect */}
       <div className="absolute inset-0 -m-4 rounded-3xl bg-gradient-to-br from-purple-500/20 via-indigo-500/20 to-purple-500/20 blur-2xl opacity-60" />
       
+      {/* Close Button - positioned at top right corner of container */}
+      <button
+        onClick={onClose}
+        className="absolute -top-2 -right-2 p-2 rounded-full bg-slate-800/95 hover:bg-slate-700/95 backdrop-blur-sm border-2 border-white/30 text-white hover:text-white transition-all hover:scale-110 hover:border-white/50 shadow-xl shadow-purple-900/50 z-20"
+        title="Close"
+        aria-label="Close card"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      
       <div className="relative bg-gradient-to-br from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-2 border-purple-400/40 rounded-3xl p-8 shadow-2xl min-w-[320px] max-w-[380px] overflow-hidden">
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
         
         {/* Animated border glow */}
         <div className="absolute inset-0 rounded-3xl border-2 border-purple-300/20 animate-pulse-slow pointer-events-none" />
-        
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 text-gray-300 hover:text-white transition-all hover:scale-110 hover:border-purple-300/50 shadow-lg z-10"
-          title="Close"
-          aria-label="Close card"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
 
         {/* Card Content */}
         <div className="text-center relative z-10 pt-2">
