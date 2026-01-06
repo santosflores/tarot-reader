@@ -44,13 +44,7 @@ function App() {
         {/* CSS Effects overlay */}
         <div className="tarot-background absolute inset-0" style={{ background: 'transparent' }}>
           {/* Slow rotating aurora */}
-          <div className="aurora" />
-          {/* Floating energy orbs */}
-          <div className="energy-orbs">
-            <span /><span /><span /><span />
-          </div>
-          {/* Moon glow */}
-          <div className="moon-glow" />
+          <div className="aurora" />          
           {/* Rising particles */}
           <div className="mystical-particles">
             <span /><span /><span /><span /><span />
@@ -58,9 +52,10 @@ function App() {
             <span /><span /><span /><span /><span />
             <span /><span /><span /><span /><span />
             <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+            
           </div>
-          {/* Breathing pulse */}
-          <div className="breathing-bg" />
           {/* Vignette */}
           <div className="vignette" />
         </div>
