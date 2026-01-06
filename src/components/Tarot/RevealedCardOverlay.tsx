@@ -283,14 +283,14 @@ export function RevealedCardOverlay() {
         />
       )}
 
-      {/* Toggle Button - Always visible when cards exist */}
-      {hasCards && (
+      {/* Toggle Button - Always visible when cards exist, hidden when drawer is open */}
+      {hasCards && !isOpen && (
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`fixed right-4 top-20 z-[150] w-12 h-12 bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-110 hover:bg-slate-800/90 ${
             shouldPopIcon ? 'animate-pop' : ''
           }`}
-          title={isOpen ? 'Hide cards' : `Show cards (${revealedCards.length})`}
+          title={`Show cards (${revealedCards.length})`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
