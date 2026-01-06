@@ -1,33 +1,145 @@
 /**
  * RevealedCardOverlay Component
- * Displays revealed tarot cards as overlays on top of the 3D scene
- * Positioned at bottom center with manual dismissal for each card
+ * Displays revealed tarot cards in a drawer that can be toggled
+ * Cards are stored and can be viewed/hidden during the session
  */
 
+import { useState, useEffect, useRef } from 'react';
 import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { isMajorArcana } from '../../types/tarot';
 import type { TarotCard } from '../../types/tarot';
 import { getCardImagePath } from '../../utils/tarot';
 
 /**
- * Individual card component
+ * Main scene card display component
+ */
+interface MainSceneCardProps {
+  card: TarotCard;
+  onClose: () => void;
+  isFadingOut?: boolean;
+  isFadingIn?: boolean;
+}
+
+function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false }: MainSceneCardProps) {
+  const isMajor = isMajorArcana(card);
+
+  return (
+    <div 
+      className={`fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[160] pointer-events-auto transition-opacity duration-300 ${
+        isFadingOut ? 'opacity-0' : isFadingIn ? 'opacity-100' : 'opacity-100'
+      }`}
+      style={{
+        animation: isFadingIn ? 'cardReveal 0.5s ease-out forwards' : 'none',
+      }}
+    >
+      {/* Outer glow effect */}
+      <div className="absolute inset-0 -m-4 rounded-3xl bg-gradient-to-br from-purple-500/20 via-indigo-500/20 to-purple-500/20 blur-2xl opacity-60" />
+      
+      {/* Close Button - positioned at top right corner of container */}
+      <button
+        onClick={onClose}
+        className="absolute -top-2 -right-2 p-2 rounded-full bg-slate-800/95 hover:bg-slate-700/95 backdrop-blur-sm border-2 border-white/30 text-white hover:text-white transition-all hover:scale-110 hover:border-white/50 shadow-xl shadow-purple-900/50 z-20"
+        title="Close"
+        aria-label="Close card"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      
+      <div className="relative bg-gradient-to-br from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-2 border-purple-400/40 rounded-3xl p-8 shadow-2xl min-w-[320px] max-w-[380px] overflow-hidden">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
+        
+        {/* Animated border glow */}
+        <div className="absolute inset-0 rounded-3xl border-2 border-purple-300/20 animate-pulse-slow pointer-events-none" />
+
+        {/* Card Content */}
+        <div className="text-center relative z-10 pt-2">
+          {/* Card Image */}
+          <div className="mb-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-indigo-500/30 rounded-2xl blur-xl -z-10" />
+            <img
+              src={getCardImagePath(card)}
+              alt={card.name}
+              className="w-56 h-auto mx-auto rounded-2xl shadow-2xl shadow-purple-900/50 border-2 border-purple-300/20 transition-transform hover:scale-[1.02]"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling;
+                if (fallback) fallback.classList.remove('hidden');
+              }}
+            />
+            <div className="hidden text-4xl">
+              {isMajor ? '⭐' : '🌙'}
+            </div>
+          </div>
+
+          {/* Card Name */}
+          <h3 className="text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 mb-4 tracking-wide drop-shadow-lg">
+            {card.name}
+          </h3>
+
+          {/* Card Type Badge */}
+          <div className="text-sm">
+            {isMajor ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/30 via-amber-400/20 to-amber-500/30 text-amber-100 rounded-full font-semibold border border-amber-400/40 shadow-lg shadow-amber-900/30 backdrop-blur-sm">
+                <span className="text-amber-300">✨</span>
+                Major Arcana • {card.number}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500/30 via-indigo-400/20 to-indigo-500/30 text-indigo-100 rounded-full font-semibold border border-indigo-400/40 shadow-lg shadow-indigo-900/30 backdrop-blur-sm">
+                <span className="text-indigo-300">🃏</span>
+                {card.suit}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Individual card component for drawer display
  */
 interface CardDisplayProps {
   card: TarotCard;
   onClose: () => void;
+  onClick: () => void;
 }
 
-function CardDisplay({ card, onClose }: CardDisplayProps) {
+function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
   const isMajor = isMajorArcana(card);
 
   return (
-    <div className="bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-4 shadow-2xl shadow-purple-900/40 min-w-[200px] max-w-[240px] animate-fade-in relative">
+    <div 
+      className="bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/30 rounded-xl p-3 shadow-lg shadow-purple-900/40 relative group cursor-pointer hover:border-purple-300/60 hover:shadow-xl hover:shadow-purple-900/50 hover:scale-105 transition-all duration-300 overflow-hidden"
+      onClick={onClick}
+    >
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
       {/* Close Button */}
       <button
-        onClick={onClose}
-        className="absolute top-2 right-2 p-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors"
-        title="Close"
-        aria-label="Close card"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 hover:scale-110 shadow-lg"
+        title="Remove card"
+        aria-label="Remove card"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -46,20 +158,15 @@ function CardDisplay({ card, onClose }: CardDisplayProps) {
       </button>
 
       {/* Card Content */}
-      <div className="text-center pt-2">
+      <div className="text-center">
         {/* Card Image */}
-        <div className="mb-3">
+        <div className="mb-2 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-lg blur-sm -z-10" />
           <img
             src={getCardImagePath(card)}
             alt={card.name}
-            className="w-32 h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/30 opacity-0 transition-opacity duration-500 ease-out"
-            onLoad={(e) => {
-              // Fade in when image loads
-              e.currentTarget.classList.remove('opacity-0');
-              e.currentTarget.classList.add('opacity-100');
-            }}
+            className="w-full h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/40 border border-purple-300/20 group-hover:border-purple-200/40 transition-all"
             onError={(e) => {
-              // Fallback to emoji if image fails to load
               const target = e.currentTarget;
               target.style.display = 'none';
               const fallback = target.nextElementSibling;
@@ -72,19 +179,19 @@ function CardDisplay({ card, onClose }: CardDisplayProps) {
         </div>
 
         {/* Card Name */}
-        <h3 className="text-lg font-serif font-bold text-white mb-2">
+        <h3 className="text-sm font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-indigo-200 mb-1.5 truncate">
           {card.name}
         </h3>
 
         {/* Card Type Badge */}
-        <div className="text-sm">
+        <div className="text-xs">
           {isMajor ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-200 rounded-full text-xs font-medium border border-amber-500/30">
-              Major Arcana • {card.number}
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500/25 to-amber-400/15 text-amber-200 rounded-full font-semibold border border-amber-400/40 shadow-md backdrop-blur-sm">
+              ✨ Major • {card.number}
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-500/20 text-indigo-200 rounded-full text-xs font-medium border border-indigo-500/30">
-              {card.suit}
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500/25 to-indigo-400/15 text-indigo-200 rounded-full font-semibold border border-indigo-400/40 shadow-md backdrop-blur-sm">
+              🃏 {card.suit}
             </span>
           )}
         </div>
@@ -94,60 +201,272 @@ function CardDisplay({ card, onClose }: CardDisplayProps) {
 }
 
 /**
- * Overlay component that displays all revealed tarot cards
- * Only renders when cards have been revealed via the revealCard client tool
+ * Drawer component that displays all revealed tarot cards
+ * Can be toggled to show/hide cards drawn during the session
  */
 export function RevealedCardOverlay() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [mainSceneCard, setMainSceneCard] = useState<TarotCard | null>(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isFadingIn, setIsFadingIn] = useState(false);
+  const [shouldPopIcon, setShouldPopIcon] = useState(false);
   const revealedCards = useRevealedCard((state) => state.revealedCards);
   const removeRevealedCard = useRevealedCard((state) => state.removeRevealedCard);
   const clearRevealedCards = useRevealedCard((state) => state.clearRevealedCards);
+  const prevCardCountRef = useRef(0);
+  const currentCardRef = useRef<TarotCard | null>(null);
 
-  // Don't render if no cards are revealed
-  if (revealedCards.length === 0) {
-    return null;
-  }
+  // Handle new card reveal - show in main scene with fade transition
+  useEffect(() => {
+    if (revealedCards.length > prevCardCountRef.current) {
+      const newCard = revealedCards[revealedCards.length - 1];
+      const hasCurrentCard = currentCardRef.current !== null;
+      
+      // If there's already a card showing, fade it out first
+      if (hasCurrentCard) {
+        setIsFadingOut(true);
+        // After fadeout completes, show new card with fade in
+        setTimeout(() => {
+          currentCardRef.current = newCard;
+          setMainSceneCard(newCard);
+          setIsFadingOut(false);
+          setIsFadingIn(true);
+          // Reset fade in flag after animation
+          setTimeout(() => setIsFadingIn(false), 500);
+        }, 300); // Match fadeout duration
+      } else {
+        // No card currently showing, just fade in the new one
+        currentCardRef.current = newCard;
+        setMainSceneCard(newCard);
+        setIsFadingIn(true);
+        setTimeout(() => setIsFadingIn(false), 500);
+      }
+      
+      // Pop the drawer icon when first card is added
+      if (prevCardCountRef.current === 0) {
+        setShouldPopIcon(true);
+        setTimeout(() => setShouldPopIcon(false), 600);
+      }
+    }
+    prevCardCountRef.current = revealedCards.length;
+  }, [revealedCards.length, revealedCards]);
+
+  const handleCardClick = (card: TarotCard) => {
+    // If clicking the same card, do nothing
+    if (currentCardRef.current?.id === card.id) {
+      return;
+    }
+    
+    // If there's already a card showing, fade it out first
+    if (currentCardRef.current) {
+      setIsFadingOut(true);
+      setTimeout(() => {
+        currentCardRef.current = card;
+        setMainSceneCard(card);
+        setIsFadingOut(false);
+        setIsFadingIn(true);
+        setTimeout(() => setIsFadingIn(false), 500);
+      }, 300);
+    } else {
+      // No card currently showing, just fade in
+      currentCardRef.current = card;
+      setMainSceneCard(card);
+      setIsFadingIn(true);
+      setTimeout(() => setIsFadingIn(false), 500);
+    }
+  };
+
+  const handleCloseCard = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      currentCardRef.current = null;
+      setMainSceneCard(null);
+      setIsFadingOut(false);
+    }, 300);
+  };
+
+  const hasCards = revealedCards.length > 0;
 
   return (
-    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[150]">
-      {/* Clear All Button (shown when multiple cards) */}
-      {revealedCards.length > 1 && (
-        <div className="flex justify-center mb-2">
-          <button
-            onClick={clearRevealedCards}
-            className="px-3 py-1 text-xs bg-slate-800/80 hover:bg-slate-700 text-gray-300 hover:text-white rounded-full transition-colors border border-slate-600/50"
-          >
-            Clear All
-          </button>
-        </div>
+    <>
+      {/* Main Scene Card Display */}
+      {mainSceneCard && (
+        <MainSceneCard
+          card={mainSceneCard}
+          onClose={handleCloseCard}
+          isFadingOut={isFadingOut}
+          isFadingIn={isFadingIn}
+        />
       )}
 
-      {/* Cards Container */}
-      <div className="flex gap-3 flex-wrap justify-center max-w-[90vw]">
-        {revealedCards.map((card) => (
-          <CardDisplay
-            key={card.id}
-            card={card}
-            onClose={() => removeRevealedCard(card.id)}
-          />
-        ))}
+      {/* Toggle Button - Always visible when cards exist, hidden when drawer is open */}
+      {hasCards && !isOpen && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`fixed right-4 top-20 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${
+            shouldPopIcon ? 'animate-pop' : ''
+          }`}
+          title={`Show cards (${revealedCards.length})`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-7 h-7 text-purple-200 drop-shadow-lg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+          {/* Badge showing card count */}
+          {revealedCards.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white/30 shadow-lg shadow-purple-900/50">
+              {revealedCards.length}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Drawer */}
+      <div
+        className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-l-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
+        
+        {/* Drawer Header */}
+        <div className="relative p-5 border-b border-purple-400/30 bg-gradient-to-r from-purple-900/30 to-transparent flex items-center justify-between backdrop-blur-sm">
+          <div>
+            <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 flex items-center gap-2">
+              <span className="text-2xl drop-shadow-lg">🃏</span>
+              Revealed Cards
+            </h2>
+            <p className="text-sm text-purple-300/80 mt-1 font-medium">
+              {revealedCards.length} card{revealedCards.length !== 1 ? 's' : ''} drawn
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {revealedCards.length > 0 && (
+              <button
+                onClick={clearRevealedCards}
+                className="p-2 rounded-lg bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg"
+                title="Clear all cards"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-2 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg"
+              title="Close drawer"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Cards List */}
+        <div className="relative overflow-y-auto h-[calc(100vh-100px)] p-5">
+          {revealedCards.length === 0 ? (
+            <div className="text-center text-purple-300/60 mt-12">
+              <div className="text-5xl mb-4 opacity-50">🃏</div>
+              <p className="text-sm font-medium">No cards revealed yet</p>
+              <p className="text-xs text-purple-400/50 mt-1">Draw cards to see them here</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {revealedCards.map((card) => (
+                <CardDisplay
+                  key={card.id}
+                  card={card}
+                  onClose={() => removeRevealedCard(card.id)}
+                  onClick={() => handleCardClick(card)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* CSS for fade-in animation */}
+      {/* Backdrop when drawer is open */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[130]"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* CSS Animations */}
       <style>{`
-        @keyframes fade-in {
+        @keyframes cardReveal {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translate(-50%, -50%) scale(0.85);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate(-50%, -50%) scale(1);
           }
         }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+
+        @keyframes pop {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.25);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.6;
+          }
+        }
+
+        .animate-pop {
+          animation: pop 0.6s ease-out;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
         }
       `}</style>
-    </div>
+    </>
   );
 }
