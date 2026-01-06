@@ -361,7 +361,7 @@ export function ElevenLabsOverlay() {
             isConnected
               ? 'bg-red-600 hover:bg-red-700'
               : 'bg-purple-600 hover:bg-purple-700'
-          } text-white rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+          } text-white rounded-full border-2 border-white shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
             isConnecting ? 'animate-pulse' : ''
           }`}
           style={{
