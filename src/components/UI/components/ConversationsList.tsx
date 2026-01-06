@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
+import { useAuthContext } from '../../../hooks/useAuthContext';
 
 interface Conversation {
   agent_id: string;
@@ -33,10 +34,16 @@ export function ConversationsList() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthContext();
 
   const fetchConversations = async () => {
     if (!AGENT_ID) {
       setError('Agent ID is not configured');
+      return;
+    }
+
+    if (!user?.id) {
+      setError('User not authenticated');
       return;
     }
 
@@ -54,9 +61,10 @@ export function ConversationsList() {
         return;
       }
 
-      // Build query parameters
+      // Build query parameters - filter by user_id to show only conversations owned by this user
       const params = new URLSearchParams({
         agent_id: AGENT_ID,
+        user_id: user.id,
         page_size: '10',
         summary_mode: 'exclude',
       });
@@ -89,8 +97,10 @@ export function ConversationsList() {
   };
 
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    if (user?.id) {
+      fetchConversations();
+    }
+  }, [user?.id]);
 
   const formatDate = (unixTimestamp: number): string => {
     const date = new Date(unixTimestamp * 1000);
