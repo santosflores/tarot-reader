@@ -32,11 +32,20 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
         animation: isFadingIn ? 'cardReveal 0.5s ease-out forwards' : 'none',
       }}
     >
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 shadow-2xl shadow-purple-900/40 min-w-[280px] max-w-[320px] relative">
+      {/* Outer glow effect */}
+      <div className="absolute inset-0 -m-4 rounded-3xl bg-gradient-to-br from-purple-500/20 via-indigo-500/20 to-purple-500/20 blur-2xl opacity-60" />
+      
+      <div className="relative bg-gradient-to-br from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-2 border-purple-400/40 rounded-3xl p-8 shadow-2xl min-w-[320px] max-w-[380px] overflow-hidden">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
+        
+        {/* Animated border glow */}
+        <div className="absolute inset-0 rounded-3xl border-2 border-purple-300/20 animate-pulse-slow pointer-events-none" />
+        
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 text-gray-300 hover:text-white transition-all hover:scale-110 hover:border-purple-300/50 shadow-lg z-10"
           title="Close"
           aria-label="Close card"
         >
@@ -50,20 +59,21 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
         </button>
 
         {/* Card Content */}
-        <div className="text-center">
+        <div className="text-center relative z-10 pt-2">
           {/* Card Image */}
-          <div className="mb-4">
+          <div className="mb-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-indigo-500/30 rounded-2xl blur-xl -z-10" />
             <img
               src={getCardImagePath(card)}
               alt={card.name}
-              className="w-48 h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/30"
+              className="w-56 h-auto mx-auto rounded-2xl shadow-2xl shadow-purple-900/50 border-2 border-purple-300/20 transition-transform hover:scale-[1.02]"
               onError={(e) => {
                 const target = e.currentTarget;
                 target.style.display = 'none';
@@ -77,18 +87,20 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
           </div>
 
           {/* Card Name */}
-          <h3 className="text-xl font-serif font-bold text-white mb-3">
+          <h3 className="text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 mb-4 tracking-wide drop-shadow-lg">
             {card.name}
           </h3>
 
           {/* Card Type Badge */}
           <div className="text-sm">
             {isMajor ? (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-500/20 text-amber-200 rounded-full font-medium border border-amber-500/30">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/30 via-amber-400/20 to-amber-500/30 text-amber-100 rounded-full font-semibold border border-amber-400/40 shadow-lg shadow-amber-900/30 backdrop-blur-sm">
+                <span className="text-amber-300">✨</span>
                 Major Arcana • {card.number}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-500/20 text-indigo-200 rounded-full font-medium border border-indigo-500/30">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500/30 via-indigo-400/20 to-indigo-500/30 text-indigo-100 rounded-full font-semibold border border-indigo-400/40 shadow-lg shadow-indigo-900/30 backdrop-blur-sm">
+                <span className="text-indigo-300">🃏</span>
                 {card.suit}
               </span>
             )}
@@ -113,16 +125,19 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
 
   return (
     <div 
-      className="bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-xl p-3 shadow-lg shadow-purple-900/40 relative group cursor-pointer hover:border-purple-400/50 transition-all"
+      className="bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/30 rounded-xl p-3 shadow-lg shadow-purple-900/40 relative group cursor-pointer hover:border-purple-300/60 hover:shadow-xl hover:shadow-purple-900/50 hover:scale-105 transition-all duration-300 overflow-hidden"
       onClick={onClick}
     >
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
       {/* Close Button */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-2 right-2 p-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100 z-10"
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 hover:scale-110 shadow-lg"
         title="Remove card"
         aria-label="Remove card"
       >
@@ -145,11 +160,12 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
       {/* Card Content */}
       <div className="text-center">
         {/* Card Image */}
-        <div className="mb-2">
+        <div className="mb-2 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-lg blur-sm -z-10" />
           <img
             src={getCardImagePath(card)}
             alt={card.name}
-            className="w-full h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/30"
+            className="w-full h-auto mx-auto rounded-lg shadow-lg shadow-purple-900/40 border border-purple-300/20 group-hover:border-purple-200/40 transition-all"
             onError={(e) => {
               const target = e.currentTarget;
               target.style.display = 'none';
@@ -163,19 +179,19 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
         </div>
 
         {/* Card Name */}
-        <h3 className="text-sm font-serif font-bold text-white mb-1 truncate">
+        <h3 className="text-sm font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-indigo-200 mb-1.5 truncate">
           {card.name}
         </h3>
 
         {/* Card Type Badge */}
         <div className="text-xs">
           {isMajor ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-200 rounded-full font-medium border border-amber-500/30">
-              Major • {card.number}
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500/25 to-amber-400/15 text-amber-200 rounded-full font-semibold border border-amber-400/40 shadow-md backdrop-blur-sm">
+              ✨ Major • {card.number}
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-200 rounded-full font-medium border border-indigo-500/30">
-              {card.suit}
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500/25 to-indigo-400/15 text-indigo-200 rounded-full font-semibold border border-indigo-400/40 shadow-md backdrop-blur-sm">
+              🃏 {card.suit}
             </span>
           )}
         </div>
@@ -287,14 +303,14 @@ export function RevealedCardOverlay() {
       {hasCards && !isOpen && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`fixed right-4 top-20 z-[150] w-12 h-12 bg-slate-900/90 backdrop-blur-xl border border-purple-500/30 rounded-full shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-110 hover:bg-slate-800/90 ${
+          className={`fixed right-4 top-20 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${
             shouldPopIcon ? 'animate-pop' : ''
           }`}
           title={`Show cards (${revealedCards.length})`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-purple-300"
+            className="w-7 h-7 text-purple-200 drop-shadow-lg"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -308,7 +324,7 @@ export function RevealedCardOverlay() {
           </svg>
           {/* Badge showing card count */}
           {revealedCards.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-slate-900">
+            <span className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white/30 shadow-lg shadow-purple-900/50">
               {revealedCards.length}
             </span>
           )}
@@ -317,18 +333,21 @@ export function RevealedCardOverlay() {
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-slate-900/95 backdrop-blur-xl border-l border-purple-500/30 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-l-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
+        
         {/* Drawer Header */}
-        <div className="p-4 border-b border-purple-500/30 flex items-center justify-between">
+        <div className="relative p-5 border-b border-purple-400/30 bg-gradient-to-r from-purple-900/30 to-transparent flex items-center justify-between backdrop-blur-sm">
           <div>
-            <h2 className="text-lg font-semibold text-purple-100 flex items-center gap-2">
-              <span className="text-xl">🃏</span>
+            <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 flex items-center gap-2">
+              <span className="text-2xl drop-shadow-lg">🃏</span>
               Revealed Cards
             </h2>
-            <p className="text-xs text-purple-300/70 mt-0.5">
+            <p className="text-sm text-purple-300/80 mt-1 font-medium">
               {revealedCards.length} card{revealedCards.length !== 1 ? 's' : ''} drawn
             </p>
           </div>
@@ -336,7 +355,7 @@ export function RevealedCardOverlay() {
             {revealedCards.length > 0 && (
               <button
                 onClick={clearRevealedCards}
-                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors"
+                className="p-2 rounded-lg bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg"
                 title="Clear all cards"
               >
                 <svg
@@ -357,7 +376,7 @@ export function RevealedCardOverlay() {
             )}
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-white transition-colors"
+              className="p-2 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg"
               title="Close drawer"
             >
               <svg
@@ -379,13 +398,15 @@ export function RevealedCardOverlay() {
         </div>
 
         {/* Cards List */}
-        <div className="overflow-y-auto h-[calc(100vh-80px)] p-4">
+        <div className="relative overflow-y-auto h-[calc(100vh-100px)] p-5">
           {revealedCards.length === 0 ? (
-            <div className="text-center text-purple-300/50 mt-8">
-              <p className="text-sm">No cards revealed yet</p>
+            <div className="text-center text-purple-300/60 mt-12">
+              <div className="text-5xl mb-4 opacity-50">🃏</div>
+              <p className="text-sm font-medium">No cards revealed yet</p>
+              <p className="text-xs text-purple-400/50 mt-1">Draw cards to see them here</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {revealedCards.map((card) => (
                 <CardDisplay
                   key={card.id}
@@ -412,7 +433,7 @@ export function RevealedCardOverlay() {
         @keyframes cardReveal {
           from {
             opacity: 0;
-            transform: translate(-50%, -50%) scale(0.8);
+            transform: translate(-50%, -50%) scale(0.85);
           }
           to {
             opacity: 1;
@@ -425,12 +446,25 @@ export function RevealedCardOverlay() {
             transform: scale(1);
           }
           50% {
-            transform: scale(1.2);
+            transform: scale(1.25);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.6;
           }
         }
 
         .animate-pop {
           animation: pop 0.6s ease-out;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
         }
       `}</style>
     </>
