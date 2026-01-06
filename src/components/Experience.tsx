@@ -24,6 +24,7 @@ export const Experience = () => {
         enableDamping
         dampingFactor={0.05}
         enablePan={false}
+        enableRotate={false}
       />
       <Character />
       <Environment preset="dawn" />

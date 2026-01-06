@@ -15,7 +15,7 @@ export const DEFAULT_CAMERA_POSITION: Vector3Tuple = [0, 1.5, 1.5];
  * Default camera field of view (FOV)
  * Lower values = more zoomed in
  */
-export const DEFAULT_CAMERA_FOV = 50;
+export const DEFAULT_CAMERA_FOV = 30;
 
 /**
  * Character head position for camera targeting
