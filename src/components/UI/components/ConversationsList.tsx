@@ -123,15 +123,15 @@ export function ConversationsList() {
   const getStatusColor = (status: Conversation['status']): string => {
     switch (status) {
       case 'done':
-        return 'text-green-200 bg-green-900/30 border-green-400/40';
+        return 'text-purple-200 bg-slate-800/90 border-purple-400/40';
       case 'in-progress':
-        return 'text-blue-200 bg-blue-900/30 border-blue-400/40';
+        return 'text-blue-200 bg-slate-800/90 border-blue-400/40';
       case 'processing':
-        return 'text-amber-200 bg-amber-900/30 border-amber-400/40';
+        return 'text-amber-200 bg-slate-800/90 border-amber-400/40';
       case 'failed':
-        return 'text-red-200 bg-red-900/30 border-red-400/40';
+        return 'text-red-200 bg-slate-800/90 border-red-400/40';
       default:
-        return 'text-gray-300 bg-gray-800/30 border-gray-400/40';
+        return 'text-gray-300 bg-slate-800/90 border-gray-400/40';
     }
   };
 
@@ -193,14 +193,11 @@ export function ConversationsList() {
             {conversations.map((conv) => (
               <div
                 key={conv.conversation_id}
-                className="group relative bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/30 rounded-xl p-3 hover:border-purple-300/60 hover:shadow-xl hover:shadow-purple-900/50 hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                className="group relative bg-slate-800/90 backdrop-blur-sm border border-purple-400/30 rounded-lg p-3 hover:border-purple-300/60 hover:bg-slate-800 transition-all duration-200 cursor-pointer"
               >
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
                 {/* Status indicator bar */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
-                  conv.status === 'done' ? 'bg-green-400' :
+                <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+                  conv.status === 'done' ? 'bg-purple-400' :
                   conv.status === 'in-progress' ? 'bg-blue-400' :
                   conv.status === 'processing' ? 'bg-amber-400' :
                   conv.status === 'failed' ? 'bg-red-400' :
@@ -211,7 +208,7 @@ export function ConversationsList() {
                   {/* Header with title and status */}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 truncate">
+                      <h3 className="text-sm font-semibold text-purple-200 truncate">
                         {conv.call_summary_title || `Conversation ${conv.conversation_id.slice(0, 8)}`}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
@@ -255,7 +252,7 @@ export function ConversationsList() {
                       </div>
                     )}
                     {conv.call_successful === 'success' && (
-                      <div className="flex items-center gap-1 text-green-400">
+                      <div className="flex items-center gap-1 text-purple-300">
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
@@ -266,7 +263,7 @@ export function ConversationsList() {
 
                   {/* Summary preview */}
                   {conv.transcript_summary && (
-                    <div className="text-xs text-purple-200/80 mt-2 p-2 bg-slate-800/50 rounded-lg border border-purple-400/20 line-clamp-2 backdrop-blur-sm">
+                    <div className="text-xs text-purple-200/80 mt-2 p-2 bg-slate-900/50 rounded border border-purple-400/20 line-clamp-2">
                       {conv.transcript_summary}
                     </div>
                   )}
