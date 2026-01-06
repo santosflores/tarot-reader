@@ -215,9 +215,24 @@ export function RevealedCardOverlay() {
   const clearRevealedCards = useRevealedCard((state) => state.clearRevealedCards);
   const prevCardCountRef = useRef(0);
   const currentCardRef = useRef<TarotCard | null>(null);
+  const isInitializedRef = useRef(false);
+
+  // Initialize the card count ref on mount to prevent auto-showing existing cards
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      prevCardCountRef.current = revealedCards.length;
+      isInitializedRef.current = true;
+      return;
+    }
+  }, []);
 
   // Handle new card reveal - show in main scene with fade transition
   useEffect(() => {
+    // Don't run if not initialized yet
+    if (!isInitializedRef.current) {
+      return;
+    }
+    
     if (revealedCards.length > prevCardCountRef.current) {
       const newCard = revealedCards[revealedCards.length - 1];
       const hasCurrentCard = currentCardRef.current !== null;
