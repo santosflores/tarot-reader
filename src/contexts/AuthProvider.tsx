@@ -8,6 +8,12 @@ import { supabase } from '../lib/supabase';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import type { UserProfile, UserProfileUpdate } from '../types/supabase';
 import { AuthContext, AuthContextType } from './AuthContext';
+import { useRevealedCard } from '../hooks/useRevealedCard';
+import { useAnimation } from '../hooks/useAnimation';
+import { useChatbot } from '../hooks/useChatbot';
+import { useCamera } from '../hooks/useCamera';
+import { DEFAULT_ANIMATION } from '../config/animations';
+import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from '../config/camera';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -150,6 +156,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Clean up session-related state before signing out
+    try {
+      // Clear revealed cards
+      useRevealedCard.getState().clearRevealedCards();
+      
+      // Reset animation to default
+      useAnimation.getState().setCurrentAnimation(DEFAULT_ANIMATION);
+      
+      // Reset camera to default position and FOV
+      useCamera.getState().setCameraPosition(DEFAULT_CAMERA_POSITION);
+      useCamera.getState().setCameraFov(DEFAULT_CAMERA_FOV);
+      
+      // Clean up audio/chatbot state
+      useChatbot.getState().cleanup();
+      
+      // Clear any localStorage items related to the session
+      // (Add any other localStorage keys that need clearing)
+      const keysToRemove: string[] = [];
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn(`Failed to remove localStorage key: ${key}`, e);
+        }
+      });
+    } catch (cleanupError) {
+      console.error('Error during session cleanup:', cleanupError);
+      // Continue with sign out even if cleanup fails
+    }
+    
+    // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setProfile(null);
