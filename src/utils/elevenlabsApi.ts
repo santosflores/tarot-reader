@@ -7,6 +7,26 @@ import { supabase } from '../lib/supabase';
 import type { ConversationDetails, ConversationAudioResponse } from '../types/elevenlabs';
 
 /**
+ * Conversation item from the conversations list API
+ */
+export interface ConversationListItem {
+  agent_id: string;
+  conversation_id: string;
+  start_time_unix_secs: number;
+  call_duration_secs: number;
+  message_count: number;
+  status: 'initiated' | 'in-progress' | 'processing' | 'done' | 'failed';
+  call_successful: 'success' | 'failure' | 'unknown';
+  transcript_summary?: string | null;
+  call_summary_title?: string | null;
+  direction?: 'inbound' | 'outbound' | null;
+  rating?: number | null;
+  agent_name?: string | null;
+  has_audio?: boolean;
+  has_response_audio?: boolean;
+}
+
+/**
  * Common error handling for API requests
  */
 function handleApiError(response: Response, context: string): Error {
@@ -28,7 +48,7 @@ export async function fetchConversations(params: {
   agentId: string;
   userId?: string;
   pageSize?: number;
-}): Promise<{ conversations: unknown[]; next_cursor?: string | null; has_more: boolean }> {
+}): Promise<{ conversations: ConversationListItem[]; next_cursor?: string | null; has_more: boolean }> {
   const { agentId, userId, pageSize = 10 } = params;
 
   const queryParams = new URLSearchParams({
