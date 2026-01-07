@@ -258,6 +258,21 @@ export function ConversationReplay({
     }
   }, [audioUrl, audioPlayer, isPlaying, playAudioFromStore]);
 
+  const handleStop = useCallback(() => {
+    if (!audioPlayer) return;
+
+    // Stop and reset audio
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    audioPlayer.src = '';
+
+    // Reset all related states
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setHighlightedIndex(-1);
+    setAgentSpeaking(false);
+  }, [audioPlayer, setAgentSpeaking]);
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -382,6 +397,16 @@ export function ConversationReplay({
                 <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
               </svg>
             )}
+          </button>
+          <button
+            onClick={handleStop}
+            disabled={!audioUrl || (!isPlaying && currentTime === 0)}
+            className="flex items-center justify-center w-8 h-8 bg-slate-600 hover:bg-slate-500 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 rounded-full text-white transition-colors"
+            title="Stop"
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+              <rect width="10" height="10" x="3" y="3" rx="1" />
+            </svg>
           </button>
           <div className="flex-1 text-xs text-purple-300/80">
             <span>{formatTime(currentTime)}</span>
