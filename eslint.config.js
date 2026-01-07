@@ -24,6 +24,18 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: ['../../../*', '../../../../*'],
+              message: 'Use @/ alias instead of deeply nested relative imports',
+            },
+          ],
+          allowTypeImports: true,
+        },
+      ],
     },
   }
 )
