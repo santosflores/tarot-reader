@@ -4,22 +4,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { create } from 'zustand';
+import { useOnboardingStore } from '@/stores/onboardingStore';
 
 const STORAGE_KEY = 'tarot-onboarding-seen';
-
-// Store to control tooltip visibility from outside
-interface OnboardingStore {
-  showRequested: boolean;
-  requestShow: () => void;
-  clearRequest: () => void;
-}
-
-export const useOnboardingStore = create<OnboardingStore>((set) => ({
-  showRequested: false,
-  requestShow: () => set({ showRequested: true }),
-  clearRequest: () => set({ showRequested: false }),
-}));
 
 export function OnboardingTooltip() {
   const [isVisible, setIsVisible] = useState(false);

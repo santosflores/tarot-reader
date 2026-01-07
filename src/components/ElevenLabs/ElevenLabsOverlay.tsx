@@ -4,17 +4,21 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useRef, useCallback } from 'react';
-import { useConversation } from '@elevenlabs/react';
-import type { Callbacks, Mode } from '@elevenlabs/client';
-import type { TarotDeck, TarotCard } from '../../types/tarot';
-import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
-import { isMajorArcana } from '../../types/tarot';
-import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
-import { useRevealedCard } from '../../hooks/useRevealedCard';
-import { useAuthContext } from '../../hooks/useAuthContext';
-import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
-import { useOnboardingStore } from '../UI/OnboardingTooltip';
+import { useState, useRef, useCallback } from "react";
+import { useConversation } from "@elevenlabs/react";
+import type { Callbacks, Mode } from "@elevenlabs/client";
+import type { TarotDeck, TarotCard } from "@/types/tarot";
+import {
+  createTarotDeck,
+  shuffleDeck as shuffleTarotDeck,
+  drawCards,
+} from "@/utils/tarot";
+import { isMajorArcana } from "@/types/tarot";
+import { useElevenLabsAudio } from "@/hooks/useElevenLabsAudio";
+import { useRevealedCard } from "@/hooks/useRevealedCard";
+import { useAuthContext } from "@/hooks/useAuthContext";
+import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
+import { useOnboardingStore } from "@/stores/onboardingStore";
 
 // ============================================================================
 // Types
@@ -44,8 +48,8 @@ const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'An unexpected error occurred';
+  if (typeof error === "string") return error;
+  return "An unexpected error occurred";
 };
 
 // ============================================================================
@@ -56,13 +60,13 @@ export function ElevenLabsOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
-  
+
   // Get user ID and profile from auth context
   const { user, profile } = useAuthContext();
-  
+
   // Get the requestShow function to trigger the help tooltip
   const requestShowHelp = useOnboardingStore((state) => state.requestShow);
-  
+
   // Deck state - each session starts with a fresh deck
   const deckRef = useRef<TarotDeck | null>(null);
   const [, setDeck] = useState<TarotDeck | null>(null);
@@ -87,7 +91,7 @@ export function ElevenLabsOverlay() {
   const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
   // Callbacks for the ElevenLabs SDK
-  const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
+  const handleConnect: NonNullable<Callbacks["onConnect"]> = useCallback(() => {
     setError(null);
     setIsSessionConnected(true);
     deckRef.current = null;
@@ -95,16 +99,20 @@ export function ElevenLabsOverlay() {
     drawnCardsRef.current = [];
   }, []);
 
-  const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
-    setIsSessionConnected(false);
-    setAgentMode(null);
-  }, []);
+  const handleDisconnect: NonNullable<Callbacks["onDisconnect"]> =
+    useCallback(() => {
+      setIsSessionConnected(false);
+      setAgentMode(null);
+    }, []);
 
-  const handleError: NonNullable<Callbacks['onError']> = useCallback((message: string) => {
-    setError(message);
-  }, []);
+  const handleError: NonNullable<Callbacks["onError"]> = useCallback(
+    (message: string) => {
+      setError(message);
+    },
+    []
+  );
 
-  const handleModeChange: NonNullable<Callbacks['onModeChange']> = useCallback(
+  const handleModeChange: NonNullable<Callbacks["onModeChange"]> = useCallback(
     ({ mode }) => {
       setAgentMode(mode);
     },
@@ -115,16 +123,16 @@ export function ElevenLabsOverlay() {
   const clientTools = {
     logMessage: (params: LogMessageParams): string => {
       if (import.meta.env.DEV) {
-        console.log('[Agent Log]', params.message);
+        console.log("[Agent Log]", params.message);
       }
-      return 'Message logged successfully';
+      return "Message logged successfully";
     },
     initDeck: (): string => {
       try {
         const newDeck = createTarotDeck();
         deckRef.current = newDeck;
         setDeck(newDeck);
-        return 'Deck initialized successfully with 78 cards';
+        return "Deck initialized successfully with 78 cards";
       } catch (error) {
         return `Error: ${getErrorMessage(error)}`;
       }
@@ -133,12 +141,12 @@ export function ElevenLabsOverlay() {
       try {
         const currentDeck = deckRef.current;
         if (!currentDeck) {
-          return 'Error: No deck has been initialized. Please initialize the deck first.';
+          return "Error: No deck has been initialized. Please initialize the deck first.";
         }
         const shuffledDeck = shuffleTarotDeck(currentDeck);
         deckRef.current = shuffledDeck;
         setDeck(shuffledDeck);
-        return 'Deck shuffled successfully';
+        return "Deck shuffled successfully";
       } catch (error) {
         return `Error: ${getErrorMessage(error)}`;
       }
@@ -147,13 +155,13 @@ export function ElevenLabsOverlay() {
       try {
         const currentDeck = deckRef.current;
         if (!currentDeck) {
-          return 'Error: No deck has been initialized. Please initialize the deck first.';
+          return "Error: No deck has been initialized. Please initialize the deck first.";
         }
 
         const { numberOfCards } = params;
-        
+
         if (numberOfCards < 1) {
-          return 'Error: Number of cards must be at least 1';
+          return "Error: Number of cards must be at least 1";
         }
 
         if (numberOfCards > currentDeck.length) {
@@ -166,14 +174,16 @@ export function ElevenLabsOverlay() {
         // Store drawn cards for revealCard tool
         drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
 
-        const cardNames = result.drawn.map(card => {
-          if (isMajorArcana(card)) {
-            return `${card.name} (Major Arcana #${card.number})`;
-          }
-          return `${card.name} (${card.suit})`;
-        }).join(', ');
+        const cardNames = result.drawn
+          .map((card) => {
+            if (isMajorArcana(card)) {
+              return `${card.name} (Major Arcana #${card.number})`;
+            }
+            return `${card.name} (${card.suit})`;
+          })
+          .join(", ");
 
-        return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}: ${cardNames}. ${result.remaining.length} cards remaining.`;
+        return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? "" : "s"}: ${cardNames}. ${result.remaining.length} cards remaining.`;
       } catch (error) {
         return `Error: ${getErrorMessage(error)}`;
       }
@@ -182,9 +192,9 @@ export function ElevenLabsOverlay() {
       try {
         const { cardIndex } = params;
         const drawnCards = drawnCardsRef.current;
-        
+
         if (drawnCards.length === 0) {
-          return 'Error: No cards have been drawn yet. Please draw cards first.';
+          return "Error: No cards have been drawn yet. Please draw cards first.";
         }
 
         if (cardIndex < 0 || cardIndex >= drawnCards.length) {
@@ -199,7 +209,7 @@ export function ElevenLabsOverlay() {
         const cardInfo = isMajorArcana(card)
           ? `${card.name} (Major Arcana #${card.number})`
           : `${card.name} (${card.suit})`;
-        
+
         return `Successfully revealed card: ${cardInfo}`;
       } catch (error) {
         return `Error: ${getErrorMessage(error)}`;
@@ -217,31 +227,37 @@ export function ElevenLabsOverlay() {
 
   const handleStartSession = useCallback(async (): Promise<void> => {
     if (!AGENT_ID) {
-      setError('Agent ID is not configured');
+      setError("Agent ID is not configured");
       return;
     }
 
     try {
       setError(null);
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // Prepare dynamic variables
       const dynamicVariables: Record<string, string> = {};
       if (profile?.display_name) {
         dynamicVariables.user_name = profile.display_name;
       }
-      
+
       await conversation.startSession({
         agentId: AGENT_ID,
-        connectionType: 'webrtc',
+        connectionType: "webrtc",
         userId: user?.id,
-        dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
+        dynamicVariables:
+          Object.keys(dynamicVariables).length > 0
+            ? dynamicVariables
+            : undefined,
       });
       await conversation.setVolume({ volume: 0.8 });
     } catch (err) {
       const errorMessage = getErrorMessage(err);
-      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
-        setError('Microphone access required');
+      if (
+        errorMessage.includes("Permission denied") ||
+        errorMessage.includes("NotAllowedError")
+      ) {
+        setError("Microphone access required");
       } else {
         setError(errorMessage);
       }
@@ -252,39 +268,39 @@ export function ElevenLabsOverlay() {
     try {
       await conversation.endSession();
     } catch (err) {
-      console.error('Failed to end session:', err);
+      console.error("Failed to end session:", err);
     }
   }, [conversation]);
 
-  const isConnected = conversation.status === 'connected';
-  const isConnecting = conversation.status === 'connecting';
-  const isSpeaking = agentMode === 'speaking';
+  const isConnected = conversation.status === "connected";
+  const isConnecting = conversation.status === "connecting";
+  const isSpeaking = agentMode === "speaking";
 
   // Determine ring color and animation based on state
   const getRingClasses = () => {
     if (error) {
-      return 'ring-red-500 ring-8 animate-pulse';
+      return "ring-red-500 ring-8 animate-pulse";
     }
     if (isConnecting) {
-      return 'ring-yellow-500 ring-8 animate-pulse';
+      return "ring-yellow-500 ring-8 animate-pulse";
     }
     if (isConnected) {
       if (isSpeaking) {
-        return 'ring-purple-500 ring-8 animate-pulse';
+        return "ring-purple-500 ring-8 animate-pulse";
       }
-      return 'ring-green-500 ring-8';
+      return "ring-green-500 ring-8";
     }
-    return 'ring-transparent ring-0';
+    return "ring-transparent ring-0";
   };
 
   const getButtonTitle = () => {
-    if (error) return 'Error: ' + error;
-    if (isConnecting) return 'Connecting...';
+    if (error) return "Error: " + error;
+    if (isConnecting) return "Connecting...";
     if (isConnected) {
-      if (isSpeaking) return 'Agent is speaking';
-      return 'Listening - Click to end session';
+      if (isSpeaking) return "Agent is speaking";
+      return "Listening - Click to end session";
     }
-    return 'Click to start conversation';
+    return "Click to start conversation";
   };
 
   const handleButtonClick = () => {
@@ -296,10 +312,11 @@ export function ElevenLabsOverlay() {
   };
 
   return (
-    <div 
+    <div
       className="fixed left-1/2 -translate-x-1/2 z-[200]"
       style={{
-        bottom: 'calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))',
+        bottom:
+          "calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))",
       }}
     >
       {/* Floating Action Button with Glowing Ring */}
@@ -309,66 +326,67 @@ export function ElevenLabsOverlay() {
           onClick={requestShowHelp}
           className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg shadow-yellow-900/40 flex items-center justify-center transition-all hover:scale-110 z-10 border-2 border-white"
           title="Show help"
-        >?
+        >
+          ?
         </button>
         {/* Outer Glowing Ring - More visible */}
         <div
           className={`absolute -inset-4 rounded-full transition-all duration-300 ${
             error
-              ? 'bg-red-500/30 animate-pulse'
+              ? "bg-red-500/30 animate-pulse"
               : isConnecting
-              ? 'bg-yellow-500/30 animate-pulse'
-              : isConnected
-              ? isSpeaking
-                ? 'bg-purple-500/30 animate-pulse'
-                : 'bg-green-500/30'
-              : 'bg-transparent'
+                ? "bg-yellow-500/30 animate-pulse"
+                : isConnected
+                  ? isSpeaking
+                    ? "bg-purple-500/30 animate-pulse"
+                    : "bg-green-500/30"
+                  : "bg-transparent"
           }`}
           style={{
             boxShadow: error
-              ? '0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)'
+              ? "0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)"
               : isConnecting
-              ? '0 0 30px rgba(234, 179, 8, 0.8), 0 0 60px rgba(234, 179, 8, 0.4)'
-              : isConnected
-              ? isSpeaking
-                ? '0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(168, 85, 247, 0.4)'
-                : '0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4)'
-              : 'none',
+                ? "0 0 30px rgba(234, 179, 8, 0.8), 0 0 60px rgba(234, 179, 8, 0.4)"
+                : isConnected
+                  ? isSpeaking
+                    ? "0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(168, 85, 247, 0.4)"
+                    : "0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4)"
+                  : "none",
           }}
         />
-        
+
         {/* Inner Glowing Ring */}
         <div
           className={`absolute inset-0 rounded-full transition-all duration-300 ${getRingClasses()}`}
           style={{
             boxShadow: error
-              ? '0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5)'
+              ? "0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5)"
               : isConnecting
-              ? '0 0 20px rgba(234, 179, 8, 0.9), 0 0 40px rgba(234, 179, 8, 0.5)'
-              : isConnected
-              ? isSpeaking
-                ? '0 0 20px rgba(168, 85, 247, 0.9), 0 0 40px rgba(168, 85, 247, 0.5)'
-                : '0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5)'
-              : 'none',
+                ? "0 0 20px rgba(234, 179, 8, 0.9), 0 0 40px rgba(234, 179, 8, 0.5)"
+                : isConnected
+                  ? isSpeaking
+                    ? "0 0 20px rgba(168, 85, 247, 0.9), 0 0 40px rgba(168, 85, 247, 0.5)"
+                    : "0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5)"
+                  : "none",
           }}
         />
-        
+
         {/* Button */}
         <button
           onClick={handleButtonClick}
           disabled={isConnecting && !AGENT_ID}
           className={`relative w-20 h-20 lg:w-20 lg:h-20 ${
             isConnected
-              ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-purple-600 hover:bg-purple-700'
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-purple-600 hover:bg-purple-700"
           } text-white rounded-full border-2 border-white shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-            isConnecting ? 'animate-pulse' : ''
+            isConnecting ? "animate-pulse" : ""
           }`}
           style={{
             boxShadow: isConnected
               ? isSpeaking
-                ? '0 0 15px rgba(168, 85, 247, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)'
-                : '0 0 15px rgba(34, 197, 94, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)'
+                ? "0 0 15px rgba(168, 85, 247, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
+                : "0 0 15px rgba(34, 197, 94, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
               : undefined,
           }}
           title={getButtonTitle()}

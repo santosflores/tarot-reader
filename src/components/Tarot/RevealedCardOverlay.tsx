@@ -224,7 +224,7 @@ export function RevealedCardOverlay() {
       isInitializedRef.current = true;
       return;
     }
-  }, []);
+  });
 
   // Handle new card reveal - show in main scene with fade transition
   useEffect(() => {
