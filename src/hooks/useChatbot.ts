@@ -12,6 +12,8 @@ import { createWebRTCLipsyncAnalyzer } from '../utils/webrtcLipsync';
 interface ChatbotStore extends ChatbotState {
   lipsyncManagerInitialized: boolean;
   webrtcLipsyncInitialized: boolean;
+  isAgentSpeaking: boolean;
+  setAgentSpeaking: (speaking: boolean) => void;
 }
 
 // Store event handlers for cleanup
@@ -34,6 +36,11 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
   audioSourceType: null,
   lipsyncManagerInitialized: false,
   webrtcLipsyncInitialized: false,
+  isAgentSpeaking: false,
+
+  setAgentSpeaking: (speaking: boolean) => {
+    set({ isAgentSpeaking: speaking });
+  },
 
   setupAudioPlayer: () => {
     // Prevent re-initialization of file audio player
@@ -195,6 +202,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
         isAudioPlaying: false,
         audioSourceType: null,
         lipsyncManagerInitialized: false,
+        isAgentSpeaking: false,
       });
     }
   },

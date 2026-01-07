@@ -27,6 +27,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   const isAudioPlaying = useChatbot((state) => state.isAudioPlaying);
   const audioPlayer = useChatbot((state) => state.audioPlayer);
   const audioSourceType = useChatbot((state) => state.audioSourceType);
+  const isAgentSpeaking = useChatbot((state) => state.isAgentSpeaking);
 
   // Use refs to track values for useFrame (avoid accessing store in render loop)
   const lipsyncManagerRef = useRef<LipsyncManager | null>(lipsyncManager);
@@ -34,6 +35,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   const isAudioPlayingRef = useRef(isAudioPlaying);
   const audioPlayerRef = useRef(audioPlayer);
   const audioSourceTypeRef = useRef<AudioSourceType>(audioSourceType);
+  const isAgentSpeakingRef = useRef(isAgentSpeaking);
 
   // Update refs when values change
   useEffect(() => {
@@ -42,7 +44,8 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
     isAudioPlayingRef.current = isAudioPlaying;
     audioPlayerRef.current = audioPlayer;
     audioSourceTypeRef.current = audioSourceType;
-  }, [lipsyncManager, webrtcLipsyncManager, isAudioPlaying, audioPlayer, audioSourceType]);
+    isAgentSpeakingRef.current = isAgentSpeaking;
+  }, [lipsyncManager, webrtcLipsyncManager, isAudioPlaying, audioPlayer, audioSourceType, isAgentSpeaking]);
 
   /**
    * Update a morph target value with smoothing
@@ -77,6 +80,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
     const currentIsAudioPlaying = isAudioPlayingRef.current;
     const currentSourceType = audioSourceTypeRef.current;
     const currentAudioPlayer = audioPlayerRef.current;
+    const currentIsAgentSpeaking = isAgentSpeakingRef.current;
     
     // Get the appropriate lipsync manager based on source type
     const currentLipsyncManager = currentSourceType === 'webrtc'
@@ -85,13 +89,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
 
     // Check if audio is actually playing
     // For WebRTC, we rely on isAudioPlaying state and the analyzer connection
-    // For file audio, we check the audio element state
+    // For file audio, we check the audio element state AND if agent is speaking
     const isPlaying = currentSourceType === 'webrtc'
       ? currentIsAudioPlaying && currentLipsyncManager
       : currentAudioPlayer &&
         !currentAudioPlayer.paused &&
         !currentAudioPlayer.ended &&
-        currentAudioPlayer.currentTime > 0;
+        currentAudioPlayer.currentTime > 0 &&
+        currentIsAgentSpeaking; // Only lipsync when agent is speaking
 
     if (isPlaying && currentIsAudioPlaying && currentLipsyncManager) {
       currentLipsyncManager.processAudio();

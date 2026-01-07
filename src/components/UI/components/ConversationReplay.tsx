@@ -3,7 +3,7 @@
  * Displays and replays a conversation with synchronized transcript highlighting
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useChatbot } from "@/hooks/useChatbot";
 import {
   fetchConversationDetails,
@@ -12,6 +12,12 @@ import {
   revokeAudioUrl,
 } from "@/utils/elevenlabsApi";
 import type { ConversationDetails } from "@/types/elevenlabs";
+
+/** Time range representing when the agent is speaking */
+interface AgentSpeakingRange {
+  start: number;
+  end: number;
+}
 
 interface ConversationReplayProps {
   conversationId: string;
@@ -42,11 +48,43 @@ export function ConversationReplay({
     playAudio: playAudioFromStore,
     audioPlayer,
     isAudioPlaying,
+    setAgentSpeaking,
   } = useChatbot();
 
   // Filter agent messages from transcript for highlighting
   const agentMessages =
     conversation?.transcript.filter((msg) => msg.role === "agent") || [];
+
+  /**
+   * Calculate time ranges when the agent is speaking.
+   * Each agent message starts at its time_in_call_secs and ends when the next message starts.
+   */
+  const agentSpeakingRanges = useMemo((): AgentSpeakingRange[] => {
+    if (!conversation?.transcript || conversation.transcript.length === 0) {
+      return [];
+    }
+
+    const transcript = conversation.transcript;
+    const ranges: AgentSpeakingRange[] = [];
+
+    for (let i = 0; i < transcript.length; i++) {
+      const msg = transcript[i];
+      if (msg.role === "agent" && typeof msg.time_in_call_secs === "number") {
+        const start = msg.time_in_call_secs;
+        // End time is the start of the next message, or use duration as fallback
+        let end: number;
+        if (i + 1 < transcript.length && typeof transcript[i + 1].time_in_call_secs === "number") {
+          end = transcript[i + 1].time_in_call_secs!;
+        } else {
+          // Last message - use duration or estimate based on content
+          end = duration > 0 ? duration : start + 30; // Fallback: assume 30 seconds
+        }
+        ranges.push({ start, end });
+      }
+    }
+
+    return ranges;
+  }, [conversation?.transcript, duration]);
 
   // Initialize audio player
   useEffect(() => {
@@ -118,8 +156,15 @@ export function ConversationReplay({
 
     const handleTimeUpdate = () => {
       if (audioPlayer) {
-        setCurrentTime(audioPlayer.currentTime);
+        const currentPlayTime = audioPlayer.currentTime;
+        setCurrentTime(currentPlayTime);
         setDuration(audioPlayer.duration || 0);
+
+        // Check if current time is within any agent speaking range
+        const isInAgentRange = agentSpeakingRanges.some(
+          (range) => currentPlayTime >= range.start && currentPlayTime < range.end
+        );
+        setAgentSpeaking(isInAgentRange);
 
         // Calculate which agent message should be highlighted
         // Simple approach: divide audio duration by number of agent messages
@@ -140,12 +185,14 @@ export function ConversationReplay({
 
     const handlePause = () => {
       setIsPlaying(false);
+      setAgentSpeaking(false);
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
       setHighlightedIndex(-1);
+      setAgentSpeaking(false);
     };
 
     const handleLoadedMetadata = () => {
@@ -167,7 +214,7 @@ export function ConversationReplay({
       audioPlayer.removeEventListener("ended", handleEnded);
       audioPlayer.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [audioPlayer, audioUrl, agentMessages.length]);
+  }, [audioPlayer, audioUrl, agentMessages.length, agentSpeakingRanges, setAgentSpeaking]);
 
   // Auto-scroll to highlighted message
   useEffect(() => {
@@ -373,30 +420,27 @@ export function ConversationReplay({
               <div
                 key={index}
                 ref={isHighlighted ? highlightedElementRef : null}
-                className={`p-2 rounded-lg border transition-all ${
-                  isHighlighted
-                    ? "bg-purple-900/50 border-purple-400/60 shadow-lg shadow-purple-900/30"
-                    : isAgent
-                      ? "bg-slate-700/30 border-purple-400/20"
-                      : "bg-slate-700/20 border-slate-600/20"
-                }`}
+                className={`p-2 rounded-lg border transition-all ${isHighlighted
+                  ? "bg-purple-900/50 border-purple-400/60 shadow-lg shadow-purple-900/30"
+                  : isAgent
+                    ? "bg-slate-700/30 border-purple-400/20"
+                    : "bg-slate-700/20 border-slate-600/20"
+                  }`}
               >
                 <div className="flex items-start gap-2">
                   <div
-                    className={`text-xs font-medium ${
-                      isAgent ? "text-purple-300" : "text-blue-300"
-                    }`}
+                    className={`text-xs font-medium ${isAgent ? "text-purple-300" : "text-blue-300"
+                      }`}
                   >
                     {message.role === "agent" ? "Agent" : "You"}:
                   </div>
                   <div
-                    className={`text-xs flex-1 ${
-                      isHighlighted
-                        ? "text-white"
-                        : isAgent
-                          ? "text-purple-200/90"
-                          : "text-gray-300/90"
-                    }`}
+                    className={`text-xs flex-1 ${isHighlighted
+                      ? "text-white"
+                      : isAgent
+                        ? "text-purple-200/90"
+                        : "text-gray-300/90"
+                      }`}
                   >
                     {message.content}
                   </div>

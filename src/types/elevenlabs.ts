@@ -19,6 +19,8 @@ export type TranscriptRole = 'user' | 'agent';
 export interface ConversationTranscriptItem {
   role: TranscriptRole;
   content: string;
+  /** Time in seconds from the start of the call when this message was spoken */
+  time_in_call_secs?: number;
   // Additional fields may exist, but we'll focus on what we need
   [key: string]: unknown;
 }
