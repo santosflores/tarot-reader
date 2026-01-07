@@ -3,81 +3,48 @@
  * Root application component with 3D character and voice agent integration
  */
 
-import { useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { UI } from './components/UI/UI';
+import { Background } from './components/UI/Background';
 import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ElevenLabsOverlay } from './components/ElevenLabs';
 import { RevealedCardOverlay } from './components/Tarot/RevealedCardOverlay';
 import { OnboardingTooltip } from './components/UI/OnboardingTooltip';
-import { useChatbot } from './hooks/useChatbot';
+import { AudioController } from './components/Audio/AudioController';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
-import { safeAsync } from './utils/errors';
 
 function App() {
-  const setupAudioPlayerRef = useRef<(() => void) | null>(null);
-
-  // Initialize audio player on mount (only once)
-  useEffect(() => {
-    if (!setupAudioPlayerRef.current) {
-      setupAudioPlayerRef.current = useChatbot.getState().setupAudioPlayer;
-      safeAsync(
-        async () => {
-          setupAudioPlayerRef.current?.();
-        },
-        'Failed to initialize audio player'
-      );
-    }
-  }, []);
-
   return (
     <ErrorBoundary>
       <div className="fixed inset-0 overflow-hidden">
-        {/* Background Image with CSS Effects */}
-        <div className="fixed inset-0 -z-10">
-        {/* Base image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/images/bg.jpg)' }}
-        />
-        {/* CSS Effects overlay */}
-        <div className="tarot-background absolute inset-0" style={{ background: 'transparent' }}>
-          {/* Slow rotating aurora */}
-          <div className="aurora" />          
-          {/* Rising particles */}
-          <div className="mystical-particles">
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            <span /><span /><span /><span /><span />
-            
-          </div>
-          {/* Vignette */}
-          <div className="vignette" />
-        </div>
-      </div>
-      
-      <UI />
-      {/* Onboarding tooltip for first-time users */}
-      <OnboardingTooltip />
-      {/* Voice Agent Overlay - positioned above the 3D scene */}
-      <ElevenLabsOverlay />
-      {/* Revealed Card Overlay - displays tarot card from revealCard tool */}
-      <RevealedCardOverlay />
-      <Canvas
-        shadows
-        style={{ background: 'transparent' }}
-        camera={{
-          position: DEFAULT_CAMERA_POSITION,
-          fov: DEFAULT_CAMERA_FOV,
-        }}
-      >
-        <Experience />
-      </Canvas>
+        {/* Background Effects */}
+        <Background />
+
+        {/* Audio Controller (Invisible) */}
+        <AudioController />
+
+        <UI />
+
+        {/* Onboarding tooltip for first-time users */}
+        <OnboardingTooltip />
+
+        {/* Voice Agent Overlay - positioned above the 3D scene */}
+        <ElevenLabsOverlay />
+
+        {/* Revealed Card Overlay - displays tarot card from revealCard tool */}
+        <RevealedCardOverlay />
+
+        <Canvas
+          shadows
+          style={{ background: 'transparent' }}
+          camera={{
+            position: DEFAULT_CAMERA_POSITION,
+            fov: DEFAULT_CAMERA_FOV,
+          }}
+        >
+          <Experience />
+        </Canvas>
       </div>
     </ErrorBoundary>
   );

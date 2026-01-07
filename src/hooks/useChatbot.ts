@@ -18,16 +18,20 @@ interface ChatbotStore extends ChatbotState {
   setActiveReplayId: (id: string | null) => void;
 }
 
-// Store event handlers for cleanup
-let audioEventHandlers: {
+// Encapsulated event handlers for cleanup
+interface AudioEventHandlers {
   onplaying: (() => void) | null;
   onended: (() => void) | null;
   onpause: (() => void) | null;
-} = {
+}
+
+const createAudioEventHandlers = (): AudioEventHandlers => ({
   onplaying: null,
   onended: null,
   onpause: null,
-};
+});
+
+let audioEventHandlers = createAudioEventHandlers();
 
 export const useChatbot = create<ChatbotStore>((set, get) => ({
   audioPlayer: null,
@@ -113,7 +117,10 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     }
     audioPlayer.src = url;
     audioPlayer.play().catch((error) => {
-      logError(error, { context: 'useChatbot.playAudio', url });
+      logError(error instanceof Error ? error : new Error(String(error)), { 
+        context: 'useChatbot.playAudio', 
+        url 
+      });
     });
   },
 
@@ -196,11 +203,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
       audioPlayer.src = '';
 
       // Reset handlers
-      audioEventHandlers = {
-        onplaying: null,
-        onended: null,
-        onpause: null,
-      };
+      audioEventHandlers = createAudioEventHandlers();
 
       // Reset state
       set({
@@ -215,7 +218,4 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     }
   },
 }));
-
-// Note: setupAudioPlayer() should be called in a component's useEffect or App initialization
-// Removed module-level side effect for better control
 
