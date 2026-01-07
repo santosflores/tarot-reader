@@ -4,10 +4,17 @@ trigger: always_on
 
 # Development Rules
 
-Create a new commit each time a single logical change is finished.
+When all sub-tasks under a task are complete:
+
+1. Run `npm run build` and `npm run lint`
+2. Stage changes: `git add .`
+3. Clean up temporary files
+4. Commit with conventional format:
 
 ## Commit Standards (Conventional Commits)
 
+- **Atomic Changes**: Keep commits focused on a single logical change. Do not bundle unrelated fixes.
+- **Message Quality**: Provide a concise summary in the first line. Use the body for explanation if needed.
 - **Format**: `<type>(<scope>): <subject>`
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
   - Example: `feat(auth): add google login support`
@@ -15,11 +22,6 @@ Create a new commit each time a single logical change is finished.
 - **Subject**: Imperative mood, no period at end (e.g., "add google login" not "added google login").
 
 ## Workflow
-
-1.  **Atomic Changes**: Keep commits focused on a single logical change. Do not bundle unrelated fixes.
-2.  **Verify First**: Run builds/tests (`npm run build` or equivalent) _before_ committing.
-3.  **Linting**: Use `npm run lint` to ensure code is linted and formatted before committing.
-4.  **Message Quality**: Provide a concise summary in the first line. Use the body for explanation if needed.
 
 ## General
 
