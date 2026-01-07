@@ -1,6 +1,6 @@
 /**
  * Auth Layout Component
- * Shared layout for authentication pages with a mystical tarot theme
+ * Shared layout for authentication pages with a minimalist indie-hacker theme
  */
 
 import { ReactNode } from 'react';
@@ -14,57 +14,36 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 overflow-x-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-slate-900 text-slate-200 font-mono flex items-center justify-center p-6 selection:bg-purple-500/30">
+      <div className="w-full max-w-md">
 
-      <div className="relative w-full max-w-md mx-auto">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block">
-            <div className="text-4xl mb-2">🔮</div>
-            <h1 className="text-3xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-200 to-amber-200">
+          <Link to="/" className="inline-flex flex-col items-center group">
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 ring-2 ring-slate-700 group-hover:ring-purple-500/50 transition-all duration-200">
+              <span className="text-3xl">🔮</span>
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-tight group-hover:text-purple-400 transition-colors">
               Tarot Reader
             </h1>
           </Link>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-2xl shadow-2xl shadow-purple-900/20 p-8 overflow-x-hidden">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-white mb-2">{title}</h2>
+        <div className="bg-slate-800/20 border border-slate-700/50 rounded-xl p-6 md:p-8 backdrop-blur-sm">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">{title}</h2>
             {subtitle && (
-              <p className="text-purple-200/70 text-sm">{subtitle}</p>
+              <p className="text-slate-400 text-sm">{subtitle}</p>
             )}
-          </div>
-
-          {/* Demo Credentials Banner */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-400/30 rounded-lg backdrop-blur-sm">
-            <p className="text-xs font-semibold text-amber-200/90 mb-2 uppercase tracking-wide">
-              🧪 Demo Credentials
-            </p>
-            <div className="text-xs text-purple-200/80 space-y-1">
-              <p>
-                <span className="text-purple-300/70">User:</span>{' '}
-                <span className="font-mono text-amber-200">test@test.com</span>
-              </p>
-              <p>
-                <span className="text-purple-300/70">Pass:</span>{' '}
-                <span className="font-mono text-amber-200">test123</span>
-              </p>
-            </div>
           </div>
 
           {children}
         </div>
 
         {/* Footer */}
-        <p className="text-center text-purple-200/40 text-xs mt-8">
-          The cards reveal what the heart already knows
+        <p className="text-center text-slate-500 text-xs mt-8">
+          © {new Date().getFullYear()} Tarot Reader. All rights reserved.
         </p>
       </div>
     </div>
