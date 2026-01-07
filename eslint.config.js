@@ -27,13 +27,16 @@ export default tseslint.config(
       '@typescript-eslint/no-restricted-imports': [
         'warn',
         {
-          patterns: [
+          paths: [
             {
-              group: ['../../../*', '../../../../*'],
+              name: '../../../*',
+              message: 'Use @/ alias instead of deeply nested relative imports',
+            },
+            {
+              name: '../../../../*',
               message: 'Use @/ alias instead of deeply nested relative imports',
             },
           ],
-          allowTypeImports: true,
         },
       ],
     },
