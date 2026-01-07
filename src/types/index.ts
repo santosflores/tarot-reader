@@ -12,6 +12,11 @@ import type {
   Vector3Tuple,
 } from "three";
 
+export * from './auth';
+export * from './store';
+export * from './elevenlabs';
+
+
 /**
  * Animation name type - all available animation names
  */

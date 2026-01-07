@@ -52,4 +52,26 @@ export interface ConversationDetails {
  * Conversation audio response
  * The audio endpoint returns a blob/stream
  */
+// ... existing code ...
 export type ConversationAudioResponse = Blob;
+
+/**
+ * Conversation item from the conversations list API
+ */
+export interface ConversationListItem {
+  agent_id: string;
+  conversation_id: string;
+  start_time_unix_secs: number;
+  call_duration_secs: number;
+  message_count: number;
+  status: 'initiated' | 'in-progress' | 'processing' | 'done' | 'failed';
+  call_successful: 'success' | 'failure' | 'unknown';
+  transcript_summary?: string | null;
+  call_summary_title?: string | null;
+  direction?: 'inbound' | 'outbound' | null;
+  rating?: number | null;
+  agent_name?: string | null;
+  has_audio?: boolean;
+  has_response_audio?: boolean;
+}
+

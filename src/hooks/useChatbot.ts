@@ -5,18 +5,11 @@
 
 import { create } from 'zustand';
 import { Lipsync } from 'wawa-lipsync';
-import type { ChatbotState, LipsyncManager } from '../types';
+import type { LipsyncManager } from '../types';
+
+import type { ChatbotStore } from '../types/store';
 import { logError } from '../utils/errors';
 import { createWebRTCLipsyncAnalyzer } from '../utils/webrtcLipsync';
-
-interface ChatbotStore extends ChatbotState {
-  lipsyncManagerInitialized: boolean;
-  webrtcLipsyncInitialized: boolean;
-  isAgentSpeaking: boolean;
-  activeReplayId: string | null;
-  setAgentSpeaking: (speaking: boolean) => void;
-  setActiveReplayId: (id: string | null) => void;
-}
 
 // Encapsulated event handlers for cleanup
 interface AudioEventHandlers {
@@ -103,12 +96,12 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
 
   playAudio: (url: string) => {
     const { audioPlayer, webrtcAudioPlayer } = get();
-    
+
     // Disconnect WebRTC audio if active
     if (webrtcAudioPlayer) {
       get().disconnectWebRTCAudio();
     }
-    
+
     if (!audioPlayer) {
       logError(new Error('Audio player not initialized. Call setupAudioPlayer() first.'), {
         context: 'useChatbot.playAudio',
@@ -117,16 +110,16 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
     }
     audioPlayer.src = url;
     audioPlayer.play().catch((error) => {
-      logError(error instanceof Error ? error : new Error(String(error)), { 
-        context: 'useChatbot.playAudio', 
-        url 
+      logError(error instanceof Error ? error : new Error(String(error)), {
+        context: 'useChatbot.playAudio',
+        url
       });
     });
   },
 
   connectWebRTCAudio: (mediaStream: MediaStream) => {
     const state = get();
-    
+
     if (import.meta.env.DEV) {
       console.log('[useChatbot] Connecting WebRTC audio', {
         tracks: mediaStream.getAudioTracks().length,
@@ -148,7 +141,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
       console.log('[useChatbot] WebRTC lipsync analyzer connected');
     }
 
-    set({ 
+    set({
       webrtcAudioPlayer: null, // We don't need an audio element for WebRTC
       webrtcLipsyncManager,
       webrtcLipsyncInitialized: true,
@@ -159,10 +152,10 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
 
   disconnectWebRTCAudio: () => {
     const { webrtcLipsyncManager } = get();
-    
+
     if (webrtcLipsyncManager) {
       webrtcLipsyncManager.disconnect();
-      
+
       if (import.meta.env.DEV) {
         console.log('[useChatbot] WebRTC lipsync analyzer disconnected');
       }
@@ -179,12 +172,12 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
 
   cleanup: () => {
     const { audioPlayer, webrtcAudioPlayer } = get();
-    
+
     // Clean up WebRTC audio
     if (webrtcAudioPlayer) {
       get().disconnectWebRTCAudio();
     }
-    
+
     // Clean up file audio
     if (audioPlayer) {
       // Remove event handlers

@@ -3,12 +3,7 @@
  */
 
 import { create } from 'zustand';
-
-interface OverlayStore {
-  expandRequested: boolean;
-  requestExpand: () => void;
-  clearRequest: () => void;
-}
+import type { OverlayStore } from '../../types/store';
 
 export const useOverlayStore = create<OverlayStore>((set) => ({
   expandRequested: false,
