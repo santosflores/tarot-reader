@@ -34,7 +34,8 @@ export function useConversationReplay(conversationId: string | null) {
     audioPlayer,
     isAudioPlaying,
     setAgentSpeaking,
-    activeReplayId
+    activeReplayId,
+    setActiveReplayId
   } = useChatbot();
 
 
@@ -179,6 +180,7 @@ export function useConversationReplay(conversationId: string | null) {
         setIsPlaying(false);
         setCurrentTime(0);
         setAgentSpeaking(false);
+        setActiveReplayId(null); // Switch back to live mode on end
       }
     };
 
@@ -201,7 +203,7 @@ export function useConversationReplay(conversationId: string | null) {
       audioPlayer.removeEventListener("ended", handleEnded);
       audioPlayer.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [audioPlayer, audioUrl, agentSpeakingRanges, setAgentSpeaking, activeReplayId, conversationId]);
+  }, [audioPlayer, audioUrl, agentSpeakingRanges, setAgentSpeaking, activeReplayId, conversationId, setActiveReplayId]);
 
   // Sync with store's isAudioPlaying state
   useEffect(() => {
