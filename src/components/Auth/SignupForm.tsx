@@ -124,8 +124,8 @@ export function SignupForm() {
         )}
 
         <div>
-          <label htmlFor="displayName" className="block text-sm font-medium text-purple-200 mb-2">
-            Display Name <span className="text-purple-400/60">(optional)</span>
+          <label htmlFor="displayName" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
+            Display Name <span className="text-slate-600 font-normal normal-case">(optional)</span>
           </label>
           <input
             id="displayName"
@@ -133,13 +133,13 @@ export function SignupForm() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             autoComplete="name"
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
             placeholder="How shall we call you?"
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="email" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
             Email Address
           </label>
           <input
@@ -149,13 +149,13 @@ export function SignupForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="password" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
             Password
           </label>
           <input
@@ -165,16 +165,16 @@ export function SignupForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="new-password"
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
             placeholder="Create a strong password"
           />
-          <p className="mt-1 text-xs text-purple-300/50">
+          <p className="mt-2 text-xs text-slate-500">
             At least 8 characters with uppercase, lowercase, and a number
           </p>
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
             Confirm Password
           </label>
           <input
@@ -184,7 +184,7 @@ export function SignupForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             autoComplete="new-password"
-            className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
             placeholder="Confirm your password"
           />
         </div>
@@ -192,7 +192,7 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/30"
+          className="w-full py-3 px-4 bg-slate-200 hover:bg-white text-slate-900 font-bold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/10 uppercase tracking-wide text-sm"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -207,13 +207,13 @@ export function SignupForm() {
           )}
         </button>
 
-        <div className="text-center pt-4 border-t border-purple-500/20">
-          <span className="text-purple-200/60 text-sm">
+        <div className="text-center pt-6 border-t border-slate-800">
+          <span className="text-slate-500 text-sm">
             Already have an account?{' '}
           </span>
           <Link
             to="/login"
-            className="text-sm font-medium text-purple-300 hover:text-purple-200 transition-colors"
+            className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors ml-1"
           >
             Sign in
           </Link>

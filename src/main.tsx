@@ -11,6 +11,7 @@ import { LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm } from './
 import { ProfilePage } from './components/Profile';
 import { ElevenLabsAgent } from './components/ElevenLabs';
 import { TarotPage } from './components/Tarot';
+import { LandingPage } from './components/LandingPage';
 import App from './App';
 import './index.css';
 
@@ -55,10 +56,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
           <Route path="/reset-password" element={<ResetPasswordForm />} />
-          
+
           {/* Protected Routes */}
+          <Route path="/" element={<LandingPage />} />
+
           <Route
-            path="/"
+            path="/app"
             element={
               <ProtectedRoute>
                 <App />
@@ -89,7 +92,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               </ProtectedRoute>
             }
           />
-          
+
           {/* Catch-all: redirect unknown routes to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
