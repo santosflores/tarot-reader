@@ -21,7 +21,7 @@ import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useConversationReplay } from "@/hooks/useConversationReplay";
-import { ReplayTimeline } from "../UI/components/ReplayTimeline";
+
 
 // ============================================================================
 // Types
@@ -104,7 +104,7 @@ export function ElevenLabsOverlay() {
     duration: replayDuration,
     handlePlayPause: toggleReplay,
     handleStop: stopReplay,
-    seek: seekReplay,
+
     audioUrl: replayAudioUrl
   } = useConversationReplay(activeReplayId);
 
@@ -350,15 +350,6 @@ export function ElevenLabsOverlay() {
 
   return (
     <>
-      {/* Timeline Overlay for Replay - Positioned relative to viewport */}
-      {activeReplayId && (
-        <ReplayTimeline
-          currentTime={replayTime}
-          duration={replayDuration}
-          onSeek={seekReplay}
-        />
-      )}
-
       <div
         className="fixed left-1/2 -translate-x-1/2 z-[200]"
         style={{
@@ -416,6 +407,42 @@ export function ElevenLabsOverlay() {
                     : "none",
             }}
           />
+
+          {/* Replay Progress Ring */}
+          {activeReplayId && (
+            <div className="absolute -inset-2 z-0 pointer-events-none">
+              <svg
+                className="w-full h-full -rotate-90"
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Background Track */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth="4"
+                />
+                {/* Progress Circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  stroke="#0aadffff" // Pink-500
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 46}
+                  strokeDashoffset={
+                    2 * Math.PI * 46 * (1 - (replayTime / (replayDuration || 1)))
+                  }
+                  className="transition-all duration-200 ease-linear"
+                />
+              </svg>
+            </div>
+          )}
+
 
 
 
