@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 export function LandingPage() {
@@ -14,6 +13,25 @@ export function LandingPage() {
                     <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Tarot Reader</h1>
                     <p className="text-slate-400 text-lg">AI-Powered Mystical Guidance System</p>
                 </header>
+
+                {/* Sales Copy */}
+                <section className="mb-12 text-center animate-fade-in-delay">
+                    <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-indigo-200 mb-6 font-serif italic">
+                        "Stop wondering. Start knowing."
+                    </h2>
+                    <div className="prose prose-invert mx-auto text-slate-300 leading-relaxed max-w-lg">
+                        <p className="mb-4">
+                            You have questions that keep you up at night. Questions about love, career, and the path ahead.
+                            Traditional readings can feel distant, but what if you could step into a realm where
+                            <strong> ancient wisdom meets cutting-edge intelligence?</strong>
+                        </p>
+                        <p className="text-sm text-slate-400">
+                            This isn't just a tarot reading; it's an immersive 3D experience led by an AI guide so intuitive,
+                            it feels like magic. We've fused the timeless art of Tarot with advanced voice synthesis to give
+                            you readings that are shockingly personal and available instantly.
+                        </p>
+                    </div>
+                </section>
 
                 {/* Main Links Container */}
                 <main className="space-y-4 mb-16">
