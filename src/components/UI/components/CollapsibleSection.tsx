@@ -42,6 +42,7 @@ export function CollapsibleSection({
   return (
     <div className={`border-t border-b border-purple-400/30 pt-4 pb-4 pl-0 ${className}`}>
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 hover:from-purple-100 hover:via-white hover:to-indigo-100 transition-all"
       >

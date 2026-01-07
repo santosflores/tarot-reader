@@ -5,7 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
-import { useAuthContext } from '../../../hooks/useAuthContext';
+import { ConversationReplay } from './ConversationReplay';
+import { useAuthContext } from '@/hooks/useAuthContext';
+import { fetchConversations as fetchConversationsApi } from '@/utils/elevenlabsApi';
 
 interface Conversation {
   agent_id: string;
@@ -20,12 +22,8 @@ interface Conversation {
   direction?: 'inbound' | 'outbound' | null;
   rating?: number | null;
   agent_name?: string | null;
-}
-
-interface ConversationsResponse {
-  conversations: Conversation[];
-  next_cursor?: string | null;
-  has_more: boolean;
+  has_audio?: boolean;
+  has_response_audio?: boolean;
 }
 
 const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
@@ -34,6 +32,7 @@ export function ConversationsList() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replayingConversationId, setReplayingConversationId] = useState<string | null>(null);
   const { user } = useAuthContext();
 
   const fetchConversations = async () => {
@@ -51,42 +50,13 @@ export function ConversationsList() {
     setError(null);
 
     try {
-      // Get API key from user's session or environment
-      // For now, we'll need to get it from the user's profile or environment variable
-      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-      
-      if (!apiKey) {
-        setError('ElevenLabs API key is not configured. Set VITE_ELEVENLABS_API_KEY in your environment.');
-        setLoading(false);
-        return;
-      }
-
-      // Build query parameters - filter by user_id to show only conversations owned by this user
-      const params = new URLSearchParams({
-        agent_id: AGENT_ID,
-        user_id: user.id,
-        page_size: '10',
-        summary_mode: 'exclude',
+      const data = await fetchConversationsApi({
+        agentId: AGENT_ID,
+        userId: user.id,
+        pageSize: 10,
       });
 
-      const response = await fetch(
-        `https://api.elevenlabs.io/v1/convai/conversations?${params.toString()}`,
-        {
-          method: 'GET',
-          headers: {
-            'xi-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Failed to fetch conversations: ${response.statusText}`);
-      }
-
-      const data: ConversationsResponse = await response.json();
-      setConversations(data.conversations || []);
+      setConversations(data.conversations as Conversation[]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch conversations';
       setError(errorMessage);
@@ -170,6 +140,7 @@ export function ConversationsList() {
                 <div className="text-xs font-medium text-red-200 mb-1">Error loading conversations</div>
                 <div className="text-xs text-red-300/80 mb-2">{error}</div>
                 <button
+                  type="button"
                   onClick={fetchConversations}
                   className="text-xs font-medium text-red-300 hover:text-red-200 underline hover:no-underline transition-colors"
                 >
@@ -267,6 +238,28 @@ export function ConversationsList() {
                       {conv.transcript_summary}
                     </div>
                   )}
+
+                  {/* Replay button */}
+                  {(conv.status === 'done' || conv.has_audio || conv.has_response_audio) && (
+                    <div className="mt-2 pt-2 border-t border-purple-400/20">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReplayingConversationId(
+                            replayingConversationId === conv.conversation_id ? null : conv.conversation_id
+                          );
+                        }}
+                        className="w-full flex items-center justify-center gap-2 text-xs font-medium bg-purple-800/50 hover:bg-purple-700/60 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-purple-200 hover:text-white px-2 py-1.5 rounded transition-all duration-200 hover:scale-[1.02]"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {replayingConversationId === conv.conversation_id ? 'Hide Replay' : 'Replay'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -275,6 +268,7 @@ export function ConversationsList() {
 
         {!loading && !error && conversations.length > 0 && (
           <button
+            type="button"
             onClick={fetchConversations}
             className="w-full flex items-center justify-center gap-2 text-xs font-medium bg-slate-800/90 hover:bg-purple-800/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-purple-200 hover:text-white px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.02] shadow-lg"
           >
@@ -283,6 +277,14 @@ export function ConversationsList() {
             </svg>
             Refresh conversations
           </button>
+        )}
+
+        {/* Replay component */}
+        {replayingConversationId && (
+          <ConversationReplay
+            conversationId={replayingConversationId}
+            onClose={() => setReplayingConversationId(null)}
+          />
         )}
       </div>
     </CollapsibleSection>

@@ -35,6 +35,7 @@ export function ControlsTabs() {
       <div className="flex gap-1 mb-3 border-b border-purple-400/30">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all border-b-2 ${
