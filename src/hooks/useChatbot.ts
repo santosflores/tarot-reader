@@ -13,7 +13,9 @@ interface ChatbotStore extends ChatbotState {
   lipsyncManagerInitialized: boolean;
   webrtcLipsyncInitialized: boolean;
   isAgentSpeaking: boolean;
+  activeReplayId: string | null;
   setAgentSpeaking: (speaking: boolean) => void;
+  setActiveReplayId: (id: string | null) => void;
 }
 
 // Store event handlers for cleanup
@@ -37,9 +39,14 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
   lipsyncManagerInitialized: false,
   webrtcLipsyncInitialized: false,
   isAgentSpeaking: false,
+  activeReplayId: null,
 
   setAgentSpeaking: (speaking: boolean) => {
     set({ isAgentSpeaking: speaking });
+  },
+
+  setActiveReplayId: (id: string | null) => {
+    set({ activeReplayId: id });
   },
 
   setupAudioPlayer: () => {
@@ -203,6 +210,7 @@ export const useChatbot = create<ChatbotStore>((set, get) => ({
         audioSourceType: null,
         lipsyncManagerInitialized: false,
         isAgentSpeaking: false,
+        activeReplayId: null,
       });
     }
   },

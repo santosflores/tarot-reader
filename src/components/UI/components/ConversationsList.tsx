@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
-import { ConversationReplay } from './ConversationReplay';
 import { useAuthContext } from '@/hooks/useAuthContext';
 import { fetchConversations as fetchConversationsApi } from '@/utils/elevenlabsApi';
+import { useChatbot } from '@/hooks/useChatbot';
 
 interface Conversation {
   agent_id: string;
@@ -32,8 +32,10 @@ export function ConversationsList() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [replayingConversationId, setReplayingConversationId] = useState<string | null>(null);
+
   const { user } = useAuthContext();
+  const activeReplayId = useChatbot((state) => state.activeReplayId);
+  const setActiveReplayId = useChatbot((state) => state.setActiveReplayId);
 
   const fetchConversations = async () => {
     if (!AGENT_ID) {
@@ -90,35 +92,7 @@ export function ConversationsList() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getStatusColor = (status: Conversation['status']): string => {
-    switch (status) {
-      case 'done':
-        return 'text-purple-200 bg-slate-800/90 border-purple-400/40';
-      case 'in-progress':
-        return 'text-blue-200 bg-slate-800/90 border-blue-400/40';
-      case 'processing':
-        return 'text-amber-200 bg-slate-800/90 border-amber-400/40';
-      case 'failed':
-        return 'text-red-200 bg-slate-800/90 border-red-400/40';
-      default:
-        return 'text-gray-300 bg-slate-800/90 border-gray-400/40';
-    }
-  };
 
-  const getStatusIcon = (status: Conversation['status']): string => {
-    switch (status) {
-      case 'done':
-        return '✓';
-      case 'in-progress':
-        return '●';
-      case 'processing':
-        return '⟳';
-      case 'failed':
-        return '✗';
-      default:
-        return '○';
-    }
-  };
 
   return (
     <CollapsibleSection title="Conversations" icon="💬" defaultExpanded={false} className="mt-4">
@@ -166,17 +140,10 @@ export function ConversationsList() {
                 key={conv.conversation_id}
                 className="group relative bg-slate-800/90 backdrop-blur-sm border border-purple-400/30 rounded-lg p-3 hover:border-purple-300/60 hover:bg-slate-800 transition-all duration-200 cursor-pointer"
               >
-                {/* Status indicator bar */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-                  conv.status === 'done' ? 'bg-purple-400' :
-                  conv.status === 'in-progress' ? 'bg-blue-400' :
-                  conv.status === 'processing' ? 'bg-amber-400' :
-                  conv.status === 'failed' ? 'bg-red-400' :
-                  'bg-gray-400'
-                }`}></div>
+                {/* Status indicator bar - REMOVED */}
 
                 <div className="pl-1 relative z-10">
-                  {/* Header with title and status */}
+                  {/* Header with title */}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-purple-200 truncate">
@@ -190,15 +157,6 @@ export function ConversationsList() {
                           {formatDate(conv.start_time_unix_secs)}
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-md border backdrop-blur-sm ${getStatusColor(conv.status)} flex items-center gap-1 shadow-lg`}
-                        title={conv.status}
-                      >
-                        <span className="text-[10px]">{getStatusIcon(conv.status)}</span>
-                        <span className="capitalize">{conv.status.replace('-', ' ')}</span>
-                      </span>
                     </div>
                   </div>
 
@@ -222,14 +180,6 @@ export function ConversationsList() {
                         <span className="font-medium">{conv.rating}/5</span>
                       </div>
                     )}
-                    {conv.call_successful === 'success' && (
-                      <div className="flex items-center gap-1 text-purple-300">
-                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-[10px] font-medium">Success</span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Summary preview */}
@@ -246,8 +196,8 @@ export function ConversationsList() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setReplayingConversationId(
-                            replayingConversationId === conv.conversation_id ? null : conv.conversation_id
+                          setActiveReplayId(
+                            activeReplayId === conv.conversation_id ? null : conv.conversation_id
                           );
                         }}
                         className="w-full flex items-center justify-center gap-2 text-xs font-medium bg-purple-800/50 hover:bg-purple-700/60 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-purple-200 hover:text-white px-2 py-1.5 rounded transition-all duration-200 hover:scale-[1.02]"
@@ -256,7 +206,7 @@ export function ConversationsList() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {replayingConversationId === conv.conversation_id ? 'Hide Replay' : 'Replay'}
+                        {activeReplayId === conv.conversation_id ? 'Stop Replay' : 'Replay'}
                       </button>
                     </div>
                   )}
@@ -279,14 +229,8 @@ export function ConversationsList() {
           </button>
         )}
 
-        {/* Replay component */}
-        {replayingConversationId && (
-          <ConversationReplay
-            conversationId={replayingConversationId}
-            onClose={() => setReplayingConversationId(null)}
-          />
-        )}
+
       </div>
-    </CollapsibleSection>
+    </CollapsibleSection >
   );
 }

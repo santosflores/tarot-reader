@@ -4,7 +4,7 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import type { Callbacks, Mode } from "@elevenlabs/client";
 import type { TarotDeck, TarotCard } from "@/types/tarot";
@@ -19,6 +19,9 @@ import { useRevealedCard } from "@/hooks/useRevealedCard";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { useChatbot } from "@/hooks/useChatbot";
+import { useConversationReplay } from "@/hooks/useConversationReplay";
+import { ReplayTimeline } from "../UI/components/ReplayTimeline";
 
 // ============================================================================
 // Types
@@ -89,6 +92,30 @@ export function ElevenLabsOverlay() {
 
   // Get the addRevealedCard action from the store
   const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
+
+  // Get active replay state
+  const activeReplayId = useChatbot((state) => state.activeReplayId);
+  const setActiveReplayId = useChatbot((state) => state.setActiveReplayId);
+
+  // Initialize replay hook (will be no-op if no activeReplayId)
+  const {
+    isPlaying: isReplayPlaying,
+    currentTime: replayTime,
+    duration: replayDuration,
+    handlePlayPause: toggleReplay,
+    handleStop: stopReplay,
+    seek: seekReplay,
+    audioUrl: replayAudioUrl
+  } = useConversationReplay(activeReplayId);
+
+  // Hook for stopping replay when session starts
+  useEffect(() => {
+    if (isSessionConnected && activeReplayId) {
+      // Stop replay if user starts a new session
+      stopReplay();
+      setActiveReplayId(null);
+    }
+  }, [isSessionConnected, activeReplayId, stopReplay, setActiveReplayId]);
 
   // Callbacks for the ElevenLabs SDK
   const handleConnect: NonNullable<Callbacks["onConnect"]> = useCallback(() => {
@@ -304,6 +331,11 @@ export function ElevenLabsOverlay() {
   };
 
   const handleButtonClick = () => {
+    if (activeReplayId) {
+      toggleReplay();
+      return;
+    }
+
     if (isConnected) {
       handleEndSession();
     } else {
@@ -311,28 +343,42 @@ export function ElevenLabsOverlay() {
     }
   };
 
+  // Override button title for replay mode
+  const buttonTitle = activeReplayId
+    ? (isReplayPlaying ? "Pause Replay" : "Play Replay")
+    : getButtonTitle();
+
   return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[200]"
-      style={{
-        bottom:
-          "calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))",
-      }}
-    >
-      {/* Floating Action Button with Glowing Ring */}
-      <div className="relative mb-[10px]">
-        {/* Help Button - positioned at bottom right corner of mic button */}
-        <button
-          onClick={requestShowHelp}
-          className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg shadow-yellow-900/40 flex items-center justify-center transition-all hover:scale-110 z-10 border-2 border-white"
-          title="Show help"
-        >
-          ?
-        </button>
-        {/* Outer Glowing Ring - More visible */}
-        <div
-          className={`absolute -inset-4 rounded-full transition-all duration-300 ${
-            error
+    <>
+      {/* Timeline Overlay for Replay - Positioned relative to viewport */}
+      {activeReplayId && (
+        <ReplayTimeline
+          currentTime={replayTime}
+          duration={replayDuration}
+          onSeek={seekReplay}
+        />
+      )}
+
+      <div
+        className="fixed left-1/2 -translate-x-1/2 z-[200]"
+        style={{
+          bottom:
+            "calc(var(--mic-bottom-mobile, 2rem) + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
+        {/* Floating Action Button with Glowing Ring */}
+        <div className="relative mb-[10px]">
+          {/* Help Button - positioned at bottom right corner of mic button */}
+          <button
+            onClick={requestShowHelp}
+            className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg shadow-yellow-900/40 flex items-center justify-center transition-all hover:scale-110 z-10 border-2 border-white"
+            title="Show help"
+          >
+            ?
+          </button>
+          {/* Outer Glowing Ring - More visible */}
+          <div
+            className={`absolute -inset-4 rounded-full transition-all duration-300 ${error
               ? "bg-red-500/30 animate-pulse"
               : isConnecting
                 ? "bg-yellow-500/30 animate-pulse"
@@ -341,91 +387,106 @@ export function ElevenLabsOverlay() {
                     ? "bg-purple-500/30 animate-pulse"
                     : "bg-green-500/30"
                   : "bg-transparent"
-          }`}
-          style={{
-            boxShadow: error
-              ? "0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)"
-              : isConnecting
-                ? "0 0 30px rgba(234, 179, 8, 0.8), 0 0 60px rgba(234, 179, 8, 0.4)"
-                : isConnected
-                  ? isSpeaking
-                    ? "0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(168, 85, 247, 0.4)"
-                    : "0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4)"
-                  : "none",
-          }}
-        />
+              }`}
+            style={{
+              boxShadow: error
+                ? "0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)"
+                : isConnecting
+                  ? "0 0 30px rgba(234, 179, 8, 0.8), 0 0 60px rgba(234, 179, 8, 0.4)"
+                  : isConnected
+                    ? isSpeaking
+                      ? "0 0 30px rgba(168, 85, 247, 0.8), 0 0 60px rgba(168, 85, 247, 0.4)"
+                      : "0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4)"
+                    : "none",
+            }}
+          />
 
-        {/* Inner Glowing Ring */}
-        <div
-          className={`absolute inset-0 rounded-full transition-all duration-300 ${getRingClasses()}`}
-          style={{
-            boxShadow: error
-              ? "0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5)"
-              : isConnecting
-                ? "0 0 20px rgba(234, 179, 8, 0.9), 0 0 40px rgba(234, 179, 8, 0.5)"
-                : isConnected
-                  ? isSpeaking
-                    ? "0 0 20px rgba(168, 85, 247, 0.9), 0 0 40px rgba(168, 85, 247, 0.5)"
-                    : "0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5)"
-                  : "none",
-          }}
-        />
+          {/* Inner Glowing Ring */}
+          <div
+            className={`absolute inset-0 rounded-full transition-all duration-300 ${getRingClasses()}`}
+            style={{
+              boxShadow: error
+                ? "0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5)"
+                : isConnecting
+                  ? "0 0 20px rgba(234, 179, 8, 0.9), 0 0 40px rgba(234, 179, 8, 0.5)"
+                  : isConnected
+                    ? isSpeaking
+                      ? "0 0 20px rgba(168, 85, 247, 0.9), 0 0 40px rgba(168, 85, 247, 0.5)"
+                      : "0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5)"
+                    : "none",
+            }}
+          />
 
-        {/* Button */}
-        <button
-          onClick={handleButtonClick}
-          disabled={isConnecting && !AGENT_ID}
-          className={`relative w-20 h-20 lg:w-20 lg:h-20 ${
-            isConnected
-              ? "bg-red-600 hover:bg-red-700"
-              : "bg-purple-600 hover:bg-purple-700"
-          } text-white rounded-full border-2 border-white shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-            isConnecting ? "animate-pulse" : ""
-          }`}
-          style={{
-            boxShadow: isConnected
-              ? isSpeaking
-                ? "0 0 15px rgba(168, 85, 247, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
-                : "0 0 15px rgba(34, 197, 94, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
-              : undefined,
-          }}
-          title={getButtonTitle()}
-        >
-          {isConnecting ? (
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : isConnected ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-9 h-9 lg:w-8 lg:h-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 8l-8 8m0-8l8 8"
-              />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-9 h-9 lg:w-8 lg:h-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-              />
-            </svg>
-          )}
-        </button>
+
+
+          {/* Button */}
+          <button
+            onClick={handleButtonClick}
+            disabled={(isConnecting && !AGENT_ID) || (!!activeReplayId && !replayAudioUrl)}
+            className={`relative w-20 h-20 lg:w-20 lg:h-20 ${activeReplayId
+              ? "bg-purple-600 hover:bg-purple-700"
+              : isConnected
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-purple-600 hover:bg-purple-700"
+              } text-white rounded-full border-2 border-white shadow-lg shadow-purple-900/40 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${isConnecting ? "animate-pulse" : ""
+              }`}
+            style={{
+              boxShadow: isConnected
+                ? isSpeaking
+                  ? "0 0 15px rgba(168, 85, 247, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
+                  : "0 0 15px rgba(34, 197, 94, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3)"
+                : undefined,
+            }}
+            title={buttonTitle}
+          >
+            {isConnecting ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : activeReplayId ? (
+              isReplayPlaying ? (
+                // Pause Icon
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+              ) : (
+                // Play Icon
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 ml-1" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )
+            ) : isConnected ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-9 h-9 lg:w-8 lg:h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 8l-8 8m0-8l8 8"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-9 h-9 lg:w-8 lg:h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
