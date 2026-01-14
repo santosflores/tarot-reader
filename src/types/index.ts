@@ -22,9 +22,6 @@ export * from './elevenlabs';
  */
 export type AnimationName =
   | "Idle"
-  | "Sit_Talking"
-  | "Sit_Talking2"
-  | "Sit_Talking3"
   | "Talking"
   | "Talking2"
   | "Talking3"

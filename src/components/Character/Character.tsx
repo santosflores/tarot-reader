@@ -24,9 +24,6 @@ export const Character = ({ ...props }: CharacterProps) => {
   // Load all animations (hooks must be called at top level)
   // Using individual calls as required by React's rules of hooks
   const idleAnim = useFBX(ANIMATION_CONFIG.Idle);
-  const sitTalkingAnim = useFBX(ANIMATION_CONFIG.Sit_Talking);
-  const sitTalking2Anim = useFBX(ANIMATION_CONFIG.Sit_Talking2);
-  const sitTalking3Anim = useFBX(ANIMATION_CONFIG.Sit_Talking3);
   const talkingAnim = useFBX(ANIMATION_CONFIG.Talking);
   const talking2Anim = useFBX(ANIMATION_CONFIG.Talking2);
   const talking3Anim = useFBX(ANIMATION_CONFIG.Talking3);
@@ -37,9 +34,6 @@ export const Character = ({ ...props }: CharacterProps) => {
   const animations: AnimationMap = useMemo(() => {
     const loadedAnimations = {
       Idle: idleAnim,
-      Sit_Talking: sitTalkingAnim,
-      Sit_Talking2: sitTalking2Anim,
-      Sit_Talking3: sitTalking3Anim,
       Talking: talkingAnim,
       Talking2: talking2Anim,
       Talking3: talking3Anim,
@@ -57,9 +51,6 @@ export const Character = ({ ...props }: CharacterProps) => {
     return animationMap as AnimationMap;
   }, [
     idleAnim,
-    sitTalkingAnim,
-    sitTalking2Anim,
-    sitTalking3Anim,
     talkingAnim,
     talking2Anim,
     talking3Anim,
@@ -81,9 +72,6 @@ export const Character = ({ ...props }: CharacterProps) => {
     // Check if model and all animations are loaded
     const allAnimationsLoaded = [
       idleAnim,
-      sitTalkingAnim,
-      sitTalking2Anim,
-      sitTalking3Anim,
       talkingAnim,
       talking2Anim,
       talking3Anim,
@@ -103,9 +91,6 @@ export const Character = ({ ...props }: CharacterProps) => {
   }, [
     scene,
     idleAnim,
-    sitTalkingAnim,
-    sitTalking2Anim,
-    sitTalking3Anim,
     talkingAnim,
     talking2Anim,
     talking3Anim,
