@@ -5,10 +5,10 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useRevealedCard } from '../../hooks/useRevealedCard';
-import type { TarotCard } from '../../types/tarot';
-import { isMajorArcana } from '../../types/tarot';
-import { getCardImagePath } from '../../utils/tarot';
+import { useRevealedCard } from '../../hooks/useRevealedCard.ts';
+import type { TarotCard } from '../../types/tarot.ts';
+import { isMajorArcana } from '../../types/tarot.ts';
+import { getCardImagePath } from '../../utils/tarot.ts';
 
 /**
  * Card thumbnail in the launcher arc
@@ -51,6 +51,7 @@ function LauncherCard({ card, index, totalCards, isActive, onClick, onRemove }: 
         >
             {/* Remove button - shown on hover */}
             <button
+                type="button"
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemove();
