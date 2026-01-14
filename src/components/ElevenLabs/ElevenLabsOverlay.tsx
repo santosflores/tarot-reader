@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react";
-import type { Mode, Status } from "@elevenlabs/client";
+import type { Mode } from "@elevenlabs/client";
 import { useTarotReaderAgent } from "@/hooks/useTarotReaderAgent";
 import { useElevenLabsAudio } from "@/hooks/useElevenLabsAudio";
 import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
@@ -95,39 +95,7 @@ export function ElevenLabsOverlay() {
 
 
   // Callbacks for the ElevenLabs SDK via our custom hook
-  const callbacks = {
-    onConnect: useCallback(() => {
-    }, []),
-    onDisconnect: useCallback(() => {
-    }, []),
-    onMessage: useCallback(
-      (payload: { source: 'user' | 'ai'; message: string }) => {
-      },
-      []
-    ),
-    onError: useCallback((message: string) => {
-    }, []),
-    onStatusChange: useCallback(
-      ({ status }: { status: Status }) => {
-      },
-      []
-    ),
-    onModeChange: useCallback(
-      ({ mode }: { mode: Mode }) => {
-      },
-      []
-    ),
-    // Wire up tool logs to system messages in chat
-    onToolLog: useCallback((message: string) => {
-
-    }, []),
-    // Wire up streaming
-    onAgentChatResponsePart: useCallback(
-      (responsePart: any) => {
-
-      }, []
-    ),
-  };
+  const callbacks = {};
 
   const { conversation, startSession, endSession } = useTarotReaderAgent({
     agentId: AGENT_ID,
