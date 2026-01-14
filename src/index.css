@@ -390,3 +390,342 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: rgba(139, 92, 246, 0.7) rgba(15, 23, 42, 0.3);
 }
+
+/* ============================================
+   TAROT SPREAD DISPLAY STYLES
+   ============================================ */
+
+/* Main overlay container */
+.tarot-spread-overlay {
+  position: fixed;
+  bottom: 20px; /* Position closer to mic button */
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 95vw;
+  height: auto;
+  min-height: auto;
+  max-height: none;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.85) 0%,
+    rgba(88, 28, 135, 0.75) 50%,
+    rgba(15, 23, 42, 0.85) 100%
+  );
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 1.5rem;
+  z-index: 140;
+  display: flex;
+  flex-direction: column;
+  animation: spreadSlideUp 0.5s ease-out forwards;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(88, 28, 135, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1.5rem 1rem;
+}
+
+@keyframes spreadSlideUp {
+  from {
+    transform: translateX(-50%) translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header section */
+.spread-header {
+  display: none; /* Hide header for compact floating mode */
+}
+
+.spread-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spread-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #e9d5ff, #ffffff, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.spread-description {
+  font-size: 0.75rem;
+  color: rgba(196, 181, 253, 0.7);
+  margin: 0;
+}
+
+.spread-progress {
+  font-size: 0.75rem;
+  color: rgba(168, 85, 247, 0.9);
+  font-weight: 600;
+  margin: 0;
+}
+
+.spread-close-btn {
+  padding: 0.5rem;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 0.5rem;
+  color: rgba(196, 181, 253, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spread-close-btn:hover {
+  background: rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.6);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Horizontal scrollable container */
+.spread-scroll-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.5rem 0;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Spread layout area */
+.spread-layout {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+  min-width: max-content;
+  padding: 0 0.5rem;
+}
+
+/* Individual card container */
+.spread-card-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  scroll-snap-align: center;
+  animation: cardEnter 0.6s ease-out forwards;
+  animation-delay: var(--card-delay, 0s);
+  opacity: 0;
+  transform: translateY(30px) rotate(var(--card-rotation, 0deg));
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.spread-card-container:hover {
+  transform: translateY(-5px) rotate(var(--card-rotation, 0deg)) scale(1.02);
+}
+
+@keyframes cardEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--card-rotation, 0deg));
+  }
+}
+
+/* Position label above card */
+.spread-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(196, 181, 253, 0.9);
+  padding: 0.25rem 0.75rem;
+  background: rgba(88, 28, 135, 0.4);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.spread-card-label-empty {
+  opacity: 0.5;
+}
+
+/* Card with flip effect */
+.spread-card {
+  width: 100px;
+  height: 150px;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.spread-card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* Card faces */
+.spread-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(168, 85, 247, 0.2);
+  border: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.spread-card-back {
+  background: linear-gradient(135deg, #1e1b4b 0%, #581c87 50%, #1e1b4b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spread-card-front {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  transform: rotateY(180deg);
+}
+
+.spread-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spread-card-back-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #581c87 100%);
+}
+
+.spread-card-emoji-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 3rem;
+}
+
+/* Card name below */
+.spread-card-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.4s ease 0.5s;
+}
+
+.spread-card-name.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Empty card placeholder */
+.spread-card-empty {
+  opacity: 0.5;
+}
+
+.spread-card-placeholder {
+  width: 100px;
+  height: 150px;
+  border-radius: 0.75rem;
+  border: 2px dashed rgba(168, 85, 247, 0.3);
+  background: rgba(88, 28, 135, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(168, 85, 247, 0.5);
+}
+
+/* Scroll hint - hidden for compact mode */
+.spread-scroll-hint {
+  display: none;
+}
+
+/* Glow effect on card flip */
+.spread-card.is-flipped .spread-card-front {
+  animation: cardGlow 1s ease-out forwards;
+}
+
+@keyframes cardGlow {
+  0% {
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(168, 85, 247, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(168, 85, 247, 0.6),
+      0 0 60px rgba(139, 92, 246, 0.4);
+  }
+  100% {
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(168, 85, 247, 0.3);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tarot-spread-overlay {
+    bottom: 15px;
+    max-width: 98vw;
+  }
+
+  .spread-card {
+    width: 80px;
+    height: 120px;
+  }
+
+  .spread-card-placeholder {
+    width: 80px;
+    height: 120px;
+  }
+
+  .spread-layout {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tarot-spread-overlay {
+    bottom: 10px;
+  }
+
+  .spread-card {
+    width: 65px;
+    height: 100px;
+  }
+
+  .spread-card-placeholder {
+    width: 65px;
+    height: 100px;
+  }
+
+  .spread-card-label {
+    font-size: 0.55rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .spread-card-name {
+    font-size: 0.6rem;
+    max-width: 65px;
+  }
+}
+
