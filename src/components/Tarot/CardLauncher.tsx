@@ -112,7 +112,7 @@ function MainCardDisplay({ card, onClose }: MainCardDisplayProps) {
 
     return (
         <div
-            className={`fixed top-[15%] left-1/2 -translate-x-1/2 z-[100] pointer-events-auto transition-all duration-400 ${isAnimating ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
+            className={`fixed top-[10%] md:top-[8%] lg:top-[5%] left-1/2 -translate-x-1/2 z-[100] pointer-events-auto transition-all duration-400 max-h-[70vh] ${isAnimating ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
                 }`}
         >
             {/* Subtle backdrop glow */}
@@ -142,7 +142,7 @@ function MainCardDisplay({ card, onClose }: MainCardDisplayProps) {
                         <img
                             src={getCardImagePath(card)}
                             alt={card.name}
-                            className="w-60 h-auto mx-auto rounded-xl"
+                            className="w-48 md:w-60 lg:w-80 h-auto max-h-[55vh] md:max-h-[50vh] mx-auto rounded-xl object-contain"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 const fallback = e.currentTarget.nextElementSibling;
