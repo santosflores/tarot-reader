@@ -6,6 +6,7 @@ import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../
 import { isMajorArcana } from '../types/tarot';
 import { useRevealedCard } from '../hooks/useRevealedCard';
 import { useAuthContext } from '../hooks/useAuthContext';
+import { supabase } from '@/lib/supabase';
 
 // ============================================================================
 // Types
@@ -53,6 +54,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const [deck, setDeck] = useState<TarotDeck | null>(null);
     // Store drawn cards for revealCard tool
     const drawnCardsRef = useRef<TarotCard[]>([]);
+    // Store current conversation ID for session tracking
+    const currentConversationIdRef = useRef<string | null>(null);
 
     // Get user ID and profile from auth context
     const { user, profile } = useAuthContext();
@@ -199,7 +202,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
         if (DEBUG) {
-            console.log('[useTarotReaderAgent] Callback: onConnect');
+            console.log('[useTarotReaderAgent][onConnect]');
         }
         // Reset deck for new session - each session starts fresh
         deckRef.current = null;
@@ -209,17 +212,37 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         callbacks?.onConnect?.();
     }, [callbacks]);
 
+    const saveSession = useCallback(async (conversationId: string) => {
+        try {
+            if (DEBUG) console.log('[useTarotReaderAgent] Saving session...', conversationId);
+            const { error } = await supabase.functions.invoke('save-session', {
+                body: { conversation_id: conversationId },
+            });
+            if (error) throw error;
+            if (DEBUG) console.log('[useTarotReaderAgent] Session saved successfully');
+        } catch (error) {
+            console.error('[useTarotReaderAgent] Failed to save session:', error);
+        }
+    }, []);
+
     const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
         if (DEBUG) {
-            console.log('[useTarotReaderAgent] Callback: onDisconnect');
+            console.log('[useTarotReaderAgent][onDisconnect]');
         }
+
+        // Trigger save session if we have an ID
+        if (currentConversationIdRef.current) {
+            saveSession(currentConversationIdRef.current);
+            currentConversationIdRef.current = null;
+        }
+
         callbacks?.onDisconnect?.();
-    }, [callbacks]);
+    }, [callbacks, saveSession]);
 
     const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
         (payload) => {
             if (DEBUG) {
-                console.log('[useTarotReaderAgent] Callback: onMessage', payload);
+                console.log('[useTarotReaderAgent][onMessage]', payload);
             }
             callbacks?.onMessage?.(payload);
         },
@@ -228,7 +251,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleError: NonNullable<Callbacks['onError']> = useCallback((message: string) => {
         if (DEBUG) {
-            console.error('[useTarotReaderAgent] Callback: onError', message);
+            console.error('[useTarotReaderAgent][onError]', message);
         }
         callbacks?.onError?.(message);
     }, [callbacks]);
@@ -236,7 +259,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const handleStatusChange: NonNullable<Callbacks['onStatusChange']> = useCallback(
         (payload) => {
             if (DEBUG) {
-                console.log('[useTarotReaderAgent] Status changed:', payload.status);
+                console.log('[useTarotReaderAgent][onStatusChange]', payload.status);
             }
             callbacks?.onStatusChange?.(payload);
         },
@@ -246,7 +269,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const handleModeChange: NonNullable<Callbacks['onModeChange']> = useCallback(
         (payload) => {
             if (DEBUG) {
-                console.log('[useTarotReaderAgent] Mode changed:', payload.mode);
+                console.log('[useTarotReaderAgent][onModeChange]', payload.mode);
             }
             callbacks?.onModeChange?.(payload);
         },
@@ -255,7 +278,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleAudio: NonNullable<Callbacks['onAudio']> = useCallback((audioData: string) => {
         if (DEBUG) {
-            console.log('[useTarotReaderAgent] Audio received, length:', audioData.length);
+            console.log('[useTarotReaderAgent][onAudio]', audioData.length);
         }
         // Audio is handled internally by the hook for playback
     }, []);
@@ -263,7 +286,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const handleCanSendFeedbackChange: NonNullable<Callbacks['onCanSendFeedbackChange']> = useCallback(
         ({ canSendFeedback }) => {
             if (DEBUG) {
-                console.log('[useTarotReaderAgent] Can send feedback changed:', canSendFeedback);
+                console.log('[useTarotReaderAgent][onCanSendFeedbackChange]', canSendFeedback);
             }
         },
         []
@@ -271,7 +294,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleDebug: NonNullable<Callbacks['onDebug']> = useCallback((debugInfo: unknown) => {
         if (DEBUG) {
-            console.log('[useTarotReaderAgent] Debug info:', debugInfo);
+            console.log('[useTarotReaderAgent][onDebug]', debugInfo);
         }
     }, []);
 
@@ -279,7 +302,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         (toolCall) => {
             const name = (toolCall as any).toolName || (toolCall as any).name || 'Unknown Tool';
             const args = (toolCall as any).toolArgs || (toolCall as any).arguments || {};
-            const message = `[useTarotReaderAgent] Received unhandled tool call: ${name}`;
+            const message = `[useTarotReaderAgent][onUnhandledClientToolCall] Received unhandled tool call: ${name}`;
             console.warn(message, args);
             callbacks?.onToolLog?.(`⚠️ ${message}`);
         },
@@ -288,7 +311,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleVadScore: NonNullable<Callbacks['onVadScore']> = useCallback(({ vadScore }: { vadScore: number }) => {
         if (DEBUG && vadScore > 0.8) {
-            console.log('[useTarotReaderAgent] Callback: onVadScore', vadScore);
+            console.log('[useTarotReaderAgent][onVadScore]', vadScore);
         }
         callbacks?.onVadScore?.(vadScore);
     }, [callbacks]);
@@ -297,7 +320,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         (responsePart) => {
             if (!responsePart) return;
             if (DEBUG) {
-                console.log('[useTarotReaderAgent] Callback: onAgentChatResponsePart', responsePart);
+                console.log('[useTarotReaderAgent][onAgentChatResponsePart]', responsePart);
             }
             callbacks?.onAgentChatResponsePart?.(responsePart);
         },
@@ -346,12 +369,15 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 dynamicVariables.user_name = profile.display_name;
             }
 
-            await conversation.startSession({
+            const conversationId = await conversation.startSession({
                 agentId,
                 connectionType: 'webrtc',
                 userId: user?.id,
                 dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
             });
+
+            // Store the conversation ID for tracking
+            currentConversationIdRef.current = conversationId;
 
             // Ensure volume is set to maximum after session starts
             await conversation.setVolume({ volume: 0.8 });
