@@ -38,9 +38,10 @@ export function ElevenLabsOverlay() {
     }
   }, []);
 
-  const [error] = useState<string | null>(null);
-  const [agentMode] = useState<Mode | null>(null);
-  const [isSessionConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [agentMode, setAgentMode] = useState<Mode | null>(null);
+  const [isSessionConnected, setIsSessionConnected] = useState(false);
+  const [captions, setCaptions] = useState<string>("");
 
   // Get user ID and profile from auth context
   // Note: user/profile logic is now inside the hook, but we still need profile for other overlay logic?
@@ -95,7 +96,46 @@ export function ElevenLabsOverlay() {
 
 
   // Callbacks for the ElevenLabs SDK via our custom hook
-  const callbacks = {};
+  // Callbacks for the ElevenLabs SDK via our custom hook
+  const callbacks = {
+    onConnect: useCallback(() => {
+      setError(null);
+      setIsSessionConnected(true);
+      setCaptions(""); // Reset captions on new session
+    }, []),
+
+    onDisconnect: useCallback(() => {
+      setIsSessionConnected(false);
+      setAgentMode(null);
+      setCaptions(""); // Clear captions on disconnect
+    }, []),
+
+    onError: useCallback((message: string) => {
+      setError(message);
+    }, []),
+
+    onModeChange: useCallback(
+      ({ mode }: { mode: Mode }) => {
+        setAgentMode(mode);
+      },
+      []
+    ),
+
+    onAgentChatResponsePart: useCallback(
+      (responsePart: any) => {
+        if (responsePart.type === 'start') {
+          setCaptions("");
+        } else if (responsePart.type === 'delta') {
+          setCaptions((prev) => prev + (responsePart.text || ""));
+        } else if (responsePart.type === 'stop') {
+          // Optional: You could set a timeout here to clear captions after X seconds
+          // For now, we leave it until the next turn starts
+          setTimeout(() => setCaptions(""), 3000);
+        }
+      },
+      []
+    ),
+  };
 
   const { conversation, startSession, endSession } = useTarotReaderAgent({
     agentId: AGENT_ID,
@@ -208,6 +248,15 @@ export function ElevenLabsOverlay() {
                     : "none",
             }}
           />
+
+          {/* Captions Overlay */}
+          {captions && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-72 text-center pointer-events-none z-20">
+              <span className="inline-block text-white text-lg font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-sm px-3 py-1 rounded-xl line-clamp-2 leading-tight tracking-wide border border-white/10">
+                {captions}
+              </span>
+            </div>
+          )}
 
           {/* Inner Glowing Ring */}
           <div
