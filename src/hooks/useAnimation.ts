@@ -16,9 +16,20 @@ export const useAnimation = create<AnimationStore>((set, get) => ({
   availableAnimations: AVAILABLE_ANIMATIONS as AnimationName[],
   animationFiles: {},
 
+  isPaused: false,
+  duration: 0,
+  currentTime: 0,
+  seekTarget: null,
+
   setCurrentAnimation: (animation: AnimationName) => {
-    set({ currentAnimation: animation });
+    set({ currentAnimation: animation, currentTime: 0, seekTarget: 0 });
   },
+
+  setPaused: (paused) => set({ isPaused: paused }),
+  setDuration: (duration) => set({ duration }),
+  setCurrentTime: (time) => set({ currentTime: time }),
+  seek: (time) => set({ seekTarget: time }),
+  consumeSeek: () => set({ seekTarget: null }),
 
   addAnimation: (animation: AnimationName) => {
     set((state) => {

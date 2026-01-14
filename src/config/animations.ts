@@ -9,9 +9,6 @@
  */
 export const ANIMATION_CONFIG = {
   Idle: '/animations/Idle.fbx',
-  Sit_Talking: '/animations/Sit_Talking.fbx',
-  Sit_Talking2: '/animations/Sit_Talking2.fbx',
-  Sit_Talking3: '/animations/Sit_Talking3.fbx',
   Talking: '/animations/Talking.fbx',
   Talking2: '/animations/Talking2.fbx',
   Talking3: '/animations/Talking3.fbx',

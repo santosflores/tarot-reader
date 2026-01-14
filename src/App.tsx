@@ -13,10 +13,13 @@ import { CardLauncher } from './components/Tarot/CardLauncher';
 import { OnboardingTooltip } from './components/UI/OnboardingTooltip';
 import { AudioController } from './components/Audio/AudioController';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
+import { Loader } from './components/UI/Loader';
 
 function App() {
   return (
     <ErrorBoundary>
+      <Loader />
+
       <div className="fixed inset-0 overflow-hidden">
         {/* Background Effects */}
         <Background />
