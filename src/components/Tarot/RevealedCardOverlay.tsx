@@ -1,7 +1,7 @@
 /**
  * RevealedCardOverlay Component
- * Displays revealed tarot cards in a drawer that can be toggled
- * Cards are stored and can be viewed/hidden during the session
+ * Displays revealed tarot cards in spread layouts with flip animations
+ * Supports both spread mode (structured layout) and single card mode
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,9 +9,10 @@ import { useRevealedCard } from '../../hooks/useRevealedCard';
 import { isMajorArcana } from '../../types/tarot';
 import type { TarotCard } from '../../types/tarot';
 import { getCardImagePath } from '../../utils/tarot';
+import { TarotSpreadDisplay } from './TarotSpreadDisplay';
 
 /**
- * Main scene card display component
+ * Main scene card display component (for single card view when clicking from drawer)
  */
 interface MainSceneCardProps {
   card: TarotCard;
@@ -24,17 +25,16 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
   const isMajor = isMajorArcana(card);
 
   return (
-    <div 
-      className={`fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[160] pointer-events-auto transition-opacity duration-300 ${
-        isFadingOut ? 'opacity-0' : isFadingIn ? 'opacity-100' : 'opacity-100'
-      }`}
+    <div
+      className={`fixed left-1/2 top-1/4 transform -translate-x-1/2 -translate-y-1/2 z-[160] pointer-events-auto transition-opacity duration-300 ${isFadingOut ? 'opacity-0' : isFadingIn ? 'opacity-100' : 'opacity-100'
+        }`}
       style={{
         animation: isFadingIn ? 'cardReveal 0.5s ease-out forwards' : 'none',
       }}
     >
       {/* Outer glow effect */}
       <div className="absolute inset-0 -m-4 rounded-3xl bg-gradient-to-br from-purple-500/20 via-indigo-500/20 to-purple-500/20 blur-2xl opacity-60" />
-      
+
       {/* Close Button - positioned at top right corner of container */}
       <button
         onClick={onClose}
@@ -57,11 +57,11 @@ function MainSceneCard({ card, onClose, isFadingOut = false, isFadingIn = false 
           />
         </svg>
       </button>
-      
+
       <div className="relative bg-gradient-to-br from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-2 border-purple-400/40 rounded-3xl p-8 shadow-2xl min-w-[320px] max-w-[380px] overflow-hidden">
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
-        
+
         {/* Animated border glow */}
         <div className="absolute inset-0 rounded-3xl border-2 border-purple-300/20 animate-pulse-slow pointer-events-none" />
 
@@ -124,13 +124,13 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
   const isMajor = isMajorArcana(card);
 
   return (
-    <div 
+    <div
       className="bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/30 rounded-xl p-3 shadow-lg shadow-purple-900/40 relative group cursor-pointer hover:border-purple-300/60 hover:shadow-xl hover:shadow-purple-900/50 hover:scale-105 transition-all duration-300 overflow-hidden"
       onClick={onClick}
     >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+
       {/* Close Button */}
       <button
         onClick={(e) => {
@@ -201,20 +201,22 @@ function CardDisplay({ card, onClose, onClick }: CardDisplayProps) {
 }
 
 /**
- * Drawer component that displays all revealed tarot cards
- * Can be toggled to show/hide cards drawn during the session
+ * Main overlay component for displaying tarot reading spreads and card drawer
  */
 export function RevealedCardOverlay() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mainSceneCard, setMainSceneCard] = useState<TarotCard | null>(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
   const [shouldPopIcon, setShouldPopIcon] = useState(false);
+  const [showSpread, setShowSpread] = useState(false);
+
   const revealedCards = useRevealedCard((state) => state.revealedCards);
+  const currentSpreadType = useRevealedCard((state) => state.currentSpreadType);
   const removeRevealedCard = useRevealedCard((state) => state.removeRevealedCard);
   const clearRevealedCards = useRevealedCard((state) => state.clearRevealedCards);
+
   const prevCardCountRef = useRef(0);
-  const currentCardRef = useRef<TarotCard | null>(null);
   const isInitializedRef = useRef(false);
 
   // Initialize the card count ref on mount to prevent auto-showing existing cards
@@ -226,37 +228,20 @@ export function RevealedCardOverlay() {
     }
   });
 
-  // Handle new card reveal - show in main scene with fade transition
+  // Handle new card reveal - show spread display when cards are added
   useEffect(() => {
     // Don't run if not initialized yet
     if (!isInitializedRef.current) {
       return;
     }
-    
+
     if (revealedCards.length > prevCardCountRef.current) {
-      const newCard = revealedCards[revealedCards.length - 1];
-      const hasCurrentCard = currentCardRef.current !== null;
-      
-      // If there's already a card showing, fade it out first
-      if (hasCurrentCard) {
-        setIsFadingOut(true);
-        // After fadeout completes, show new card with fade in
-        setTimeout(() => {
-          currentCardRef.current = newCard;
-          setMainSceneCard(newCard);
-          setIsFadingOut(false);
-          setIsFadingIn(true);
-          // Reset fade in flag after animation
-          setTimeout(() => setIsFadingIn(false), 500);
-        }, 300); // Match fadeout duration
-      } else {
-        // No card currently showing, just fade in the new one
-        currentCardRef.current = newCard;
-        setMainSceneCard(newCard);
-        setIsFadingIn(true);
-        setTimeout(() => setIsFadingIn(false), 500);
+      // Show the spread display when cards are revealed
+      if (currentSpreadType) {
+        setShowSpread(true);
+        setMainSceneCard(null); // Clear any single card view
       }
-      
+
       // Pop the drawer icon when first card is added
       if (prevCardCountRef.current === 0) {
         setShouldPopIcon(true);
@@ -264,63 +249,81 @@ export function RevealedCardOverlay() {
       }
     }
     prevCardCountRef.current = revealedCards.length;
-  }, [revealedCards.length, revealedCards]);
+  }, [revealedCards.length, revealedCards, currentSpreadType]);
 
-  const handleCardClick = (card: TarotCard) => {
-    // If clicking the same card, do nothing
-    if (currentCardRef.current?.id === card.id) {
+  // Handle clicking a card in the drawer to view details
+  const handleDrawerCardClick = (card: TarotCard) => {
+    // Close drawer and show the card in detail view
+    setIsDrawerOpen(false);
+
+    if (mainSceneCard?.id === card.id) {
       return;
     }
-    
-    // If there's already a card showing, fade it out first
-    if (currentCardRef.current) {
+
+    if (mainSceneCard) {
       setIsFadingOut(true);
       setTimeout(() => {
-        currentCardRef.current = card;
         setMainSceneCard(card);
         setIsFadingOut(false);
         setIsFadingIn(true);
         setTimeout(() => setIsFadingIn(false), 500);
       }, 300);
     } else {
-      // No card currently showing, just fade in
-      currentCardRef.current = card;
       setMainSceneCard(card);
       setIsFadingIn(true);
       setTimeout(() => setIsFadingIn(false), 500);
     }
   };
 
-  const handleCloseCard = () => {
+  const handleCloseMainCard = () => {
     setIsFadingOut(true);
     setTimeout(() => {
-      currentCardRef.current = null;
       setMainSceneCard(null);
       setIsFadingOut(false);
     }, 300);
+  };
+
+  const handleCloseSpread = () => {
+    setShowSpread(false);
+  };
+
+  const handleSpreadCardClick = (card: TarotCard) => {
+    // Show the card in detail view when clicked in spread
+    setMainSceneCard(card);
+    setIsFadingIn(true);
+    setTimeout(() => setIsFadingIn(false), 500);
   };
 
   const hasCards = revealedCards.length > 0;
 
   return (
     <>
-      {/* Main Scene Card Display */}
-      {mainSceneCard && (
+      {/* Spread Display - shown at bottom of screen */}
+      {showSpread && currentSpreadType && hasCards && (
+        <TarotSpreadDisplay
+          cards={revealedCards}
+          spreadType={currentSpreadType}
+          onCardClick={handleSpreadCardClick}
+          onClose={handleCloseSpread}
+        />
+      )}
+
+      {/* Main Scene Card Display - for viewing single card details */}
+      {mainSceneCard && !showSpread && (
         <MainSceneCard
           card={mainSceneCard}
-          onClose={handleCloseCard}
+          onClose={handleCloseMainCard}
           isFadingOut={isFadingOut}
           isFadingIn={isFadingIn}
         />
       )}
 
       {/* Toggle Button - Always visible when cards exist, hidden when drawer is open */}
-      {hasCards && !isOpen && (
+      {hasCards && !isDrawerOpen && !showSpread && (
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`fixed right-4 top-4 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${
-            shouldPopIcon ? 'animate-pop' : ''
-          }`}
+          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+          className={`fixed right-4 top-4 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60 ${shouldPopIcon ? 'animate-pop' : ''
+            }`}
           title={`Show cards (${revealedCards.length})`}
         >
           <svg
@@ -346,15 +349,26 @@ export function RevealedCardOverlay() {
         </button>
       )}
 
+      {/* Show Spread Button - visible when cards exist but spread is closed */}
+      {hasCards && !showSpread && currentSpreadType && !isDrawerOpen && (
+        <button
+          onClick={() => setShowSpread(true)}
+          className="fixed right-20 top-4 z-[150] px-4 py-2 bg-gradient-to-br from-purple-600/90 to-indigo-600/90 backdrop-blur-xl border border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 text-white text-sm font-semibold flex items-center gap-2 transition-all hover:scale-105 hover:border-purple-300/60"
+          title="View spread"
+        >
+          <span>🎴</span>
+          <span>View Spread</span>
+        </button>
+      )}
+
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-l-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-l-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
-        
+
         {/* Drawer Header */}
         <div className="relative p-5 border-b border-purple-400/30 bg-gradient-to-r from-purple-900/30 to-transparent flex items-center justify-between backdrop-blur-sm">
           <div>
@@ -390,7 +404,7 @@ export function RevealedCardOverlay() {
               </button>
             )}
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsDrawerOpen(false)}
               className="p-2 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg"
               title="Close drawer"
             >
@@ -427,7 +441,7 @@ export function RevealedCardOverlay() {
                   key={card.id}
                   card={card}
                   onClose={() => removeRevealedCard(card.id)}
-                  onClick={() => handleCardClick(card)}
+                  onClick={() => handleDrawerCardClick(card)}
                 />
               ))}
             </div>
@@ -436,10 +450,10 @@ export function RevealedCardOverlay() {
       </div>
 
       {/* Backdrop when drawer is open */}
-      {isOpen && (
+      {isDrawerOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[130]"
-          onClick={() => setIsOpen(false)}
+          onClick={() => setIsDrawerOpen(false)}
         />
       )}
 
