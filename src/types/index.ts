@@ -58,9 +58,24 @@ export interface CameraState {
 export interface AnimationState {
   currentAnimation: AnimationName;
   availableAnimations: AnimationName[];
+
+  // Player State
+  isPaused: boolean;
+  duration: number;
+  currentTime: number;
+  seekTarget: number | null;
+
   setCurrentAnimation: (animation: AnimationName) => void;
   addAnimation: (animation: AnimationName) => void;
   registerAnimation: (name: AnimationName, filePath: string) => void;
+
+  // Player Actions
+  setPaused: (paused: boolean) => void;
+  setDuration: (duration: number) => void;
+  setCurrentTime: (time: number) => void;
+  seek: (time: number) => void;
+  consumeSeek: () => void;
+
   animationFiles?: Record<string, string>;
 }
 

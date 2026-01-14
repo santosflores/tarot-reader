@@ -6,6 +6,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useAnimation } from '../../../hooks/useAnimation';
 import type { AnimationMap, AnimationName, AnimationRefs } from '../../../types';
 import { ANIMATION_CONSTANTS } from '../../../config/animations';
 
@@ -58,7 +59,10 @@ export const useCharacterAnimation = ({
       action.reset();
       action.fadeIn(ANIMATION_CONSTANTS.CROSSFADE_DURATION);
       action.play();
-      action.paused = false;
+      action.paused = useAnimation.getState().isPaused;
+
+      // Initial duration set
+      useAnimation.getState().setDuration(clip.duration);
 
       return action;
     },
@@ -120,6 +124,28 @@ export const useCharacterAnimation = ({
       }
     }
 
+    // Sync with Animation Store (Player Controls)
+    const animState = useAnimation.getState();
+    const action = currentActionRef.current;
+
+    if (action) {
+      // Sync Paused State
+      if (action.paused !== animState.isPaused) {
+        action.paused = animState.isPaused;
+      }
+
+      // Sync Seek
+      if (animState.seekTarget !== null) {
+        action.time = animState.seekTarget;
+        animState.consumeSeek();
+      }
+
+      // Update Time
+      if (!action.paused && action.isRunning()) {
+        animState.setCurrentTime(action.time);
+      }
+    }
+
     // Update mixer
     if (mixerRef.current) {
       mixerRef.current.update(delta);
@@ -134,7 +160,8 @@ export const useCharacterAnimation = ({
     // Ensure current animation keeps running
     if (currentActionRef.current && !currentActionRef.current.isRunning()) {
       currentActionRef.current.play();
-      currentActionRef.current.paused = false;
+      // Respect paused state on resume
+      currentActionRef.current.paused = animState.isPaused;
     }
   });
 
