@@ -9,7 +9,7 @@ import { Background } from './components/UI/Background';
 import { Experience } from './components/Experience';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ElevenLabsOverlay } from './components/ElevenLabs';
-import { RevealedCardOverlay } from './components/Tarot/RevealedCardOverlay';
+import { CardLauncher } from './components/Tarot/CardLauncher';
 import { OnboardingTooltip } from './components/UI/OnboardingTooltip';
 import { AudioController } from './components/Audio/AudioController';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from './config/camera';
@@ -32,8 +32,8 @@ function App() {
         {/* Voice Agent Overlay - positioned above the 3D scene */}
         <ElevenLabsOverlay />
 
-        {/* Revealed Card Overlay - displays tarot card from revealCard tool */}
-        <RevealedCardOverlay />
+        {/* Card Launcher - shows revealed cards around the mic button */}
+        <CardLauncher />
 
         <Canvas
           shadows
