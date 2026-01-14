@@ -4,40 +4,15 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useConversation } from "@elevenlabs/react";
-import type { Callbacks, Mode } from "@elevenlabs/client";
-import type { TarotDeck, TarotCard } from "@/types/tarot";
-import {
-  createTarotDeck,
-  shuffleDeck as shuffleTarotDeck,
-  drawCards,
-} from "@/utils/tarot";
-import { isMajorArcana } from "@/types/tarot";
+import { useState, useCallback, useEffect } from "react";
+import type { Mode, Status } from "@elevenlabs/client";
+import { useTarotReaderAgent } from "@/hooks/useTarotReaderAgent";
 import { useElevenLabsAudio } from "@/hooks/useElevenLabsAudio";
-import { useRevealedCard } from "@/hooks/useRevealedCard";
-import { useAuthContext } from "@/hooks/useAuthContext";
 import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useConversationReplay } from "@/hooks/useConversationReplay";
 
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface DrawCardParams {
-  numberOfCards: number;
-}
-
-interface LogMessageParams {
-  message: string;
-}
-
-interface RevealCardParams {
-  cardIndex: number;
-}
 
 // ============================================================================
 // Constants
@@ -49,32 +24,36 @@ const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
 // Utility Functions
 // ============================================================================
 
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "An unexpected error occurred";
-};
+const DEBUG = import.meta.env.DEV || import.meta.env.VITE_DEV === 'true';
 
 // ============================================================================
 // Component: ElevenLabsOverlay (Main)
 // ============================================================================
 
 export function ElevenLabsOverlay() {
-  const [error, setError] = useState<string | null>(null);
-  const [agentMode, setAgentMode] = useState<Mode | null>(null);
-  const [isSessionConnected, setIsSessionConnected] = useState(false);
+  // Debug mount
+  useEffect(() => {
+    if (DEBUG) {
+      console.log('ElevenLabsOverlay mounted. DEBUG is enabled.');
+    }
+  }, []);
+
+  const [error] = useState<string | null>(null);
+  const [agentMode] = useState<Mode | null>(null);
+  const [isSessionConnected] = useState(false);
 
   // Get user ID and profile from auth context
-  const { user, profile } = useAuthContext();
+  // Note: user/profile logic is now inside the hook, but we still need profile for other overlay logic?
+  // Actually the hook takes care of user/profile if we pass it, OR the hook gets it from context itself.
+  // Looking at the hook implementation: `useTarotReaderAgent` gets user/profile from context internally.
+  // So we don't strictly need them here unless we use them for other UI logic.
+  // The original overlay used profile for nothing else?
+  // Wait, `handleStartSession` in original used profile for dynamic variables.
+  // The new hook `startSession` handles that internally.
+  // So we can remove useAuthContext usage here if not used.
 
   // Get the requestShow function to trigger the help tooltip
   const requestShowHelp = useOnboardingStore((state) => state.requestShow);
-
-  // Deck state - each session starts with a fresh deck
-  const deckRef = useRef<TarotDeck | null>(null);
-  const [, setDeck] = useState<TarotDeck | null>(null);
-  // Store drawn cards for revealCard tool
-  const drawnCardsRef = useRef<TarotCard[]>([]);
 
   // Integrate with lipsync audio system
   useElevenLabsAudio({
@@ -89,9 +68,6 @@ export function ElevenLabsOverlay() {
     normalVolume: 0.05,
     sessionVolume: 0.02, // Volume when session is active
   });
-
-  // Get the addRevealedCard action from the store
-  const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
   // Get active replay state
   const activeReplayId = useChatbot((state) => state.activeReplayId);
@@ -117,187 +93,59 @@ export function ElevenLabsOverlay() {
     }
   }, [isSessionConnected, activeReplayId, stopReplay, setActiveReplayId]);
 
-  // Callbacks for the ElevenLabs SDK
-  const handleConnect: NonNullable<Callbacks["onConnect"]> = useCallback(() => {
-    setError(null);
-    setIsSessionConnected(true);
-    deckRef.current = null;
-    setDeck(null);
-    drawnCardsRef.current = [];
-  }, []);
 
-  const handleDisconnect: NonNullable<Callbacks["onDisconnect"]> =
-    useCallback(() => {
-      setIsSessionConnected(false);
-      setAgentMode(null);
-    }, []);
+  // Callbacks for the ElevenLabs SDK via our custom hook
+  const callbacks = {
+    onConnect: useCallback(() => {
+    }, []),
+    onDisconnect: useCallback(() => {
+    }, []),
+    onMessage: useCallback(
+      (payload: { source: 'user' | 'ai'; message: string }) => {
+      },
+      []
+    ),
+    onError: useCallback((message: string) => {
+    }, []),
+    onStatusChange: useCallback(
+      ({ status }: { status: Status }) => {
+      },
+      []
+    ),
+    onModeChange: useCallback(
+      ({ mode }: { mode: Mode }) => {
+      },
+      []
+    ),
+    // Wire up tool logs to system messages in chat
+    onToolLog: useCallback((message: string) => {
 
-  const handleError: NonNullable<Callbacks["onError"]> = useCallback(
-    (message: string) => {
-      setError(message);
-    },
-    []
-  );
+    }, []),
+    // Wire up streaming
+    onAgentChatResponsePart: useCallback(
+      (responsePart: any) => {
 
-  const handleModeChange: NonNullable<Callbacks["onModeChange"]> = useCallback(
-    ({ mode }) => {
-      setAgentMode(mode);
-    },
-    []
-  );
-
-  // Client tools configuration
-  const clientTools = {
-    logMessage: (params: LogMessageParams): string => {
-      if (import.meta.env.DEV) {
-        console.log("[Agent Log]", params.message);
-      }
-      return "Message logged successfully";
-    },
-    initDeck: (): string => {
-      try {
-        const newDeck = createTarotDeck();
-        deckRef.current = newDeck;
-        setDeck(newDeck);
-        return "Deck initialized successfully with 78 cards";
-      } catch (error) {
-        return `Error: ${getErrorMessage(error)}`;
-      }
-    },
-    shuffleDeck: (): string => {
-      try {
-        const currentDeck = deckRef.current;
-        if (!currentDeck) {
-          return "Error: No deck has been initialized. Please initialize the deck first.";
-        }
-        const shuffledDeck = shuffleTarotDeck(currentDeck);
-        deckRef.current = shuffledDeck;
-        setDeck(shuffledDeck);
-        return "Deck shuffled successfully";
-      } catch (error) {
-        return `Error: ${getErrorMessage(error)}`;
-      }
-    },
-    drawCard: (params: DrawCardParams): string => {
-      try {
-        const currentDeck = deckRef.current;
-        if (!currentDeck) {
-          return "Error: No deck has been initialized. Please initialize the deck first.";
-        }
-
-        const { numberOfCards } = params;
-
-        if (numberOfCards < 1) {
-          return "Error: Number of cards must be at least 1";
-        }
-
-        if (numberOfCards > currentDeck.length) {
-          return `Error: Cannot draw ${numberOfCards} cards. Only ${currentDeck.length} cards remaining in the deck.`;
-        }
-
-        const result = drawCards(currentDeck, numberOfCards);
-        deckRef.current = result.remaining;
-        setDeck(result.remaining);
-        // Store drawn cards for revealCard tool
-        drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
-
-        const cardNames = result.drawn
-          .map((card) => {
-            if (isMajorArcana(card)) {
-              return `${card.name} (Major Arcana #${card.number})`;
-            }
-            return `${card.name} (${card.suit})`;
-          })
-          .join(", ");
-
-        return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? "" : "s"}: ${cardNames}. ${result.remaining.length} cards remaining.`;
-      } catch (error) {
-        return `Error: ${getErrorMessage(error)}`;
-      }
-    },
-    revealCard: (params: RevealCardParams): string => {
-      try {
-        const { cardIndex } = params;
-        const drawnCards = drawnCardsRef.current;
-
-        if (drawnCards.length === 0) {
-          return "Error: No cards have been drawn yet. Please draw cards first.";
-        }
-
-        if (cardIndex < 0 || cardIndex >= drawnCards.length) {
-          return `Error: Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
-        }
-
-        const card = drawnCards[cardIndex];
-
-        // Add the card to the revealed cards store to display the overlay
-        addRevealedCard(card);
-
-        const cardInfo = isMajorArcana(card)
-          ? `${card.name} (Major Arcana #${card.number})`
-          : `${card.name} (${card.suit})`;
-
-        return `Successfully revealed card: ${cardInfo}`;
-      } catch (error) {
-        return `Error: ${getErrorMessage(error)}`;
-      }
-    },
+      }, []
+    ),
   };
 
-  const conversation = useConversation({
-    clientTools,
-    onConnect: handleConnect,
-    onDisconnect: handleDisconnect,
-    onError: handleError,
-    onModeChange: handleModeChange,
+  const { conversation, startSession, endSession } = useTarotReaderAgent({
+    agentId: AGENT_ID,
+    callbacks
   });
 
   const handleStartSession = useCallback(async (): Promise<void> => {
-    if (!AGENT_ID) {
-      setError("Agent ID is not configured");
-      return;
-    }
-
-    try {
-      setError(null);
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Prepare dynamic variables
-      const dynamicVariables: Record<string, string> = {};
-      if (profile?.display_name) {
-        dynamicVariables.user_name = profile.display_name;
-      }
-
-      await conversation.startSession({
-        agentId: AGENT_ID,
-        connectionType: "webrtc",
-        userId: user?.id,
-        dynamicVariables:
-          Object.keys(dynamicVariables).length > 0
-            ? dynamicVariables
-            : undefined,
-      });
-      await conversation.setVolume({ volume: 0.8 });
-    } catch (err) {
-      const errorMessage = getErrorMessage(err);
-      if (
-        errorMessage.includes("Permission denied") ||
-        errorMessage.includes("NotAllowedError")
-      ) {
-        setError("Microphone access required");
-      } else {
-        setError(errorMessage);
-      }
-    }
-  }, [conversation, user, profile]);
+    // Hook handles permissions and config
+    await startSession();
+  }, [startSession]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
     try {
-      await conversation.endSession();
+      await endSession();
     } catch (err) {
       console.error("Failed to end session:", err);
     }
-  }, [conversation]);
+  }, [endSession]);
 
   const isConnected = conversation.status === "connected";
   const isConnecting = conversation.status === "connecting";
@@ -361,6 +209,7 @@ export function ElevenLabsOverlay() {
         <div className="relative mb-[10px]">
           {/* Help Button - positioned at bottom right corner of mic button */}
           <button
+            type="button"
             onClick={requestShowHelp}
             className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg shadow-yellow-900/40 flex items-center justify-center transition-all hover:scale-110 z-10 border-2 border-white"
             title="Show help"
@@ -448,6 +297,7 @@ export function ElevenLabsOverlay() {
 
           {/* Button */}
           <button
+            type="button"
             onClick={handleButtonClick}
             disabled={(isConnecting && !AGENT_ID) || (!!activeReplayId && !replayAudioUrl)}
             className={`relative w-20 h-20 lg:w-20 lg:h-20 ${activeReplayId

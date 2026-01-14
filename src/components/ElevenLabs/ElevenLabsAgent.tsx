@@ -7,37 +7,20 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useConversation } from '@elevenlabs/react';
-import type { Role, Status, Callbacks, Mode } from '@elevenlabs/client';
-import type { TarotDeck, TarotCard } from '../../types/tarot';
-import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../../utils/tarot';
-import { isMajorArcana } from '../../types/tarot';
+import type { Role, Status, Mode } from '@elevenlabs/client';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
-import { useRevealedCard } from '../../hooks/useRevealedCard';
-import { useAuthContext } from '../../hooks/useAuthContext';
-
+import { useTarotReaderAgent } from '../../hooks/useTarotReaderAgent';
 // ============================================================================
 // Types
 // ============================================================================
+const DEBUG = import.meta.env.DEV || import.meta.env.VITE_DEV === 'true';
 
 interface ChatMessage {
   readonly id: string;
-  readonly role: Role | 'system';
+  readonly role: Role | 'system' | 'agent' | 'user';
   readonly content: string;
   readonly timestamp: Date;
   readonly isStreaming?: boolean;
-}
-
-interface LogMessageParams {
-  message: string;
-}
-
-interface DrawCardParams {
-  numberOfCards: number;
-}
-
-interface RevealCardParams {
-  cardIndex: number;
 }
 
 // ============================================================================
@@ -50,14 +33,8 @@ const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
 // Utility Functions
 // ============================================================================
 
-const generateMessageId = (): string => 
+const generateMessageId = (): string =>
   `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'An unexpected error occurred';
-};
 
 // ============================================================================
 // Custom Hook: useAgentMessages
@@ -108,7 +85,7 @@ function useAgentMessages() {
     streamingTextRef.current += text;
     const currentIndex = streamingIndexRef.current;
     const currentContent = streamingTextRef.current;
-    
+
     if (currentIndex === null) return;
 
     setMessages((prev) => {
@@ -124,7 +101,7 @@ function useAgentMessages() {
   const finalizeStreamingMessage = useCallback((): void => {
     const currentIndex = streamingIndexRef.current;
     const finalContent = streamingTextRef.current;
-    
+
     if (currentIndex === null) return;
 
     setMessages((prev) => {
@@ -222,9 +199,8 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div
-            className={`w-3 h-3 rounded-full ${
-              isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
-            }`}
+            className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
+              }`}
           />
           <span className="text-sm text-gray-600 capitalize">{status}</span>
         </div>
@@ -299,21 +275,18 @@ function MessageInput({ value, onChange, onSend, disabled }: MessageInputProps) 
 // ============================================================================
 
 export function ElevenLabsAgent() {
+  // Debug mount
+  useEffect(() => {
+    if (DEBUG) {
+      console.log('ElevenLabsAgent mounted. DEBUG is enabled.');
+    }
+  }, []);
+
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Get user ID and profile from auth context
-  const { user, profile } = useAuthContext();
-  
-  // Deck state - each session starts with a fresh deck
-  // Use ref to ensure client tools always have access to current deck value
-  const deckRef = useRef<TarotDeck | null>(null);
-  const [deck, setDeck] = useState<TarotDeck | null>(null);
-  // Store drawn cards for revealCard tool
-  const drawnCardsRef = useRef<TarotCard[]>([]);
 
   const {
     messages,
@@ -325,283 +298,112 @@ export function ElevenLabsAgent() {
   } = useAgentMessages();
 
   // Integrate with lipsync audio system
+  // Note: we still use this hook internally for the lipsync side effects
   useElevenLabsAudio({
     isConnected: isSessionConnected,
     mode: agentMode,
   });
 
-  // Get the addRevealedCard action from the store
-  const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
-  // Keep ref in sync with state
-  useEffect(() => {
-    deckRef.current = deck;
-  }, [deck]);
+  // Callbacks for the ElevenLabs SDK via our custom hook
+  const callbacks = {
+    onConnect: useCallback(() => {
+      setError(null);
+      setIsSessionConnected(true);
+      addMessage('system', 'Connected to agent');
+    }, [addMessage]),
 
-  // Callbacks for the ElevenLabs SDK
-  const handleConnect: NonNullable<Callbacks['onConnect']> = useCallback(() => {
-    setError(null);
-    setIsSessionConnected(true);
-    // Reset deck for new session - each session starts fresh
-    deckRef.current = null;
-    setDeck(null);
-    drawnCardsRef.current = [];
-    addMessage('system', 'Connected to agent');
-  }, [addMessage]);
+    onDisconnect: useCallback(() => {
+      setIsSessionConnected(false);
+      setAgentMode(null);
+      addMessage('system', 'Disconnected from agent');
+    }, [addMessage]),
 
-  const handleDisconnect: NonNullable<Callbacks['onDisconnect']> = useCallback(() => {
-    setIsSessionConnected(false);
-    setAgentMode(null);
-    addMessage('system', 'Disconnected from agent');
-  }, [addMessage]);
+    onMessage: useCallback(
+      (payload: { source: 'user' | 'ai'; message: string }) => {
+        if (payload.source === 'ai') { // 'role' in raw SDK is 'agent' or 'ai', useConversation often normalizes or passes raw. 
+          // Check SDK types: The raw uses 'agent', but our hook might just pass it through.
+          // Let's assume the payload matches what we had before roughly or normalized.
+          // Actually, useTarotReaderAgent passes the raw payload from onMessage.
+          // The previous code checked `payload.role === 'agent'`.
 
-  // Handle full messages - skip if already handled via streaming
-  const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
-    (payload) => {
-      if (payload.role === 'agent') {
-        // Check if this message was already handled via streaming
-        if (wasHandledViaStreaming()) {
-          // Skip - already displayed via streaming
-          return;
-        }
-        // Non-streamed response, add it
-        addMessage('agent', payload.message);
-      }
-    },
-    [addMessage, wasHandledViaStreaming]
-  );
-
-  const handleError: NonNullable<Callbacks['onError']> = useCallback((message: string) => {
-    setError(message);
-  }, []);
-
-  const handleStatusChange: NonNullable<Callbacks['onStatusChange']> = useCallback(
-    ({ status }) => {
-      if (import.meta.env.DEV) {
-        console.log('Status changed:', status);
-      }
-    },
-    []
-  );
-
-  // Handle mode changes (speaking/listening) - update state for lipsync
-  const handleModeChange: NonNullable<Callbacks['onModeChange']> = useCallback(
-    ({ mode }) => {
-      setAgentMode(mode);
-      if (import.meta.env.DEV) {
-        console.log('Mode changed:', mode);
-      }
-    },
-    []
-  );
-
-  // Handle streaming response parts for real-time text display
-  const handleAgentChatResponsePart: NonNullable<Callbacks['onAgentChatResponsePart']> = useCallback(
-    (responsePart) => {
-      if (!responsePart) return;
-
-      switch (responsePart.type) {
-        case 'start':
-          // Create a new streaming message placeholder
-          startStreamingMessage();
-          break;
-        
-        case 'delta':
-          // Append the text chunk to the streaming message
-          if (responsePart.text) {
-            appendStreamingText(responsePart.text);
+          if ((payload as any).role === 'agent' || (payload as any).role === 'ai') {
+            // Check if this message was already handled via streaming
+            if (wasHandledViaStreaming()) {
+              return;
+            }
+            // Non-streamed response, add it
+            addMessage('agent', payload.message);
           }
-          break;
-        
-        case 'stop':
-          // Finalize the streaming message
-          finalizeStreamingMessage();
-          break;
-      }
-    },
-    [startStreamingMessage, appendStreamingText, finalizeStreamingMessage]
-  );
-
-  // Client tools configuration
-  const clientTools = {
-    logMessage: (params: LogMessageParams): string => {
-      addMessage('system', `[Log] ${params.message}`);
-      return 'Message logged successfully';
-    },
-    initDeck: (): string => {
-      try {
-        const newDeck = createTarotDeck();
-        deckRef.current = newDeck;
-        setDeck(newDeck);
-        addMessage('system', '🎴 Tarot deck initialized with 78 cards (22 Major Arcana + 56 Minor Arcana)');
-        return 'Deck initialized successfully with 78 cards';
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        addMessage('system', `❌ Failed to initialize deck: ${errorMessage}`);
-        return `Error: ${errorMessage}`;
-      }
-    },
-    shuffleDeck: (): string => {
-      try {
-        const currentDeck = deckRef.current;
-        if (!currentDeck) {
-          const errorMessage = 'No deck has been initialized. Please initialize the deck first.';
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
         }
-        const shuffledDeck = shuffleTarotDeck(currentDeck);
-        deckRef.current = shuffledDeck;
-        setDeck(shuffledDeck);
-        addMessage('system', '🔀 Deck shuffled successfully');
-        return 'Deck shuffled successfully';
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        addMessage('system', `❌ Failed to shuffle deck: ${errorMessage}`);
-        return `Error: ${errorMessage}`;
-      }
-    },
-    drawCard: (params: DrawCardParams): string => {
-      try {
-        const currentDeck = deckRef.current;
-        if (!currentDeck) {
-          const errorMessage = 'No deck has been initialized. Please initialize the deck first.';
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
+      },
+      [addMessage, wasHandledViaStreaming]
+    ),
+
+    onError: useCallback((message: string) => {
+      setError(message);
+    }, []),
+
+    onStatusChange: useCallback(
+      ({ status }: { status: Status }) => {
+        // Status handled via conversation object usually, but can log if needed
+        console.log('Status change:', status);
+      },
+      []
+    ),
+
+    onModeChange: useCallback(
+      ({ mode }: { mode: Mode }) => {
+        setAgentMode(mode);
+      },
+      []
+    ),
+
+    // Wire up tool logs to system messages in chat
+    onToolLog: useCallback((message: string) => {
+      addMessage('system', message);
+    }, [addMessage]),
+
+    // Wire up streaming
+    onAgentChatResponsePart: useCallback(
+      (responsePart: any) => {
+        if (!responsePart) return;
+
+        switch (responsePart.type) {
+          case 'start':
+            startStreamingMessage();
+            break;
+          case 'delta':
+            if (responsePart.text) {
+              appendStreamingText(responsePart.text);
+            }
+            break;
+          case 'stop':
+            finalizeStreamingMessage();
+            break;
         }
-
-        const { numberOfCards } = params;
-        
-        if (numberOfCards < 1) {
-          const errorMessage = 'Number of cards must be at least 1';
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
-        }
-
-        if (numberOfCards > currentDeck.length) {
-          const errorMessage = `Cannot draw ${numberOfCards} cards. Only ${currentDeck.length} cards remaining in the deck.`;
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
-        }
-
-        const result = drawCards(currentDeck, numberOfCards);
-        deckRef.current = result.remaining;
-        setDeck(result.remaining);
-        // Store drawn cards for revealCard tool
-        drawnCardsRef.current = [...drawnCardsRef.current, ...result.drawn];
-
-        // Format the drawn cards for display
-        const cardsList = result.drawn
-          .map((card, index) => {
-            const cardInfo = isMajorArcana(card)
-              ? `${card.name} (Major Arcana #${card.number})`
-              : `${card.name} (${card.suit})`;
-            return `${index + 1}. ${cardInfo}`;
-          })
-          .join('\n');
-
-        const message = `✨ Drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}:\n${cardsList}\n\nRemaining cards: ${result.remaining.length}`;
-        addMessage('system', message);
-
-        return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}. Cards drawn: ${result.drawn.map(c => c.name).join(', ')}. ${result.remaining.length} cards remaining in deck.`;
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        addMessage('system', `❌ Failed to draw cards: ${errorMessage}`);
-        return `Error: ${errorMessage}`;
-      }
-    },
-    revealCard: (params: RevealCardParams): string => {
-      try {
-        const { cardIndex } = params;
-        const drawnCards = drawnCardsRef.current;
-        
-        if (drawnCards.length === 0) {
-          const errorMessage = 'No cards have been drawn yet. Please draw cards first.';
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
-        }
-
-        if (cardIndex < 0 || cardIndex >= drawnCards.length) {
-          const errorMessage = `Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
-          addMessage('system', `❌ ${errorMessage}`);
-          return `Error: ${errorMessage}`;
-        }
-
-        const card = drawnCards[cardIndex];
-
-        // Add the card to the revealed cards store to display the overlay
-        addRevealedCard(card);
-
-        const cardInfo = isMajorArcana(card)
-          ? `${card.name} (Major Arcana #${card.number})`
-          : `${card.name} (${card.suit})`;
-        
-        addMessage('system', `🔮 Revealing card: ${cardInfo}`);
-        return `Successfully revealed card: ${cardInfo}`;
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        addMessage('system', `❌ Failed to reveal card: ${errorMessage}`);
-        return `Error: ${errorMessage}`;
-      }
-    },
+      },
+      [startStreamingMessage, appendStreamingText, finalizeStreamingMessage]
+    ),
   };
 
-  const conversation = useConversation({
-    clientTools,
-    onConnect: handleConnect,
-    onDisconnect: handleDisconnect,
-    onMessage: handleMessage,
-    onError: handleError,
-    onStatusChange: handleStatusChange,
-    onModeChange: handleModeChange,
-    onAgentChatResponsePart: handleAgentChatResponsePart,
+  const { conversation, startSession, endSession } = useTarotReaderAgent({
+    agentId: AGENT_ID,
+    callbacks
   });
 
   const handleStartSession = useCallback(async (): Promise<void> => {
-    if (!AGENT_ID) {
-      setError('Agent ID is not configured. Set VITE_ELEVENLABS_AGENT_ID in your environment.');
-      return;
-    }
-
-    try {
-      setError(null);
-      
-      // Request microphone permission before starting the session
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Prepare dynamic variables
-      const dynamicVariables: Record<string, string> = {};
-      if (profile?.display_name) {
-        dynamicVariables.user_name = profile.display_name;
-      }
-      
-      await conversation.startSession({
-        agentId: AGENT_ID,
-        connectionType: 'webrtc',
-        userId: user?.id,
-        dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
-      });
-      
-      // Ensure volume is set to maximum after session starts
-      await conversation.setVolume({ volume: 0.8 });
-      
-    } catch (err) {
-      const errorMessage = getErrorMessage(err);
-      // Provide user-friendly error for permission denial
-      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
-        setError('Microphone access is required for voice conversations. Please allow microphone access and try again.');
-      } else {
-        setError(errorMessage);
-      }
-    }
-  }, [conversation, user, profile]);
+    // startSession from hook handles permissions and config
+    await startSession();
+  }, [startSession]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
     try {
-      await conversation.endSession();
+      await endSession();
     } catch (err) {
       console.error('Failed to end session:', err);
     }
-  }, [conversation]);
+  }, [endSession]);
 
   const handleSendMessage = useCallback((): void => {
     const trimmedMessage = inputValue.trim();
