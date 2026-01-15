@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import type { Callbacks } from '@elevenlabs/client';
 import type { TarotDeck, TarotCard } from '../types/tarot';
@@ -43,6 +43,12 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // Get the addRevealedCard action from the store
     const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
+    // Store callbacks in a ref to avoid re-creating clientTools when callbacks change
+    const callbacksRef = useRef(callbacks);
+    useEffect(() => {
+        callbacksRef.current = callbacks;
+    }, [callbacks]);
+
     // Keep ref in sync with state
     useEffect(() => {
         deckRef.current = deck;
@@ -51,12 +57,12 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // ============================================================================
     // Client Tools
     // ============================================================================
-    const clientTools = {
+    const clientTools = useMemo(() => ({
         logMessage: (params: LogMessageParams): string => {
             if (DEBUG) {
                 console.log("[Agent Log]", params.message);
             }
-            callbacks?.onToolLog?.(`[Log] ${params.message}`);
+            callbacksRef.current?.onToolLog?.(`[Log] ${params.message}`);
             return 'Message logged successfully';
         },
         initDeck: (): string => {
@@ -64,11 +70,11 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 const newDeck = createTarotDeck();
                 deckRef.current = newDeck;
                 setDeck(newDeck);
-                callbacks?.onToolLog?.('🎴 Tarot deck initialized with 78 cards (22 Major Arcana + 56 Minor Arcana)');
+                callbacksRef.current?.onToolLog?.('🎴 Tarot deck initialized with 78 cards (22 Major Arcana + 56 Minor Arcana)');
                 return 'Deck initialized successfully with 78 cards';
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
-                callbacks?.onToolLog?.(`❌ Failed to initialize deck: ${errorMessage}`);
+                callbacksRef.current?.onToolLog?.(`❌ Failed to initialize deck: ${errorMessage}`);
                 return `Error: ${errorMessage}`;
             }
         },
@@ -77,17 +83,17 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 const currentDeck = deckRef.current;
                 if (!currentDeck) {
                     const errorMessage = 'No deck has been initialized. Please initialize the deck first.';
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
                 const shuffledDeck = shuffleTarotDeck(currentDeck);
                 deckRef.current = shuffledDeck;
                 setDeck(shuffledDeck);
-                callbacks?.onToolLog?.('🔀 Deck shuffled successfully');
+                callbacksRef.current?.onToolLog?.('🔀 Deck shuffled successfully');
                 return 'Deck shuffled successfully';
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
-                callbacks?.onToolLog?.(`❌ Failed to shuffle deck: ${errorMessage}`);
+                callbacksRef.current?.onToolLog?.(`❌ Failed to shuffle deck: ${errorMessage}`);
                 return `Error: ${errorMessage}`;
             }
         },
@@ -96,7 +102,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 const currentDeck = deckRef.current;
                 if (!currentDeck) {
                     const errorMessage = 'No deck has been initialized. Please initialize the deck first.';
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
 
@@ -104,13 +110,13 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
                 if (numberOfCards < 1) {
                     const errorMessage = 'Number of cards must be at least 1';
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
 
                 if (numberOfCards > currentDeck.length) {
                     const errorMessage = `Cannot draw ${numberOfCards} cards. Only ${currentDeck.length} cards remaining in the deck.`;
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
 
@@ -131,12 +137,12 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                     .join('\n');
 
                 const message = `✨ Drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}:\n${cardsList}\n\nRemaining cards: ${result.remaining.length}`;
-                callbacks?.onToolLog?.(message);
+                callbacksRef.current?.onToolLog?.(message);
 
                 return `Successfully drew ${numberOfCards} card${numberOfCards === 1 ? '' : 's'}. Cards drawn: ${result.drawn.map(c => c.name).join(', ')}. ${result.remaining.length} cards remaining in deck.`;
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
-                callbacks?.onToolLog?.(`❌ Failed to draw cards: ${errorMessage}`);
+                callbacksRef.current?.onToolLog?.(`❌ Failed to draw cards: ${errorMessage}`);
                 return `Error: ${errorMessage}`;
             }
         },
@@ -147,13 +153,13 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
                 if (drawnCards.length === 0) {
                     const errorMessage = 'No cards have been drawn yet. Please draw cards first.';
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
 
                 if (cardIndex < 0 || cardIndex >= drawnCards.length) {
                     const errorMessage = `Invalid card index. Please provide an index between 0 and ${drawnCards.length - 1}.`;
-                    callbacks?.onToolLog?.(`❌ ${errorMessage}`);
+                    callbacksRef.current?.onToolLog?.(`❌ ${errorMessage}`);
                     return `Error: ${errorMessage}`;
                 }
 
@@ -166,15 +172,15 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                     ? `${card.name} (Major Arcana #${card.number})`
                     : `${card.name} (${card.suit})`;
 
-                callbacks?.onToolLog?.(`🔮 Revealing card: ${cardInfo}`);
+                callbacksRef.current?.onToolLog?.(`🔮 Revealing card: ${cardInfo}`);
                 return `Successfully revealed card: ${cardInfo}`;
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
-                callbacks?.onToolLog?.(`❌ Failed to reveal card: ${errorMessage}`);
+                callbacksRef.current?.onToolLog?.(`❌ Failed to reveal card: ${errorMessage}`);
                 return `Error: ${errorMessage}`;
             }
         },
-    };
+    }), [addRevealedCard]);
 
     // ============================================================================
     // SDK Callbacks
@@ -280,7 +286,9 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleUnhandledClientToolCall: NonNullable<Callbacks['onUnhandledClientToolCall']> = useCallback(
         (toolCall) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const name = (toolCall as any).toolName || (toolCall as any).name || 'Unknown Tool';
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const args = (toolCall as any).toolArgs || (toolCall as any).arguments || {};
             const message = `[useTarotReaderAgent][onUnhandledClientToolCall] Received unhandled tool call: ${name}`;
             console.warn(message, args);
@@ -373,7 +381,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 callbacks?.onError?.(errorMessage);
             }
         }
-    }, [agentId, conversation, user, profile, callbacks]);
+    }, [agentId, conversation, user, profile, callbacks, textOnly]);
 
     return {
         conversation,
