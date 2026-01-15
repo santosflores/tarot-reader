@@ -4,7 +4,7 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Mode } from "@elevenlabs/client";
 import { useTarotReaderAgent } from "@/hooks/useTarotReaderAgent";
 import { useElevenLabsAudio } from "@/hooks/useElevenLabsAudio";
@@ -13,7 +13,8 @@ import { useOnboardingStore } from "@/stores/onboardingStore";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useConversationReplay } from "@/hooks/useConversationReplay";
 import { useTypewriter } from "@/hooks/useTypewriter";
-import { ConversationTranscriptItem } from "../../types/elevenlabs.ts";
+import { useStreamingCaptions } from "@/hooks/useStreamingCaptions";
+import type { ConversationTranscriptItem } from "../../types/elevenlabs";
 
 
 // ============================================================================
@@ -43,20 +44,19 @@ export function ElevenLabsOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
-  // Raw text from the agent (Live)
-  const [streamedCaptions, setStreamedCaptions] = useState<string>("");
+
+  // Use the streaming captions hook for ID-based tracking
+  const { captions: streamedCaptions, handleChatResponsePart, clearCaptions } = useStreamingCaptions();
+
   // Text from the agent (Replay)
   const [replayCaptions, setReplayCaptions] = useState<string>("");
-
-  // Refs for ID-based tracking of streamed captions
-  const captionsIdRef = useRef<string | null>(null);
-  const captionsTextRef = useRef<string>("");
 
   // Determine which source to use
   const targetCaptions = isSessionConnected ? streamedCaptions : replayCaptions;
 
   // Smooth typewriter effect for display (50ms per char = ~20 chars/sec, tuned for readability)
   const displayedCaptions = useTypewriter(targetCaptions, 50);
+
 
   // Get user ID and profile from auth context
   // Note: user/profile logic is now inside the hook, but we still need profile for other overlay logic?
@@ -145,19 +145,18 @@ export function ElevenLabsOverlay() {
 
 
   // Callbacks for the ElevenLabs SDK via our custom hook
-  // Callbacks for the ElevenLabs SDK via our custom hook
   const callbacks = {
     onConnect: useCallback(() => {
       setError(null);
       setIsSessionConnected(true);
-      setStreamedCaptions(""); // Reset captions on new session
-    }, []),
+      clearCaptions(); // Reset captions on new session
+    }, [clearCaptions]),
 
     onDisconnect: useCallback(() => {
       setIsSessionConnected(false);
       setAgentMode(null);
-      setStreamedCaptions(""); // Clear captions on disconnect
-    }, []),
+      clearCaptions(); // Clear captions on disconnect
+    }, [clearCaptions]),
 
     onError: useCallback((message: string) => {
       setError(message);
@@ -170,41 +169,8 @@ export function ElevenLabsOverlay() {
       []
     ),
 
-    onAgentChatResponsePart: useCallback(
-      (responsePart: any) => {
-        if (responsePart.type === 'start') {
-          // Generate new ID for this utterance
-          const newId = Math.random().toString(36).substring(7);
-          captionsIdRef.current = newId;
-          captionsTextRef.current = "";
-          setStreamedCaptions("");
-        } else if (responsePart.type === 'delta') {
-          // Only process if we have an active ID
-          if (captionsIdRef.current && responsePart.text) {
-            captionsTextRef.current += responsePart.text;
-            const currentText = captionsTextRef.current;
-            // Update state with confirmed full text
-            setStreamedCaptions(currentText);
-          }
-        } else if (responsePart.type === 'stop') {
-          // Optional: Clear ID or set timeout
-          // We keep the text for now until next start
-          // but we can clear the ID to prevent late deltas
-          captionsIdRef.current = null;
-
-          setTimeout(() => {
-            // Only clear if no new utterance started (ID is still null or changed?)
-            // Actually if we clear here, we might clear the NEXT one if we aren't careful.
-            // Safer to just let the next 'start' clear it, or strict timeout.
-            // For now, let's stick to the simple timeout if we want auto-hide.
-            // But to be robust: we only clear if the text hasn't changed?
-            // Or just clear freely.
-            setStreamedCaptions((prev) => prev === captionsTextRef.current ? "" : prev);
-          }, 5000);
-        }
-      },
-      []
-    ),
+    // Use the hook's handler for streaming captions
+    onAgentChatResponsePart: handleChatResponsePart,
   };
 
   const { conversation, startSession, endSession } = useTarotReaderAgent({
