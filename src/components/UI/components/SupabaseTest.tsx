@@ -6,6 +6,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { useCredits } from "@/stores/creditsStore";
+import { useAuthContext } from "@/hooks/useAuthContext";
 
 type ConnectionStatus = "checking" | "connected" | "error";
 
@@ -13,6 +15,12 @@ export const SupabaseTest = () => {
   const [status, setStatus] = useState<ConnectionStatus>("checking");
   const [message, setMessage] = useState("Checking connection...");
   const [serverTime, setServerTime] = useState<string | null>(null);
+  const { user } = useAuthContext();
+  const { startSessionTimer, endSessionTimer, deductCreditsForSession, refreshBalance } = useCredits();
+  const [isFakeSession, setIsFakeSession] = useState(false);
+  const [testLog, setTestLog] = useState<string[]>([]);
+
+  const addLog = (msg: string) => setTestLog(prev => [msg, ...prev].slice(0, 3));
 
   useEffect(() => {
     testConnection();
@@ -62,6 +70,45 @@ export const SupabaseTest = () => {
       } else {
         setMessage("Connection failed");
       }
+    }
+  };
+  const handleStartFakeSession = () => {
+    startSessionTimer();
+    setIsFakeSession(true);
+    addLog("Fake session started...");
+  };
+
+  const handleEndFakeSession = async () => {
+    const duration = endSessionTimer();
+    setIsFakeSession(false);
+    addLog(`Fake session ended. Duration: ${duration}s`);
+
+    if (user) {
+      addLog(`Deducting credits for ${duration}s...`);
+      const result = await deductCreditsForSession(user.id, duration);
+      if (result.success) {
+        addLog(`Deduction success! New balance: ${result.newBalance}`);
+      } else {
+        addLog(`Deduction failed: ${result.error}`);
+      }
+    } else {
+      addLog("No user found for deduction");
+    }
+  };
+
+  const grantTestCredits = async () => {
+    if (!user) return;
+    addLog("Granting 100 test credits...");
+    const { error } = await supabase.rpc('add_credits', {
+      p_user_id: user.id,
+      p_amount: 100,
+      p_description: 'Admin test grant'
+    });
+    if (error) {
+      addLog(`Grant failed: ${error.message}`);
+    } else {
+      addLog("Credits granted!");
+      refreshBalance(user.id);
     }
   };
 
@@ -125,6 +172,45 @@ export const SupabaseTest = () => {
           {import.meta.env.VITE_SUPABASE_ANON_KEY
             ? "••••••" + import.meta.env.VITE_SUPABASE_ANON_KEY.slice(-6)
             : "Not set"}
+        </div>
+      </div>
+
+      {/* Credit System Tester */}
+      <div className="mt-4 pt-4 border-t border-purple-500/20">
+        <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Credits Debugger</h4>
+
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {!isFakeSession ? (
+            <button
+              onClick={handleStartFakeSession}
+              className="px-3 py-1.5 text-xs font-medium bg-green-900/40 hover:bg-green-800/60 border border-green-500/30 text-green-300 rounded transition-colors"
+            >
+              ▶️ Start Fake Session
+            </button>
+          ) : (
+            <button
+              onClick={handleEndFakeSession}
+              className="px-3 py-1.5 text-xs font-medium bg-red-900/40 hover:bg-red-800/60 border border-red-500/30 text-red-300 rounded transition-colors animate-pulse"
+            >
+              ⏹️ End Fake Session
+            </button>
+          )}
+
+          <button
+            onClick={grantTestCredits}
+            className="px-3 py-1.5 text-xs font-medium bg-yellow-900/40 hover:bg-yellow-800/60 border border-yellow-500/30 text-yellow-300 rounded transition-colors"
+          >
+            💰 +100 Credits
+          </button>
+        </div>
+
+        {/* Test Log */}
+        <div className="space-y-1">
+          {testLog.map((log, i) => (
+            <div key={i} className="text-[10px] text-gray-400 font-mono truncate">
+              &gt; {log}
+            </div>
+          ))}
         </div>
       </div>
     </CollapsibleSection>

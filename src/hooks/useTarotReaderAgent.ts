@@ -6,6 +6,7 @@ import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../
 import { isMajorArcana } from '../types/tarot';
 import { useRevealedCard } from '../hooks/useRevealedCard';
 import { useAuthContext } from '../hooks/useAuthContext';
+import { useCredits } from '../stores/creditsStore';
 import { supabase } from '@/lib/supabase';
 import type {
     AgentCallbacks,
@@ -36,6 +37,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const drawnCardsRef = useRef<TarotCard[]>([]);
     // Store current conversation ID for session tracking
     const currentConversationIdRef = useRef<string | null>(null);
+    // Track session start time for credit deduction
+    const sessionStartTimeRef = useRef<number | null>(null);
 
     // Get user ID and profile from auth context
     const { user, profile } = useAuthContext();
@@ -48,6 +51,12 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     useEffect(() => {
         callbacksRef.current = callbacks;
     }, [callbacks]);
+
+    // Get store actions
+    const startSessionTimer = useCredits((state) => state.startSessionTimer);
+    const endSessionTimer = useCredits((state) => state.endSessionTimer);
+    const deductCreditsForSession = useCredits((state) => state.deductCreditsForSession);
+    const canStartSession = useCredits((state) => state.canStartSession);
 
     // Keep ref in sync with state
     useEffect(() => {
@@ -194,9 +203,15 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         deckRef.current = null;
         setDeck(null);
         drawnCardsRef.current = [];
+        // Record session start time for credit calculation
+        sessionStartTimeRef.current = Date.now();
+
+        // Start the session timer in the store (for UI chronometer)
+        if (DEBUG) console.log('[useTarotReaderAgent] Starting session timer (onConnect)');
+        startSessionTimer();
 
         callbacks?.onConnect?.();
-    }, [callbacks]);
+    }, [callbacks, startSessionTimer]);
 
     const saveSession = useCallback(async (conversationId: string) => {
         try {
@@ -216,6 +231,36 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             console.log('[useTarotReaderAgent][onDisconnect]');
         }
 
+        // Calculate session duration and deduct credits
+        if (sessionStartTimeRef.current && user?.id) {
+            const durationSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+            if (DEBUG) {
+                console.log(`[useTarotReaderAgent] Session duration: ${durationSeconds}s`);
+                console.log(`[useTarotReaderAgent] Deducting credits for user: ${user.id}`);
+            }
+            // Deduct credits asynchronously (don't block disconnect)
+            deductCreditsForSession(
+                user.id,
+                durationSeconds,
+                currentConversationIdRef.current || undefined
+            ).then(result => {
+                if (DEBUG) {
+                    console.log('[useTarotReaderAgent] Credit deduction result:', result);
+                }
+            }).catch(err => {
+                console.error('[useTarotReaderAgent] Credit deduction failed:', err);
+            });
+            sessionStartTimeRef.current = null;
+        } else {
+            if (DEBUG) {
+                console.warn('[useTarotReaderAgent] Skipping credit deduction. StartTime:', sessionStartTimeRef.current, 'User:', user?.id);
+            }
+        }
+
+        // End the session timer in the store (stops UI chronometer)
+        if (DEBUG) console.log('[useTarotReaderAgent] Ending session timer');
+        endSessionTimer();
+
         // Trigger save session if we have an ID
         if (currentConversationIdRef.current) {
             saveSession(currentConversationIdRef.current);
@@ -223,7 +268,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         }
 
         callbacks?.onDisconnect?.();
-    }, [callbacks, saveSession]);
+    }, [callbacks, saveSession, user, deductCreditsForSession, endSessionTimer]);
 
     const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
         (payload) => {
@@ -286,10 +331,9 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleUnhandledClientToolCall: NonNullable<Callbacks['onUnhandledClientToolCall']> = useCallback(
         (toolCall) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const name = (toolCall as any).toolName || (toolCall as any).name || 'Unknown Tool';
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const args = (toolCall as any).toolArgs || (toolCall as any).arguments || {};
+            const toolCallUnknown = toolCall as unknown as Record<string, unknown>;
+            const name = (toolCallUnknown.toolName as string) || (toolCallUnknown.name as string) || 'Unknown Tool';
+            const args = (toolCallUnknown.toolArgs as Record<string, unknown>) || (toolCallUnknown.arguments as Record<string, unknown>) || {};
             const message = `[useTarotReaderAgent][onUnhandledClientToolCall] Received unhandled tool call: ${name}`;
             console.warn(message, args);
             callbacks?.onToolLog?.(`⚠️ ${message}`);
@@ -340,11 +384,18 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // Helper Functions
     // ============================================================================
 
-    const startSession = useCallback(async () => {
+    const startSession = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
         if (!agentId) {
             const msg = 'Agent ID is not configured. Set VITE_ELEVENLABS_AGENT_ID in your environment.';
             callbacks?.onError?.(msg);
-            return;
+            return { success: false, error: msg };
+        }
+
+        // Check if user has enough credits
+        if (!canStartSession()) {
+            const msg = 'Insufficient credits to start a session.';
+            callbacks?.onError?.(msg);
+            return { success: false, error: 'INSUFFICIENT_CREDITS' };
         }
 
         try {
@@ -366,20 +417,28 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
             });
 
+            // Set session start time as a fallback if onConnect doesn't fire immediately
+            if (!sessionStartTimeRef.current) {
+                if (DEBUG) console.log('[useTarotReaderAgent] Setting session start time in startSession (fallback)');
+                sessionStartTimeRef.current = Date.now();
+                startSessionTimer();
+            }
+
             currentConversationIdRef.current = conversationId;
 
             await conversation.setVolume({ volume: 0.8 });
+
+            return { success: true };
 
         } catch (err) {
             const errorMessage = getErrorMessage(err);
             // Provide user-friendly error for permission denial
             if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
                 callbacks?.onError?.('Microphone access is required for voice conversations. Please allow microphone access and try again.');
-                // Also set explicit error if the callback doesn't handle UI state updates fully? 
-                // We rely on the `onError` callback to propagate this to the UI.
             } else {
                 callbacks?.onError?.(errorMessage);
             }
+            return { success: false, error: errorMessage };
         }
     }, [agentId, conversation, user, profile, callbacks, textOnly]);
 
