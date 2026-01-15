@@ -46,6 +46,12 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // Get the addRevealedCard action from the store
     const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
+    // Get store actions
+    const startSessionTimer = useCredits((state) => state.startSessionTimer);
+    const endSessionTimer = useCredits((state) => state.endSessionTimer);
+    const deductCreditsForSession = useCredits((state) => state.deductCreditsForSession);
+    const canStartSession = useCredits((state) => state.canStartSession);
+
     // Keep ref in sync with state
     useEffect(() => {
         deckRef.current = deck;
@@ -193,11 +199,13 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         drawnCardsRef.current = [];
         // Record session start time for credit calculation
         sessionStartTimeRef.current = Date.now();
+
         // Start the session timer in the store (for UI chronometer)
-        useCredits.getState().startSessionTimer();
+        if (DEBUG) console.log('[useTarotReaderAgent] Starting session timer (onConnect)');
+        startSessionTimer();
 
         callbacks?.onConnect?.();
-    }, [callbacks]);
+    }, [callbacks, startSessionTimer]);
 
     const saveSession = useCallback(async (conversationId: string) => {
         try {
@@ -222,9 +230,10 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             const durationSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
             if (DEBUG) {
                 console.log(`[useTarotReaderAgent] Session duration: ${durationSeconds}s`);
+                console.log(`[useTarotReaderAgent] Deducting credits for user: ${user.id}`);
             }
             // Deduct credits asynchronously (don't block disconnect)
-            useCredits.getState().deductCreditsForSession(
+            deductCreditsForSession(
                 user.id,
                 durationSeconds,
                 currentConversationIdRef.current || undefined
@@ -232,12 +241,19 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 if (DEBUG) {
                     console.log('[useTarotReaderAgent] Credit deduction result:', result);
                 }
+            }).catch(err => {
+                console.error('[useTarotReaderAgent] Credit deduction failed:', err);
             });
             sessionStartTimeRef.current = null;
+        } else {
+            if (DEBUG) {
+                console.warn('[useTarotReaderAgent] Skipping credit deduction. StartTime:', sessionStartTimeRef.current, 'User:', user?.id);
+            }
         }
 
         // End the session timer in the store (stops UI chronometer)
-        useCredits.getState().endSessionTimer();
+        if (DEBUG) console.log('[useTarotReaderAgent] Ending session timer');
+        endSessionTimer();
 
         // Trigger save session if we have an ID
         if (currentConversationIdRef.current) {
@@ -246,7 +262,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         }
 
         callbacks?.onDisconnect?.();
-    }, [callbacks, saveSession, user]);
+    }, [callbacks, saveSession, user, deductCreditsForSession, endSessionTimer]);
 
     const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
         (payload) => {
@@ -309,8 +325,9 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
     const handleUnhandledClientToolCall: NonNullable<Callbacks['onUnhandledClientToolCall']> = useCallback(
         (toolCall) => {
-            const name = (toolCall as any).toolName || (toolCall as any).name || 'Unknown Tool';
-            const args = (toolCall as any).toolArgs || (toolCall as any).arguments || {};
+            const toolCallUnknown = toolCall as unknown as Record<string, unknown>;
+            const name = (toolCallUnknown.toolName as string) || (toolCallUnknown.name as string) || 'Unknown Tool';
+            const args = (toolCallUnknown.toolArgs as Record<string, unknown>) || (toolCallUnknown.arguments as Record<string, unknown>) || {};
             const message = `[useTarotReaderAgent][onUnhandledClientToolCall] Received unhandled tool call: ${name}`;
             console.warn(message, args);
             callbacks?.onToolLog?.(`⚠️ ${message}`);
@@ -369,7 +386,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         }
 
         // Check if user has enough credits
-        if (!useCredits.getState().canStartSession()) {
+        if (!canStartSession()) {
             const msg = 'Insufficient credits to start a session.';
             callbacks?.onError?.(msg);
             return { success: false, error: 'INSUFFICIENT_CREDITS' };
@@ -393,6 +410,13 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 userId: user?.id,
                 dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
             });
+
+            // Set session start time as a fallback if onConnect doesn't fire immediately
+            if (!sessionStartTimeRef.current) {
+                if (DEBUG) console.log('[useTarotReaderAgent] Setting session start time in startSession (fallback)');
+                sessionStartTimeRef.current = Date.now();
+                startSessionTimer();
+            }
 
             currentConversationIdRef.current = conversationId;
 
