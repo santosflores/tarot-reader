@@ -107,14 +107,11 @@ serve(async (req: Request) => {
       });
     }
 
-    // Get the audio blob
-    const audioBlob = await elevenlabsResponse.blob();
-    
     // Determine content type from response or default to audio/mpeg
     const contentType = elevenlabsResponse.headers.get('content-type') || 'audio/mpeg';
 
-    // Return the audio blob with appropriate headers
-    return new Response(audioBlob, {
+    // Return the audio stream directly with appropriate headers
+    return new Response(elevenlabsResponse.body, {
       status: 200,
       headers: {
         ...corsHeaders,
