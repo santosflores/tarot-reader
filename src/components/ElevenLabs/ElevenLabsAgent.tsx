@@ -6,7 +6,7 @@
  * @see https://elevenlabs.io/docs/agents-platform/libraries/react
  */
 
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useRef, useMemo } from 'react';
 import type { Status, Mode } from '@elevenlabs/client';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useTarotReaderAgent } from '../../hooks/useTarotReaderAgent';
@@ -86,6 +86,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
         <div className="flex space-x-2">
           {!isConnected ? (
             <button
+              type="button"
               onClick={onStart}
               disabled={disabled || isConnecting}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
@@ -94,6 +95,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
             </button>
           ) : (
             <button
+              type="button"
               onClick={onEnd}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
@@ -138,6 +140,7 @@ function MessageInput({ value, onChange, onSend, disabled }: MessageInputProps) 
           disabled={disabled}
         />
         <button
+          type="button"
           onClick={onSend}
           disabled={!value.trim() || disabled}
           className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
@@ -185,87 +188,68 @@ export function ElevenLabsAgent() {
 
 
   // Callbacks for the ElevenLabs SDK via our custom hook
-  const callbacks = {
-    onConnect: useCallback(() => {
+  const callbacks = useMemo(() => ({
+    onConnect: () => {
       setError(null);
       setIsSessionConnected(true);
       addMessage('system', 'Connected to agent');
-    }, [addMessage]),
+    },
 
-    onDisconnect: useCallback(() => {
+    onDisconnect: () => {
       setIsSessionConnected(false);
       setAgentMode(null);
       addMessage('system', 'Disconnected from agent');
-    }, [addMessage]),
+    },
 
-    onMessage: useCallback(
-      (payload: { source: 'user' | 'ai'; message: string }) => {
-        if (payload.source === 'ai') { // 'role' in raw SDK is 'agent' or 'ai', useConversation often normalizes or passes raw. 
-          // Check SDK types: The raw uses 'agent', but our hook might just pass it through.
-          // Let's assume the payload matches what we had before roughly or normalized.
-          // Actually, useTarotReaderAgent passes the raw payload from onMessage.
-          // The previous code checked `payload.role === 'agent'`.
-
-          if ((payload as any).role === 'agent' || (payload as any).role === 'ai') {
-            // Check if this message was already handled via streaming
-            if (wasHandledViaStreaming()) {
-              return;
-            }
-            // Non-streamed response, add it
-            addMessage('agent', payload.message);
+    onMessage: (payload: { source: 'user' | 'ai'; message: string }) => {
+      if (payload.source === 'ai') {
+        const payloadWithRole = payload as unknown as { role?: string };
+        if (payloadWithRole.role === 'agent' || payloadWithRole.role === 'ai') {
+          // Check if this message was already handled via streaming
+          if (wasHandledViaStreaming()) {
+            return;
           }
+          // Non-streamed response, add it
+          addMessage('agent', payload.message);
         }
-      },
-      [addMessage, wasHandledViaStreaming]
-    ),
+      }
+    },
 
-    onError: useCallback((message: string) => {
+    onError: (message: string) => {
       setError(message);
-    }, []),
+    },
 
-    onStatusChange: useCallback(
-      ({ status }: { status: Status }) => {
-        // Status handled via conversation object usually, but can log if needed
-        console.log('Status change:', status);
-      },
-      []
-    ),
+    onStatusChange: ({ status }: { status: Status }) => {
+      console.log('Status change:', status);
+    },
 
-    onModeChange: useCallback(
-      ({ mode }: { mode: Mode }) => {
-        setAgentMode(mode);
-      },
-      []
-    ),
+    onModeChange: ({ mode }: { mode: Mode }) => {
+      setAgentMode(mode);
+    },
 
-    // Wire up tool logs to system messages in chat
-    onToolLog: useCallback((message: string) => {
+    onToolLog: (message: string) => {
       addMessage('system', message);
       console.log('Tool log:', message);
-    }, [addMessage]),
+    },
 
-    // Wire up streaming
-    onAgentChatResponsePart: useCallback(
-      (responsePart: any) => {
-        if (!responsePart) return;
+    onAgentChatResponsePart: (responsePart: { type: string; text?: string }) => {
+      if (!responsePart) return;
 
-        switch (responsePart.type) {
-          case 'start':
-            startStreamingMessage();
-            break;
-          case 'delta':
-            if (responsePart.text) {
-              appendStreamingText(responsePart.text);
-            }
-            break;
-          case 'stop':
-            finalizeStreamingMessage();
-            break;
-        }
-      },
-      [startStreamingMessage, appendStreamingText, finalizeStreamingMessage]
-    ),
-  };
+      switch (responsePart.type) {
+        case 'start':
+          startStreamingMessage();
+          break;
+        case 'delta':
+          if (responsePart.text) {
+            appendStreamingText(responsePart.text);
+          }
+          break;
+        case 'stop':
+          finalizeStreamingMessage();
+          break;
+      }
+    },
+  }), [addMessage, startStreamingMessage, appendStreamingText, finalizeStreamingMessage, wasHandledViaStreaming]);
 
   const { conversation, startSession, endSession } = useTarotReaderAgent({
     agentId: AGENT_ID,
