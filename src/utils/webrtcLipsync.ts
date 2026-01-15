@@ -66,8 +66,10 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   const maxVisemeDuration = 100;
 
   // History for smoothing
-  const history: AudioFeatures[] = [];
   const historySize = 10;
+  const historyBuffer: AudioFeatures[] = new Array(historySize);
+  let historyIndex = 0;
+  let historyCount = 0;
 
   // Frequency bands (same as wawa-lipsync)
   const bands = [
@@ -105,7 +107,8 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       binWidth = sampleRate / analyser.fftSize;
 
       connected = true;
-      history.length = 0;
+      historyIndex = 0;
+      historyCount = 0;
       visemeStartTime = performance.now();
 
       if (audioContext.state === "suspended") {
@@ -141,7 +144,8 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     dataArray = null;
     connected = false;
     currentViseme = VISEMES.sil;
-    history.length = 0;
+    historyIndex = 0;
+    historyCount = 0;
   };
 
   const isConnected = (): boolean => connected;
@@ -186,8 +190,9 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
 
     // Calculate delta bands (change from previous)
     const deltaBands = bandEnergies.map((energy, idx) => {
-      if (history.length < 2) return 0;
-      const prev = history[history.length - 2].bands[idx];
+      if (historyCount < 2) return 0;
+      const prevIndex = (historyIndex - 2 + historySize) % historySize;
+      const prev = historyBuffer[prevIndex].bands[idx];
       return energy - prev;
     });
 
@@ -200,9 +205,10 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
 
     // Update history
     if (totalEnergy > 0) {
-      history.push(features);
-      if (history.length > historySize) {
-        history.shift();
+      historyBuffer[historyIndex] = features;
+      historyIndex = (historyIndex + 1) % historySize;
+      if (historyCount < historySize) {
+        historyCount++;
       }
     }
 
@@ -210,7 +216,6 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   };
 
   const getAveragedFeatures = (): AudioFeatures => {
-    const count = history.length;
     const result: AudioFeatures = {
       volume: 0,
       centroid: 0,
@@ -218,16 +223,17 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       deltaBands: Array(bands.length).fill(0),
     };
 
-    for (const h of history) {
+    for (let i = 0; i < historyCount; i++) {
+      const h = historyBuffer[i];
       result.volume += h.volume;
       result.centroid += h.centroid;
-      h.bands.forEach((b, i) => (result.bands[i] += b));
+      h.bands.forEach((b, k) => (result.bands[k] += b));
     }
 
-    if (count > 0) {
-      result.volume /= count;
-      result.centroid /= count;
-      result.bands = result.bands.map((b) => b / count);
+    if (historyCount > 0) {
+      result.volume /= historyCount;
+      result.centroid /= historyCount;
+      result.bands = result.bands.map((b) => b / historyCount);
     }
 
     return result;
