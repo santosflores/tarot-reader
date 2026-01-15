@@ -160,8 +160,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
         Math.round(end / binWidth),
         dataArray!.length - 1
       );
-      const slice = Array.from(dataArray!.slice(startBin, endBin));
-      return average(slice) / 255;
+
+      let sum = 0;
+      for (let i = startBin; i < endBin; i++) {
+        sum += dataArray![i];
+      }
+      const count = endBin - startBin;
+      const avg = count > 0 ? sum / count : 0;
+      return avg / 255;
     });
 
     // Calculate spectral centroid
