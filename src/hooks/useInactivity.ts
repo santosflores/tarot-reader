@@ -13,7 +13,7 @@ interface UseInactivityOptions {
 
 export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'] }: UseInactivityOptions) {
   const [isInactive, setIsInactive] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTimer = useCallback(() => {
     setIsInactive(false);
@@ -36,7 +36,7 @@ export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keyp
 
     // Add event listeners
     events.forEach((event) => {
-      window.addEventListener(event, throttledResetTimer, { passive: true });
+      globalThis.addEventListener(event, throttledResetTimer, { passive: true });
     });
 
     // Cleanup
@@ -45,7 +45,7 @@ export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keyp
         clearTimeout(timeoutRef.current);
       }
       events.forEach((event) => {
-        window.removeEventListener(event, throttledResetTimer);
+        globalThis.removeEventListener(event, throttledResetTimer);
       });
     };
   }, [delay, events, throttledResetTimer]);
