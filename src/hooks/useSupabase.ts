@@ -170,10 +170,15 @@ export const useUserProfile = (userId?: string) => {
 };
 
 /**
+ * Table names available in the public schema
+ */
+type PublicTableName = 'user_profiles' | 'transactions';
+
+/**
  * Generic hook for Supabase table queries
  */
 export const useSupabaseQuery = <T>(
-  tableName: string,
+  tableName: PublicTableName,
   options?: {
     select?: string;
     filter?: { column: string; value: unknown };
@@ -198,7 +203,7 @@ export const useSupabaseQuery = <T>(
     try {
       let query = supabase.from(tableName).select(select ?? '*');
 
-      if (filterColumn && filterValue !== undefined) {
+      if (filterColumn && filterValue) {
         query = query.eq(filterColumn, filterValue);
       }
 
