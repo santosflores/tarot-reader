@@ -1,5 +1,5 @@
 
-import { describe, it, expect, bench } from 'vitest';
+import { describe, it } from 'vitest';
 
 // Types needed for the benchmark
 interface AudioFeatures {
@@ -57,8 +57,8 @@ class HistoryArray {
   }
 
   getPrevious(offset: number): AudioFeatures | undefined {
-      if (this.history.length < offset) return undefined;
-      return this.history[this.history.length - offset];
+    if (this.history.length < offset) return undefined;
+    return this.history[this.history.length - offset];
   }
 }
 
@@ -91,27 +91,27 @@ class HistoryRingBuffer {
     };
 
     for (let i = 0; i < this.count; i++) {
-        // We can optimize iteration by not caring about order,
-        // since average is commutative.
-        // But if we needed order we'd have to be careful.
-        // For average, we just need to iterate over valid items.
-        // However, since the buffer might not be full, we iterate 0..count-1?
-        // No, the items are scattered if wrapped.
+      // We can optimize iteration by not caring about order,
+      // since average is commutative.
+      // But if we needed order we'd have to be careful.
+      // For average, we just need to iterate over valid items.
+      // However, since the buffer might not be full, we iterate 0..count-1?
+      // No, the items are scattered if wrapped.
 
-        // Actually simplest way to iterate valid items:
-        // If not full: 0 to count-1
-        // If full: 0 to size-1
+      // Actually simplest way to iterate valid items:
+      // If not full: 0 to count-1
+      // If full: 0 to size-1
 
-        // But wait, if we are using a ring buffer, the data is always in `this.buffer`
-        // at indices logic.
-        // If count < size, valid indices are 0 to count-1.
-        // If count == size, valid indices are 0 to size-1.
-        // So we can just iterate the buffer up to `this.count`.
+      // But wait, if we are using a ring buffer, the data is always in `this.buffer`
+      // at indices logic.
+      // If count < size, valid indices are 0 to count-1.
+      // If count == size, valid indices are 0 to size-1.
+      // So we can just iterate the buffer up to `this.count`.
 
-        const h = this.buffer[i];
-        result.volume += h.volume;
-        result.centroid += h.centroid;
-        h.bands.forEach((b, k) => (result.bands[k] += b));
+      const h = this.buffer[i];
+      result.volume += h.volume;
+      result.centroid += h.centroid;
+      h.bands.forEach((b, k) => (result.bands[k] += b));
     }
 
     if (this.count > 0) {
@@ -127,16 +127,16 @@ class HistoryRingBuffer {
   // history.length is this.count.
   // The most recent item was added at `index - 1` (modulo size).
   getPrevious(offset: number): AudioFeatures | undefined {
-      if (this.count < offset) return undefined;
+    if (this.count < offset) return undefined;
 
-      // index points to next write.
-      // current head (newest) is at index - 1.
-      // previous (offset 2) is at index - 2.
+    // index points to next write.
+    // current head (newest) is at index - 1.
+    // previous (offset 2) is at index - 2.
 
-      let ptr = this.index - offset;
-      if (ptr < 0) ptr += this.size;
+    let ptr = this.index - offset;
+    if (ptr < 0) ptr += this.size;
 
-      return this.buffer[ptr];
+    return this.buffer[ptr];
   }
 }
 

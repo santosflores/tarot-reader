@@ -17,20 +17,20 @@ describe('useInactivity Benchmark', () => {
 
   it('should measure resetTimer calls on rapid events', () => {
     const events = ['mousemove'];
-    const { result } = renderHook(() => useInactivity({ delay: 5000, events }));
+    renderHook(() => useInactivity({ delay: 5000, events }));
 
     const eventCount = 1000;
 
     // Simulate rapid events
     act(() => {
       for (let i = 0; i < eventCount; i++) {
-        window.dispatchEvent(new Event('mousemove'));
+        globalThis.dispatchEvent(new Event('mousemove'));
         // Advance time slightly to simulate real world, but less than delay
         vi.advanceTimersByTime(1);
       }
     });
 
-    const clearTimeoutCount = vi.mocked(window.clearTimeout).mock.calls.length;
+    const clearTimeoutCount = vi.mocked(globalThis.clearTimeout).mock.calls.length;
     console.log(`[Benchmark] clearTimeout called ${clearTimeoutCount} times for ${eventCount} events`);
 
     // With throttling, it should be called much less often.

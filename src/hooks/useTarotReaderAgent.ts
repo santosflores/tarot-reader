@@ -440,7 +440,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             }
             return { success: false, error: errorMessage };
         }
-    }, [agentId, conversation, user, profile, callbacks, textOnly]);
+    }, [agentId, conversation, user, profile, callbacks, textOnly, canStartSession, startSessionTimer]);
 
     return {
         conversation,

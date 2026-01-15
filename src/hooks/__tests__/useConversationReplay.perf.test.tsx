@@ -1,6 +1,6 @@
 
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useConversationReplay } from "../useConversationReplay";
 import * as useChatbotModule from "@/hooks/useChatbot";
 import * as elevenlabsApi from "@/utils/elevenlabsApi";
@@ -23,7 +23,16 @@ describe("useConversationReplay Performance", () => {
   const mockSetupAudioPlayer = vi.fn();
   const mockPlayAudio = vi.fn();
 
-  let mockAudioPlayer: any;
+  let mockAudioPlayer: {
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+    play: ReturnType<typeof vi.fn>;
+    pause: ReturnType<typeof vi.fn>;
+    currentTime: number;
+    readonly duration: number;
+    src: string;
+    trigger: (event: string) => void;
+  };
   let durationAccessCount = 0;
 
   beforeEach(() => {
@@ -31,7 +40,7 @@ describe("useConversationReplay Performance", () => {
     durationAccessCount = 0;
 
     // Create a mock audio player with event listener support and duration spy
-    const listeners: Record<string, Function[]> = {};
+    const listeners: Record<string, (() => void)[]> = {};
 
     mockAudioPlayer = {
       addEventListener: vi.fn((event, callback) => {
@@ -58,7 +67,7 @@ describe("useConversationReplay Performance", () => {
       }
     };
 
-    (useChatbotModule.useChatbot as any).mockReturnValue({
+    (useChatbotModule.useChatbot as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       setupAudioPlayer: mockSetupAudioPlayer,
       playAudio: mockPlayAudio,
       audioPlayer: mockAudioPlayer,
@@ -68,7 +77,7 @@ describe("useConversationReplay Performance", () => {
       setActiveReplayId: mockSetActiveReplayId,
     });
 
-    (elevenlabsApi.fetchConversationDetails as any).mockResolvedValue({
+    (elevenlabsApi.fetchConversationDetails as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       has_audio: true,
       has_response_audio: true,
       transcript: [
@@ -77,8 +86,8 @@ describe("useConversationReplay Performance", () => {
       ]
     });
 
-    (elevenlabsApi.fetchConversationAudio as any).mockResolvedValue(new Blob([]));
-    (elevenlabsApi.createAudioUrlFromBlob as any).mockReturnValue("blob:url");
+    (elevenlabsApi.fetchConversationAudio as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(new Blob([]));
+    (elevenlabsApi.createAudioUrlFromBlob as unknown as ReturnType<typeof vi.fn>).mockReturnValue("blob:url");
   });
 
   it("should NOT access duration property on timeupdate (Optimized Behavior)", async () => {
@@ -112,7 +121,7 @@ describe("useConversationReplay Performance", () => {
 
     // Trigger durationchange
     act(() => {
-        mockAudioPlayer.trigger("durationchange");
+      mockAudioPlayer.trigger("durationchange");
     });
 
     expect(durationAccessCount).toBeGreaterThan(initialCount);
