@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+
 interface PricingTierProps {
     name: string;
     price: string;
@@ -7,10 +8,9 @@ interface PricingTierProps {
     features: string[];
     isPopular?: boolean;
     color: string;
-    billingCycle: 'monthly' | 'yearly';
 }
 
-const PricingTier = ({ name, price, credits, features, isPopular, color, billingCycle }: PricingTierProps) => {
+const PricingTier = ({ name, price, credits, features, isPopular, color }: PricingTierProps) => {
     return (
         <div className={`relative p-8 rounded-2xl border ${isPopular ? 'border-purple-500/50 bg-slate-800/60' : 'border-slate-700/50 bg-slate-900/40'} backdrop-blur-md flex flex-col transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-900/20 group`}>
 
@@ -27,10 +27,10 @@ const PricingTier = ({ name, price, credits, features, isPopular, color, billing
                 <h3 className={`text-xl font-bold text-${color}-400 mb-2 uppercase tracking-wider`}>{name}</h3>
                 <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-bold text-white">${price}</span>
-                    <span className="text-slate-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                    <span className="text-slate-400">/ pack</span>
                 </div>
                 <div className="mt-4 inline-block bg-slate-800/80 px-4 py-1 rounded-lg border border-slate-700/50">
-                    <span className={`text-${color}-300 font-bold`}>{credits} Credits / mo</span>
+                    <span className={`text-${color}-300 font-bold`}>{credits} Credits</span>
                 </div>
             </div>
 
@@ -45,62 +45,57 @@ const PricingTier = ({ name, price, credits, features, isPopular, color, billing
 
             <button className={`w-full py-4 rounded-xl font-bold transition-all duration-300 relative overflow-hidden group/btn ${isPopular ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-lg hover:shadow-purple-500/25 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'}`}>
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                    Start Membership <span className="text-lg">→</span>
+                    Purchase Pack <span className="text-lg">→</span>
                 </span>
                 {isPopular && <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />}
             </button>
 
             <p className="text-center text-xs text-slate-500 mt-3 relative z-10">
-                {billingCycle === 'yearly' ? 'Billed annually' : 'Billed monthly'}
+                Credits never expire
             </p>
         </div>
     );
 };
 
 export function PricingTable() {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
     const tiers = [
         {
-            name: "Apprentice",
-            monthlyPrice: "9.99",
-            yearlyPrice: "99.99",
-            credits: 100,
+            name: "Spark",
+            price: "4.99",
+            credits: 500,
             color: "blue",
             features: [
-                "10 Minutes of Insight / mo",
-                "Basic Interpretation",
-                "Standard Avatar Mode",
-                "Save 5 Readings"
+                "~50 Minutes of Insight",
+                "Full 3D Avatar Experience",
+                "Save Conversation History",
+                "Access to All Reading Modes"
             ]
         },
         {
-            name: "Mystic",
-            monthlyPrice: "29.99",
-            yearlyPrice: "299.99",
-            credits: 350,
+            name: "Cosmic",
+            price: "14.99",
+            credits: 2000,
             color: "purple",
             isPopular: true,
             features: [
-                "35 Minutes of Wisdom / mo",
-                "Deep Psychic Connection",
+                "~200 Minutes of Wisdom",
                 "Full 3D Avatar Experience",
-                "Unlimited Saved Readings",
-                "Priority Access"
+                "Save Conversation History",
+                "Access to All Reading Modes",
+                "33% Bonus Credits"
             ]
         },
         {
-            name: "Oracle",
-            monthlyPrice: "79.99",
-            yearlyPrice: "799.99",
-            credits: 1000,
+            name: "Infinity",
+            price: "29.99",
+            credits: 5000,
             color: "amber",
             features: [
-                "100 Minutes of Enlightenment / mo",
-                "Master Level Interpretation",
-                "Exclusive 'Void' Mode",
-                "Future Predictions Report",
-                "Direct Channel Access"
+                "~500 Minutes of Enlightenment",
+                "Full 3D Avatar Experience",
+                "Save Conversation History",
+                "Access to All Reading Modes",
+                "66% Bonus Credits"
             ]
         }
     ];
@@ -114,22 +109,8 @@ export function PricingTable() {
                     Invest in Your Destiny
                 </h2>
                 <p className="text-slate-400 max-w-xl mx-auto text-lg mb-8">
-                    Knowledge is power. Clarity is priceless. Choose the vessel for your journey.
+                    Knowledge is power. Clarity is priceless. Top up your energy whenever you need.
                 </p>
-
-                {/* Billing Toggle */}
-                <div className="flex items-center justify-center gap-4">
-                    <span className={`text-sm font-medium transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-slate-500'}`}>Monthly</span>
-                    <button
-                        onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                        className="w-14 h-8 bg-slate-800 rounded-full p-1 relative border border-slate-700 transition-colors hover:border-purple-500/50"
-                    >
-                        <div className={`w-6 h-6 bg-purple-500 rounded-full shadow-md transform transition-transform duration-300 ${billingCycle === 'yearly' ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
-                    <span className={`text-sm font-medium transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-slate-500'}`}>
-                        Yearly <span className="text-purple-400 text-xs ml-1">(Save ~15%)</span>
-                    </span>
-                </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
@@ -137,15 +118,12 @@ export function PricingTable() {
                     <PricingTier
                         key={tier.name}
                         {...tier}
-                        price={billingCycle === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice}
-                        billingCycle={billingCycle}
                     />
                 ))}
             </div>
 
             <div className="mt-12 text-center text-slate-500 text-sm max-w-2xl mx-auto italic">
                 * "Minutes" are approximate based on a standard 10 credits/minute burn rate.
-                Unused credits roll over up to 2x your monthly limit.
             </div>
         </section>
     );

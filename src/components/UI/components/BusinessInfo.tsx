@@ -81,8 +81,8 @@ export function BusinessInfo() {
                                 <div className="flex gap-4">
                                     <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm shrink-0">1</div>
                                     <div>
-                                        <h5 className="font-bold text-slate-200 mb-1">Choose a Membership</h5>
-                                        <p className="text-slate-400 text-sm">Subscribe to a plan. Higher tiers provide more insight and unlock exclusive psychic capabilities.</p>
+                                        <h5 className="font-bold text-slate-200 mb-1">Get Credits</h5>
+                                        <p className="text-slate-400 text-sm">Purchase a credit pack anytime. No subscriptions, just pure energy.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
@@ -96,7 +96,7 @@ export function BusinessInfo() {
                                     <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-sm shrink-0">3</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Receive Wisdom</h5>
-                                        <p className="text-slate-400 text-sm">Ask clarifying questions. Dig deeper. The clock stops when you end the session or run out of energy.</p>
+                                        <p className="text-slate-400 text-sm">Ask clarifying questions. Dig deeper. You only pay for the time you use.</p>
                                     </div>
                                 </div>
                             </div>
