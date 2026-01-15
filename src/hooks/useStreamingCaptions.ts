@@ -32,14 +32,9 @@ export function useStreamingCaptions() {
                 setCaptions(currentText);
             }
         } else if (responsePart.type === 'stop') {
-            // Clear ID to prevent late deltas
-            captionsIdRef.current = null;
-
-            // Auto-hide after delay
-            setTimeout(() => {
-                // Only clear if the text hasn't changed (no new utterance started)
-                setCaptions((prev) => prev === captionsTextRef.current ? '' : prev);
-            }, 5000);
+            // Don't clear the ID here - let it persist until the next 'start' event
+            // This allows any late/in-flight deltas to still be processed
+            // The ID will be reset when a new utterance begins
         }
     }, []);
 
