@@ -54,8 +54,8 @@ export function ElevenLabsOverlay() {
   // Determine which source to use
   const targetCaptions = isSessionConnected ? streamedCaptions : replayCaptions;
 
-  // Smooth typewriter effect for display (50ms per char = ~20 chars/sec, tuned for readability)
-  const displayedCaptions = useTypewriter(targetCaptions, 50);
+  // Smooth typewriter effect for display (70ms per char for better audio sync)
+  const displayedCaptions = useTypewriter(targetCaptions, 70);
 
 
   // Get user ID and profile from auth context
@@ -286,14 +286,13 @@ export function ElevenLabsOverlay() {
           />
 
           {/* Captions Overlay */}
-          {/* Captions Overlay */}
-          {displayedCaptions && (
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[350px] min-h-[6rem] flex items-end justify-center pointer-events-none z-20">
-              <span className="inline-block text-white text-xl font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-sm px-4 py-2 rounded-2xl line-clamp-2 leading-relaxed tracking-wide border border-white/10">
-                {displayedCaptions}
-              </span>
-            </div>
-          )}
+          <div
+            className={`absolute bottom-24 left-1/2 -translate-x-1/2 w-[350px] flex items-end justify-center pointer-events-none z-20 transition-opacity duration-500 ${displayedCaptions ? 'opacity-100' : 'opacity-0'}`}
+          >
+            <span className="flex flex-col-reverse w-full text-white text-xl font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-sm px-4 py-2 rounded-2xl h-[6.5rem] overflow-hidden leading-relaxed tracking-wide border border-white/10">
+              <span>{displayedCaptions}</span>
+            </span>
+          </div>
 
           {/* Inner Glowing Ring */}
           <div
