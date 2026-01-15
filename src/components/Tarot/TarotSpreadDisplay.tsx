@@ -183,7 +183,7 @@ export function TarotSpreadDisplay({ cards, spreadType, onCardClick, onClose }: 
                     ))}
 
                     {/* Empty slots for unrevealed cards */}
-                    {Array.from({ length: config.cardCount - cards.length }).map((_, i) => {
+                    {Array.from({ length: config.cardCount - cards.length }, (_, i) => {
                         const index = cards.length + i;
                         const position = config.positions[index];
                         if (!position) return null;
