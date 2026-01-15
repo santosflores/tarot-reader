@@ -3,7 +3,8 @@
  * Returns true after specified delay of inactivity
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { throttle } from '../utils/throttle';
 
 interface UseInactivityOptions {
   delay: number; // milliseconds
@@ -24,6 +25,9 @@ export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keyp
     }, delay);
   }, [delay]);
 
+  // Throttle resetTimer to run at most once per second
+  const throttledResetTimer = useMemo(() => throttle(resetTimer, 1000), [resetTimer]);
+
   useEffect(() => {
     // Start the timer
     timeoutRef.current = setTimeout(() => {
@@ -32,7 +36,7 @@ export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keyp
 
     // Add event listeners
     events.forEach((event) => {
-      window.addEventListener(event, resetTimer, { passive: true });
+      window.addEventListener(event, throttledResetTimer, { passive: true });
     });
 
     // Cleanup
@@ -41,10 +45,10 @@ export function useInactivity({ delay, events = ['mousedown', 'mousemove', 'keyp
         clearTimeout(timeoutRef.current);
       }
       events.forEach((event) => {
-        window.removeEventListener(event, resetTimer);
+        window.removeEventListener(event, throttledResetTimer);
       });
     };
-  }, [delay, events, resetTimer]);
+  }, [delay, events, throttledResetTimer]);
 
   return isInactive;
 }
