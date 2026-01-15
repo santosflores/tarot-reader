@@ -48,7 +48,7 @@ export interface UseTarotReaderAgentProps {
     };
 }
 
-export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentProps) {
+export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentProps, textOnly: boolean = false) {
     // Deck state - each session starts with a fresh deck
     const deckRef = useRef<TarotDeck | null>(null);
     const [deck, setDeck] = useState<TarotDeck | null>(null);
@@ -345,7 +345,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         onUnhandledClientToolCall: handleUnhandledClientToolCall,
         onVadScore: handleVadScore,
         onAgentChatResponsePart: handleAgentChatResponsePart,
-        textOnly: false, // Defaulting to false since we want audio
+        textOnly,
     });
 
     // ============================================================================
@@ -360,13 +360,15 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         }
 
         try {
-            // Request microphone permission before starting the session
-            await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (!textOnly) {
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
 
-            // Prepare dynamic variables
             const dynamicVariables: Record<string, string> = {};
             if (profile?.display_name) {
                 dynamicVariables.user_name = profile.display_name;
+            } else {
+                dynamicVariables.user_name = 'Unknown User';
             }
 
             const conversationId = await conversation.startSession({
@@ -376,10 +378,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
                 dynamicVariables: Object.keys(dynamicVariables).length > 0 ? dynamicVariables : undefined,
             });
 
-            // Store the conversation ID for tracking
             currentConversationIdRef.current = conversationId;
 
-            // Ensure volume is set to maximum after session starts
             await conversation.setVolume({ volume: 0.8 });
 
         } catch (err) {
