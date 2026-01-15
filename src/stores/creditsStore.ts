@@ -26,6 +26,12 @@ interface CreditsState {
     reset: () => void;
 }
 
+interface DeductResult {
+    success: boolean;
+    new_balance: number;
+    error_message: string | null;
+}
+
 export const useCredits = create<CreditsState>((set, get) => ({
     // Initial state
     balance: 0,
@@ -82,7 +88,7 @@ export const useCredits = create<CreditsState>((set, get) => ({
                 throw error;
             }
 
-            const result = data?.[0];
+            const result = (data as unknown as DeductResult[])?.[0];
 
             if (!result?.success) {
                 const errorMsg = result?.error_message || 'Failed to deduct credits';
