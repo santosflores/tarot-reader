@@ -3,13 +3,14 @@
  * Handles mouth morph targets based on audio playback (file or WebRTC)
  */
 
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
 import { VISEMES } from 'wawa-lipsync';
 import { useChatbot } from '../../../hooks/useChatbot';
 import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
+import type { SkinnedMesh } from 'three';
 
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
@@ -48,29 +49,53 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   }, [lipsyncManager, webrtcLipsyncManager, isAudioPlaying, audioPlayer, audioSourceType, isAgentSpeaking]);
 
   /**
+   * Optimization: Cache the mapping from viseme name to morph target indices for each mesh.
+   * This avoids looking up `skinnedMesh.morphTargetDictionary[target]` in every frame loop.
+   */
+  const morphTargetCache = useMemo(() => {
+    const cache: Record<string, Array<{ mesh: SkinnedMesh; index: number }>> = {};
+    const visemes = Object.values(VISEMES);
+
+    visemes.forEach((viseme) => {
+      cache[viseme] = [];
+      avatarSkinnedMeshes.forEach((mesh) => {
+        if (mesh.morphTargetDictionary && mesh.morphTargetDictionary[viseme] !== undefined) {
+          cache[viseme].push({
+            mesh,
+            index: mesh.morphTargetDictionary[viseme],
+          });
+        }
+      });
+    });
+
+    return cache;
+  }, [avatarSkinnedMeshes]);
+
+  /**
    * Update a morph target value with smoothing
    */
   const updateMorphTarget = useCallback(
     (target: string, targetValue: number): void => {
-      avatarSkinnedMeshes.forEach((skinnedMesh) => {
-        if (!skinnedMesh.morphTargetDictionary) return;
-        const morphIndex = skinnedMesh.morphTargetDictionary[target];
+      const targets = morphTargetCache[target];
+      if (!targets) return;
+
+      for (let i = 0; i < targets.length; i++) {
+        const { mesh, index } = targets[i];
         if (
-          morphIndex !== undefined &&
-          skinnedMesh.morphTargetInfluences &&
-          typeof skinnedMesh.morphTargetInfluences[morphIndex] === 'number'
+          mesh.morphTargetInfluences &&
+          typeof mesh.morphTargetInfluences[index] === 'number'
         ) {
-          const currentValue = skinnedMesh.morphTargetInfluences[morphIndex];
+          const currentValue = mesh.morphTargetInfluences[index];
           const smoothing =
             targetValue > currentValue
               ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING
               : ANIMATION_CONSTANTS.VISEME_DEACTIVATION_SMOOTHING;
 
-          skinnedMesh.morphTargetInfluences[morphIndex] = MathUtils.lerp(currentValue, targetValue, smoothing);
+          mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
         }
-      });
+      }
     },
-    [avatarSkinnedMeshes]
+    [morphTargetCache]
   );
 
   // Debug logging ref to avoid spamming
@@ -127,4 +152,3 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
     }
   });
 };
-
