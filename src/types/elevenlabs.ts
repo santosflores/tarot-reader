@@ -75,3 +75,58 @@ export interface ConversationListItem {
   has_response_audio?: boolean;
 }
 
+// ============================================================================
+// UI/State Types (Shared Across Components)
+// ============================================================================
+
+import type { Mode, Status } from '@elevenlabs/client';
+
+/**
+ * Chat message for UI display
+ */
+export interface ChatMessage {
+  readonly id: string;
+  readonly role: 'agent' | 'user' | 'system';
+  readonly content: string;
+  readonly timestamp: Date;
+  readonly isStreaming?: boolean;
+}
+
+/**
+ * Streaming response part from agent
+ */
+export interface AgentChatResponsePart {
+  type: 'start' | 'delta' | 'stop';
+  text?: string;
+}
+
+/**
+ * Callbacks interface for agent hooks
+ */
+export interface AgentCallbacks {
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onMessage?: (message: { source: 'user' | 'ai'; message: string }) => void;
+  onError?: (error: string) => void;
+  onStatusChange?: (status: { status: Status }) => void;
+  onModeChange?: (mode: { mode: Mode }) => void;
+  onToolLog?: (message: string) => void;
+  onAgentChatResponsePart?: (responsePart: AgentChatResponsePart) => void;
+  onVadScore?: (vadScore: number) => void;
+}
+
+// ============================================================================
+// Tool Parameter Types
+// ============================================================================
+
+export interface LogMessageParams {
+  message: string;
+}
+
+export interface DrawCardParams {
+  numberOfCards: number;
+}
+
+export interface RevealCardParams {
+  cardIndex: number;
+}
