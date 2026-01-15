@@ -102,6 +102,46 @@ export type Database = {
           }
         ]
       }
+      credit_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          balance_after: number
+          transaction_type: string
+          description: string | null
+          session_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          balance_after: number
+          transaction_type: string
+          description?: string | null
+          session_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          balance_after?: number
+          transaction_type?: string
+          description?: string | null
+          session_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
