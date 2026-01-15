@@ -11,6 +11,7 @@ import { ControlsTabs } from './components/ControlsTabs';
 import { TarotSimulator } from './components/TarotSimulator';
 import { ConversationsList } from './components/ConversationsList';
 import { useAuthContext } from '../../hooks/useAuthContext';
+import { CreditsBadge } from '../Credits/CreditsBadge.tsx';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
@@ -27,9 +28,13 @@ export const UI = () => {
 
   return (
     <>
+      {/* Credits Badge - Fixed top right, always visible when logged in */}
+      {!loading && user && <CreditsBadge />}
+
       {/* Toggle Button - Always visible when drawer is closed */}
       {!isOpen && !loading && user && (
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
           className="fixed left-4 top-4 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60"
           title="Open menu"
@@ -42,13 +47,12 @@ export const UI = () => {
 
       {/* Drawer */}
       <div
-        className={`fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-r-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-r-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
-        
+
         {/* Drawer Header */}
         <div className="relative p-5 border-b border-purple-400/30 bg-gradient-to-r from-purple-900/30 to-transparent flex items-center justify-between backdrop-blur-sm">
           <div className="flex-1 min-w-0">
@@ -72,6 +76,7 @@ export const UI = () => {
             )}
           </div>
           <button
+            type="button"
             onClick={() => setIsOpen(false)}
             className="p-2 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg ml-2"
             title="Close drawer"
@@ -108,20 +113,22 @@ export const UI = () => {
                     </Link>
                   </div>
                   <button
+                    type="button"
                     onClick={handleSignOut}
                     disabled={signingOut}
                     className="px-3 py-1.5 text-xs font-medium bg-slate-800/90 hover:bg-red-600/80 backdrop-blur-sm border border-purple-400/30 hover:border-red-400/50 text-gray-300 hover:text-white rounded-lg transition-all disabled:opacity-50 hover:scale-[1.02] shadow-lg"
                   >
                     {signingOut ? 'Signing out...' : 'Sign out'}
                   </button>
+
                 </div>
               </div>
-              
+
               {/* Sections Container */}
               <div className="pl-0">
                 {/* Conversations - shown to everyone */}
                 <ConversationsList />
-                
+
                 {/* Show TarotSimulator, SupabaseTest and Controls only for specific user */}
                 {user.email === 'santosflores@gmail.com' && (
                   <div className="mt-0 flex flex-col gap-0">

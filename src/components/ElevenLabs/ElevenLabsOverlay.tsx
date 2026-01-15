@@ -14,6 +14,7 @@ import { useChatbot } from "@/hooks/useChatbot";
 import { useConversationReplay } from "@/hooks/useConversationReplay";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import { useStreamingCaptions } from "@/hooks/useStreamingCaptions";
+import { InsufficientCreditsModal } from "@/components/Credits";
 import type { ConversationTranscriptItem } from "../../types/elevenlabs";
 
 
@@ -44,6 +45,7 @@ export function ElevenLabsOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   // Use the streaming captions hook for ID-based tracking
   const { captions: streamedCaptions, handleChatResponsePart, clearCaptions } = useStreamingCaptions();
@@ -180,7 +182,11 @@ export function ElevenLabsOverlay() {
 
   const handleStartSession = useCallback(async (): Promise<void> => {
     // Hook handles permissions and config
-    await startSession();
+    const result = await startSession();
+    // Check if blocked due to insufficient credits
+    if (!result.success && result.error === 'INSUFFICIENT_CREDITS') {
+      setShowCreditsModal(true);
+    }
   }, [startSession]);
 
   const handleEndSession = useCallback(async (): Promise<void> => {
@@ -417,6 +423,12 @@ export function ElevenLabsOverlay() {
           </button>
         </div>
       </div>
+
+      {/* Insufficient Credits Modal */}
+      <InsufficientCreditsModal
+        isOpen={showCreditsModal}
+        onClose={() => setShowCreditsModal(false)}
+      />
     </>
   );
 }
