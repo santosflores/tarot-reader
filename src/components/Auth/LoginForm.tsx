@@ -56,109 +56,121 @@ export function LoginForm() {
       title="Welcome Back"
       subtitle="Sign in to continue your mystical journey"
     >
-      <div className="mb-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-bold text-purple-400 uppercase tracking-wide">
-            🧪 Demo Credentials
-          </p>
+      <div className="mb-8 p-4 bg-purple-500/5 border border-purple-500/20 rounded-xl backdrop-blur-md relative overflow-hidden group/demo">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover/demo:opacity-100 transition-opacity duration-500" />
+
+        <div className="flex items-center justify-between mb-3 relative z-10">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✨</span>
+            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.2em]">
+              Quick Access
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => {
               setEmail('test@test.com');
               setPassword('test123');
             }}
-            className="text-xs text-slate-500 hover:text-purple-400 underline transition-colors cursor-pointer"
+            className="text-[10px] font-bold text-slate-500 hover:text-purple-400 uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
           >
-            Use Credentials
+            Auto-Fill
           </button>
         </div>
-        <div className="text-xs text-slate-400 space-y-1 font-mono">
-          <p className="flex justify-between">
-            <span>User:</span>
-            <span className="text-slate-200">test@test.com</span>
-          </p>
-          <p className="flex justify-between">
-            <span>Pass:</span>
-            <span className="text-slate-200">test123</span>
-          </p>
+        <div className="text-xs text-slate-400 grid grid-cols-2 gap-4 relative z-10 font-mono">
+          <div className="bg-black/20 p-2 rounded-lg border border-white/5">
+            <span className="text-[9px] block text-slate-500 mb-1 uppercase tracking-tighter">Email</span>
+            <span className="text-slate-200 truncate block">test@test.com</span>
+          </div>
+          <div className="bg-black/20 p-2 rounded-lg border border-white/5">
+            <span className="text-[9px] block text-slate-500 mb-1 uppercase tracking-tighter">Password</span>
+            <span className="text-slate-200 block">test123</span>
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-300 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 text-sm flex items-center gap-3 animate-shake">
+            <span className="text-lg">⚠️</span>
             {error}
           </div>
         )}
 
-        <div>
-          <label htmlFor="email" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
+        <div className="space-y-4">
+          <label htmlFor="email" className="block text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">
             Email Address
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
-            placeholder="you@example.com"
-          />
+          <div className="relative group/input">
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono text-base shadow-inner"
+              placeholder="you@example.com"
+            />
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all font-mono"
-            placeholder="Enter your password"
-          />
-        </div>
-
-        <div className="flex items-center justify-end">
-          <Link
-            to="/forgot-password"
-            className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors uppercase tracking-wide"
-          >
-            Forgot password?
-          </Link>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between ml-1">
+            <label htmlFor="password" className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors uppercase tracking-wider"
+            >
+              Forgot?
+            </Link>
+          </div>
+          <div className="relative group/input">
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono text-base shadow-inner"
+              placeholder="••••••••"
+            />
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 bg-slate-200 hover:bg-white text-slate-900 font-bold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/10 uppercase tracking-wide text-sm"
+          className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-900/20 uppercase tracking-[0.2em] text-xs relative overflow-hidden group/btn active:scale-[0.98]"
         >
+          <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <span className="flex items-center justify-center gap-3 relative z-10">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Signing in...
+              Opening Portal...
             </span>
           ) : (
-            'Sign In'
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              Enter The Void <span className="text-sm">→</span>
+            </span>
           )}
         </button>
 
-        <div className="text-center pt-6 border-t border-slate-800">
-          <span className="text-slate-500 text-sm">
-            New here?{' '}
+        <div className="text-center pt-8 border-t border-white/5">
+          <span className="text-slate-500 text-xs">
+            New aspirant?{' '}
           </span>
           <Link
             to="/signup"
-            className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors ml-1"
+            className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors ml-1 uppercase tracking-widest"
           >
-            Create an account
+            Create account
           </Link>
         </div>
       </form>
