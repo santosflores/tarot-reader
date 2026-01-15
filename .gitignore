@@ -28,3 +28,6 @@ supabase/.branches/
 supabase/.temp/
 supabase/functions/.env
 supabase/functions/.env.local
+
+# Agent
+.agent/
