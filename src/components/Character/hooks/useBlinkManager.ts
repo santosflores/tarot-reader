@@ -3,9 +3,9 @@
  * Creates natural-looking blink behavior using morph targets
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MathUtils } from 'three';
+import { MathUtils, type SkinnedMesh } from 'three';
 import type { SkinnedMeshArray } from '../../../types';
 
 interface UseBlinkManagerParams {
@@ -63,10 +63,12 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
   }
 
   /**
-   * Update a morph target value with smoothing
+   * Cache valid blink targets to avoid repeated lookups
+   * This maps the target indices to the corresponding meshes
    */
-  const updateMorphTarget = useCallback(
-    (target: string, targetValue: number, speed: number): void => {
+  const blinkTargetCache = useMemo(() => {
+    const cache: { mesh: SkinnedMesh; index: number }[] = [];
+    BLINK_MORPH_TARGETS.forEach((target) => {
       avatarSkinnedMeshes.forEach((skinnedMesh) => {
         if (!skinnedMesh.morphTargetDictionary) return;
         const morphIndex = skinnedMesh.morphTargetDictionary[target];
@@ -75,8 +77,25 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
           skinnedMesh.morphTargetInfluences &&
           typeof skinnedMesh.morphTargetInfluences[morphIndex] === 'number'
         ) {
-          const currentValue = skinnedMesh.morphTargetInfluences[morphIndex];
-          skinnedMesh.morphTargetInfluences[morphIndex] = MathUtils.lerp(
+          cache.push({
+            mesh: skinnedMesh,
+            index: morphIndex,
+          });
+        }
+      });
+    });
+    return cache;
+  }, [avatarSkinnedMeshes]);
+
+  /**
+   * Update all blink morph targets using the cached lookups
+   */
+  const updateBlinkTargets = useCallback(
+    (targetValue: number, speed: number): void => {
+      blinkTargetCache.forEach(({ mesh, index }) => {
+        if (mesh.morphTargetInfluences) {
+          const currentValue = mesh.morphTargetInfluences[index];
+          mesh.morphTargetInfluences[index] = MathUtils.lerp(
             currentValue,
             targetValue,
             speed
@@ -84,19 +103,7 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
         }
       });
     },
-    [avatarSkinnedMeshes]
-  );
-
-  /**
-   * Update all blink morph targets
-   */
-  const updateBlinkTargets = useCallback(
-    (targetValue: number, speed: number): void => {
-      BLINK_MORPH_TARGETS.forEach((target) => {
-        updateMorphTarget(target, targetValue, speed);
-      });
-    },
-    [updateMorphTarget]
+    [blinkTargetCache]
   );
 
   useFrame((_state, delta) => {
