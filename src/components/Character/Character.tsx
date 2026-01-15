@@ -3,8 +3,10 @@
  * Main component for rendering and animating the 3D character
  */
 
-import { useFBX, useGLTF } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
+import { useLoader } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { useAnimation } from '../../hooks/useAnimation';
 import { ANIMATION_CONFIG } from '../../config/animations';
 import { MODEL_PATHS } from '../../config/constants';
@@ -21,14 +23,22 @@ export const Character = ({ ...props }: CharacterProps) => {
   // Load 3D model
   const { scene } = useGLTF(MODEL_PATHS.CHARACTER);
 
-  // Load all animations (hooks must be called at top level)
-  // Using individual calls as required by React's rules of hooks
-  const idleAnim = useFBX(ANIMATION_CONFIG.Idle);
-  const talkingAnim = useFBX(ANIMATION_CONFIG.Talking);
-  const talking2Anim = useFBX(ANIMATION_CONFIG.Talking2);
-  const talking3Anim = useFBX(ANIMATION_CONFIG.Talking3);
-  const talking4Anim = useFBX(ANIMATION_CONFIG.Talking4);
-  const talking5Anim = useFBX(ANIMATION_CONFIG.Talking5);
+  // Load all animations in parallel using useLoader with an array
+  const [
+    idleAnim,
+    talkingAnim,
+    talking2Anim,
+    talking3Anim,
+    talking4Anim,
+    talking5Anim,
+  ] = useLoader(FBXLoader, [
+    ANIMATION_CONFIG.Idle,
+    ANIMATION_CONFIG.Talking,
+    ANIMATION_CONFIG.Talking2,
+    ANIMATION_CONFIG.Talking3,
+    ANIMATION_CONFIG.Talking4,
+    ANIMATION_CONFIG.Talking5,
+  ]);
 
   // Map animations dynamically from config to reduce duplication in mapping logic
   const animations: AnimationMap = useMemo(() => {
