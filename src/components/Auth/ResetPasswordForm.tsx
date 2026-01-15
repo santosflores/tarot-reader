@@ -7,6 +7,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { AuthLayout } from './AuthLayout';
+import { FormInput, FormButton, FormAlert } from '../UI/Form';
 import { supabase } from '../../lib/supabase';
 
 export function ResetPasswordForm() {
@@ -182,72 +183,34 @@ export function ResetPasswordForm() {
       subtitle="Choose a strong password for your account"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 text-sm flex items-center gap-3 animate-shake">
-            <span className="text-lg">⚠️</span>
-            {error}
-          </div>
-        )}
+        {error && <FormAlert message={error} type="error" />}
 
-        <div className="space-y-4">
-          <label htmlFor="password" className="block text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">
-            New Password
-          </label>
-          <div className="relative group/input">
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono text-base shadow-inner"
-              placeholder="Create a strong password"
-            />
-          </div>
-          <p className="mt-2 text-xs text-slate-500 ml-1 leading-relaxed">
-            8+ chars • Uppercase • Lowercase • Number
-          </p>
-        </div>
+        <FormInput
+          id="password"
+          type="password"
+          label="New Password"
+          value={password}
+          onChange={setPassword}
+          required
+          autoComplete="new-password"
+          placeholder="Create a strong password"
+          hint="8+ chars • Uppercase • Lowercase • Number"
+        />
 
-        <div className="space-y-4">
-          <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">
-            Confirm New Password
-          </label>
-          <div className="relative group/input">
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono text-base shadow-inner"
-              placeholder="Confirm your new password"
-            />
-          </div>
-        </div>
+        <FormInput
+          id="confirmPassword"
+          type="password"
+          label="Confirm New Password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          required
+          autoComplete="new-password"
+          placeholder="Confirm your new password"
+        />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-900/20 uppercase tracking-[0.2em] text-xs relative overflow-hidden group/btn active:scale-[0.98]"
-        >
-          <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-          {loading ? (
-            <span className="flex items-center justify-center gap-3 relative z-10">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Sealining Fate...
-            </span>
-          ) : (
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              Update Password <span className="text-sm">→</span>
-            </span>
-          )}
-        </button>
+        <FormButton loading={loading} loadingText="Sealing Fate...">
+          Update Password
+        </FormButton>
       </form>
     </AuthLayout>
   );

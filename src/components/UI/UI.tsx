@@ -10,8 +10,9 @@ import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
 import { TarotSimulator } from './components/TarotSimulator';
 import { ConversationsList } from './components/ConversationsList';
+import { AdminTransactions } from './components/AdminTransactions';
 import { useAuthContext } from '../../hooks/useAuthContext';
-import { CreditsBadge, SessionTimer } from '../Credits';
+import { CreditsBadge, SessionTimer, TransactionHistory } from '../Credits';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
@@ -132,9 +133,13 @@ export const UI = () => {
                 {/* Conversations - shown to everyone */}
                 <ConversationsList />
 
-                {/* Show TarotSimulator, SupabaseTest and Controls only for specific user */}
+                {/* Transaction History - shown to everyone */}
+                <TransactionHistory />
+
+                {/* Show TarotSimulator, SupabaseTest, AdminTransactions and Controls only for specific user */}
                 {user.email === 'santosflores@gmail.com' && (
                   <div className="mt-0 flex flex-col gap-0">
+                    <AdminTransactions />
                     <TarotSimulator />
                     <SupabaseTest />
                     <ControlsTabs />
