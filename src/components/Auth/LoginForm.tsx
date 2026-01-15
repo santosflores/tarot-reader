@@ -133,7 +133,7 @@ export function LoginForm() {
         <div className="flex gap-3">
           <Link
             to="/"
-            className="flex-1 py-4 px-6 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-all duration-300 uppercase tracking-[0.2em] text-xs text-center"
+            className="flex-1 py-4 px-6 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-all duration-300 uppercase tracking-[0.2em] text-xs flex items-center justify-center"
           >
             Cancel
           </Link>
