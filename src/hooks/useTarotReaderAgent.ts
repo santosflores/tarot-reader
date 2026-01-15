@@ -46,6 +46,9 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // Get the addRevealedCard action from the store
     const addRevealedCard = useRevealedCard((state) => state.addRevealedCard);
 
+    // Get credits actions
+    const { canStartSession, startSessionTimer } = useCredits();
+
     // Store callbacks in a ref to avoid re-creating clientTools when callbacks change
     const callbacksRef = useRef(callbacks);
     useEffect(() => {
@@ -440,7 +443,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             }
             return { success: false, error: errorMessage };
         }
-    }, [agentId, conversation, user, profile, callbacks, textOnly]);
+    }, [agentId, conversation, user, profile, callbacks, textOnly, canStartSession, startSessionTimer]);
 
     return {
         conversation,
