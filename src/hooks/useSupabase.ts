@@ -185,25 +185,31 @@ export const useSupabaseQuery = <T>(
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Destructure options to stabilize dependencies
+  const select = options?.select;
+  const limit = options?.limit;
+  const filterColumn = options?.filter?.column;
+  const filterValue = options?.filter?.value;
+  const orderByColumn = options?.orderBy?.column;
+  const orderByAscending = options?.orderBy?.ascending;
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from(tableName)
-        .select(options?.select ?? '*');
+      let query = supabase.from(tableName).select(select ?? '*');
 
-      if (options?.filter) {
-        query = query.eq(options.filter.column, options.filter.value);
+      if (filterColumn && filterValue !== undefined) {
+        query = query.eq(filterColumn, filterValue);
       }
 
-      if (options?.orderBy) {
-        query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending ?? true,
+      if (orderByColumn) {
+        query = query.order(orderByColumn, {
+          ascending: orderByAscending ?? true,
         });
       }
 
-      if (options?.limit) {
-        query = query.limit(options.limit);
+      if (limit) {
+        query = query.limit(limit);
       }
 
       const { data, error } = await query;
@@ -217,7 +223,15 @@ export const useSupabaseQuery = <T>(
     } finally {
       setLoading(false);
     }
-  }, [tableName, options?.select, options?.filter, options?.orderBy, options?.limit]);
+  }, [
+    tableName,
+    select,
+    limit,
+    filterColumn,
+    filterValue,
+    orderByColumn,
+    orderByAscending,
+  ]);
 
   useEffect(() => {
     fetchData();
