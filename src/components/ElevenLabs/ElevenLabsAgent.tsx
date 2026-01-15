@@ -42,13 +42,15 @@ const generateMessageId = (): string =>
 
 function useAgentMessages() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  // Track the current streaming message index using a ref for synchronous access
-  const streamingIndexRef = useRef<number | null>(null);
+  // Track the current streaming message ID using a ref for robust targeting
+  const streamingMessageIdRef = useRef<string | null>(null);
   const streamingTextRef = useRef<string>('');
   // Track if we handled the current response via streaming (to prevent duplicates from onMessage)
   const handledViaStreamingRef = useRef<boolean>(false);
 
   const addMessage = useCallback((role: ChatMessage['role'], content: string): void => {
+    if (!content || !content.trim()) return;
+
     setMessages((prev) => [
       ...prev,
       {
@@ -63,69 +65,76 @@ function useAgentMessages() {
   const startStreamingMessage = useCallback((): void => {
     // Mark that we're handling this response via streaming
     handledViaStreamingRef.current = true;
-    // Calculate the index synchronously before updating state
-    setMessages((prev) => {
-      const newIndex = prev.length;
-      streamingIndexRef.current = newIndex;
-      streamingTextRef.current = '';
-      return [
-        ...prev,
-        {
-          id: generateMessageId(),
-          role: 'agent' as const,
-          content: '',
-          timestamp: new Date(),
-          isStreaming: true,
-        },
-      ];
-    });
+
+    // Generate ID and reset text synchronously
+    const newId = generateMessageId();
+    streamingMessageIdRef.current = newId;
+    streamingTextRef.current = '';
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: newId,
+        role: 'agent' as const,
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      },
+    ]);
   }, []);
 
   const appendStreamingText = useCallback((text: string): void => {
+    if (!streamingMessageIdRef.current) return;
+
+    // Update ref immediately
     streamingTextRef.current += text;
-    const currentIndex = streamingIndexRef.current;
+    const currentId = streamingMessageIdRef.current;
     const currentContent = streamingTextRef.current;
 
-    if (currentIndex === null) return;
-
-    setMessages((prev) => {
-      if (currentIndex >= prev.length || !prev[currentIndex].isStreaming) {
-        return prev;
-      }
-      const updated = [...prev];
-      updated[currentIndex] = { ...updated[currentIndex], content: currentContent };
-      return updated;
-    });
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === currentId && msg.isStreaming) {
+          return { ...msg, content: currentContent };
+        }
+        return msg;
+      })
+    );
   }, []);
 
   const finalizeStreamingMessage = useCallback((): void => {
-    const currentIndex = streamingIndexRef.current;
+    if (!streamingMessageIdRef.current) return;
+
+    const currentId = streamingMessageIdRef.current;
     const finalContent = streamingTextRef.current;
 
-    if (currentIndex === null) return;
-
     setMessages((prev) => {
-      if (currentIndex >= prev.length) return prev;
-      const updated = [...prev];
-      updated[currentIndex] = {
-        ...updated[currentIndex],
-        content: finalContent,
-        isStreaming: false,
-      };
-      return updated;
+      // If the message has no content (empty bubble), remove it entirely
+      if (!finalContent.trim()) {
+        return prev.filter((msg) => msg.id !== currentId);
+      }
+
+      // Otherwise, mark it as not streaming
+      return prev.map((msg) => {
+        if (msg.id === currentId) {
+          return { ...msg, content: finalContent, isStreaming: false };
+        }
+        return msg;
+      });
     });
 
-    streamingIndexRef.current = null;
+    streamingMessageIdRef.current = null;
     streamingTextRef.current = '';
   }, []);
 
   const isStreaming = useCallback((): boolean => {
-    return streamingIndexRef.current !== null;
+    return streamingMessageIdRef.current !== null;
   }, []);
 
   // Check if the current response was handled via streaming (and reset the flag)
   const wasHandledViaStreaming = useCallback((): boolean => {
     const handled = handledViaStreamingRef.current;
+    // We don't reset here immediately if we want to query it multiple times? 
+    // Usually only queried once by onMessage.
     handledViaStreamingRef.current = false;
     return handled;
   }, []);
@@ -362,6 +371,7 @@ export function ElevenLabsAgent() {
     // Wire up tool logs to system messages in chat
     onToolLog: useCallback((message: string) => {
       addMessage('system', message);
+      console.log('Tool log:', message);
     }, [addMessage]),
 
     // Wire up streaming
@@ -390,7 +400,7 @@ export function ElevenLabsAgent() {
   const { conversation, startSession, endSession } = useTarotReaderAgent({
     agentId: AGENT_ID,
     callbacks
-  });
+  }, true);
 
   const handleStartSession = useCallback(async (): Promise<void> => {
     // startSession from hook handles permissions and config

@@ -4,7 +4,7 @@
  * Provides toggleable visibility and minimal UI footprint
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { Mode } from "@elevenlabs/client";
 import { useTarotReaderAgent } from "@/hooks/useTarotReaderAgent";
 import { useElevenLabsAudio } from "@/hooks/useElevenLabsAudio";
@@ -12,6 +12,8 @@ import { useBackgroundMusic } from "@/hooks/useBackgroundMusic";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useConversationReplay } from "@/hooks/useConversationReplay";
+import { useTypewriter } from "@/hooks/useTypewriter";
+import { ConversationTranscriptItem } from "../../types/elevenlabs.ts";
 
 
 // ============================================================================
@@ -41,7 +43,20 @@ export function ElevenLabsOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [agentMode, setAgentMode] = useState<Mode | null>(null);
   const [isSessionConnected, setIsSessionConnected] = useState(false);
-  const [captions, setCaptions] = useState<string>("");
+  // Raw text from the agent (Live)
+  const [streamedCaptions, setStreamedCaptions] = useState<string>("");
+  // Text from the agent (Replay)
+  const [replayCaptions, setReplayCaptions] = useState<string>("");
+
+  // Refs for ID-based tracking of streamed captions
+  const captionsIdRef = useRef<string | null>(null);
+  const captionsTextRef = useRef<string>("");
+
+  // Determine which source to use
+  const targetCaptions = isSessionConnected ? streamedCaptions : replayCaptions;
+
+  // Smooth typewriter effect for display (50ms per char = ~20 chars/sec, tuned for readability)
+  const displayedCaptions = useTypewriter(targetCaptions, 50);
 
   // Get user ID and profile from auth context
   // Note: user/profile logic is now inside the hook, but we still need profile for other overlay logic?
@@ -82,8 +97,42 @@ export function ElevenLabsOverlay() {
     handlePlayPause: toggleReplay,
     handleStop: stopReplay,
 
-    audioUrl: replayAudioUrl
+    audioUrl: replayAudioUrl,
+    conversation: replayConversation
   } = useConversationReplay(activeReplayId);
+
+  // Sync replay captions
+  useEffect(() => {
+    if (!activeReplayId || !replayConversation || !replayConversation.transcript) {
+      setReplayCaptions("");
+      return;
+    }
+
+    // Find the segment that matches current time
+    const transcript: ConversationTranscriptItem[] = replayConversation.transcript;
+    // We want the last message that started before current time
+    // But only if it's an AGENT message
+    let activeMessage = "";
+
+    for (const msg of transcript) {
+      if (typeof msg.time_in_call_secs !== 'number') continue;
+
+      if (replayTime >= msg.time_in_call_secs) {
+        if (msg.role === 'agent') {
+          activeMessage = msg.content || "";
+        } else {
+          // If user speaks, clear agent caption? Or keep last?
+          // Usually clear.
+          activeMessage = "";
+        }
+      } else {
+        // Future message, stop searching
+        break;
+      }
+    }
+    setReplayCaptions(activeMessage);
+
+  }, [activeReplayId, replayConversation, replayTime]);
 
   // Hook for stopping replay when session starts
   useEffect(() => {
@@ -101,13 +150,13 @@ export function ElevenLabsOverlay() {
     onConnect: useCallback(() => {
       setError(null);
       setIsSessionConnected(true);
-      setCaptions(""); // Reset captions on new session
+      setStreamedCaptions(""); // Reset captions on new session
     }, []),
 
     onDisconnect: useCallback(() => {
       setIsSessionConnected(false);
       setAgentMode(null);
-      setCaptions(""); // Clear captions on disconnect
+      setStreamedCaptions(""); // Clear captions on disconnect
     }, []),
 
     onError: useCallback((message: string) => {
@@ -124,13 +173,34 @@ export function ElevenLabsOverlay() {
     onAgentChatResponsePart: useCallback(
       (responsePart: any) => {
         if (responsePart.type === 'start') {
-          setCaptions("");
+          // Generate new ID for this utterance
+          const newId = Math.random().toString(36).substring(7);
+          captionsIdRef.current = newId;
+          captionsTextRef.current = "";
+          setStreamedCaptions("");
         } else if (responsePart.type === 'delta') {
-          setCaptions((prev) => prev + (responsePart.text || ""));
+          // Only process if we have an active ID
+          if (captionsIdRef.current && responsePart.text) {
+            captionsTextRef.current += responsePart.text;
+            const currentText = captionsTextRef.current;
+            // Update state with confirmed full text
+            setStreamedCaptions(currentText);
+          }
         } else if (responsePart.type === 'stop') {
-          // Optional: You could set a timeout here to clear captions after X seconds
-          // For now, we leave it until the next turn starts
-          setTimeout(() => setCaptions(""), 3000);
+          // Optional: Clear ID or set timeout
+          // We keep the text for now until next start
+          // but we can clear the ID to prevent late deltas
+          captionsIdRef.current = null;
+
+          setTimeout(() => {
+            // Only clear if no new utterance started (ID is still null or changed?)
+            // Actually if we clear here, we might clear the NEXT one if we aren't careful.
+            // Safer to just let the next 'start' clear it, or strict timeout.
+            // For now, let's stick to the simple timeout if we want auto-hide.
+            // But to be robust: we only clear if the text hasn't changed?
+            // Or just clear freely.
+            setStreamedCaptions((prev) => prev === captionsTextRef.current ? "" : prev);
+          }, 5000);
         }
       },
       []
@@ -250,10 +320,11 @@ export function ElevenLabsOverlay() {
           />
 
           {/* Captions Overlay */}
-          {captions && (
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-72 text-center pointer-events-none z-20">
-              <span className="inline-block text-white text-lg font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-sm px-3 py-1 rounded-xl line-clamp-2 leading-tight tracking-wide border border-white/10">
-                {captions}
+          {/* Captions Overlay */}
+          {displayedCaptions && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[350px] min-h-[6rem] flex items-end justify-center pointer-events-none z-20">
+              <span className="inline-block text-white text-xl font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-sm px-4 py-2 rounded-2xl line-clamp-2 leading-relaxed tracking-wide border border-white/10">
+                {displayedCaptions}
               </span>
             </div>
           )}
