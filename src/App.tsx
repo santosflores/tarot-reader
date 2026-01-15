@@ -4,6 +4,7 @@
  */
 
 import { Canvas } from '@react-three/fiber';
+import { Analytics } from '@vercel/analytics/react';
 import { UI } from './components/UI/UI';
 import { Background } from './components/UI/Background';
 import { Experience } from './components/Experience';
@@ -48,6 +49,9 @@ function App() {
         >
           <Experience />
         </Canvas>
+
+        {/* Vercel Web Analytics */}
+        <Analytics />
       </div>
     </ErrorBoundary>
   );
