@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 
 interface PricingTierProps {
     name: string;
@@ -105,11 +103,11 @@ export function PricingTable() {
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent pointer-events-none" />
 
             <div className="text-center mb-12 relative z-10">
-                <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-indigo-100 to-purple-200 mb-6 font-serif">
+                <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-indigo-100 to-purple-200 mb-6 font-serif uppercase tracking-tighter">
                     Invest in Your Destiny
                 </h2>
-                <p className="text-slate-400 max-w-xl mx-auto text-lg mb-8">
-                    Knowledge is power. Clarity is priceless. Top up your energy whenever you need.
+                <p className="text-slate-400 max-w-xl mx-auto text-lg mb-8 leading-relaxed">
+                    One-time energy transfers for casual seekers. No commitments, just pure wisdom.
                 </p>
             </div>
 
@@ -123,8 +121,10 @@ export function PricingTable() {
             </div>
 
             <div className="mt-12 text-center text-slate-500 text-sm max-w-2xl mx-auto italic">
-                * "Minutes" are approximate based on a standard 10 credits/minute burn rate.
+                * All energy exchanges are processed through encrypted spiritual channels.
             </div>
         </section>
     );
 }
+
+
