@@ -1,28 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useConversation } from '@elevenlabs/react';
-import type { Callbacks, Mode, Status } from '@elevenlabs/client';
+import type { Callbacks } from '@elevenlabs/client';
 import type { TarotDeck, TarotCard } from '../types/tarot';
 import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../utils/tarot';
 import { isMajorArcana } from '../types/tarot';
 import { useRevealedCard } from '../hooks/useRevealedCard';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { supabase } from '@/lib/supabase';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface LogMessageParams {
-    message: string;
-}
-
-interface DrawCardParams {
-    numberOfCards: number;
-}
-
-interface RevealCardParams {
-    cardIndex: number;
-}
+import type {
+    AgentCallbacks,
+    DrawCardParams,
+    LogMessageParams,
+    RevealCardParams
+} from '../types/elevenlabs';
 
 // Debug flag
 const DEBUG = import.meta.env.DEV || import.meta.env.VITE_DEV === 'true';
@@ -35,17 +25,7 @@ const getErrorMessage = (error: unknown): string => {
 
 export interface UseTarotReaderAgentProps {
     agentId?: string;
-    callbacks?: {
-        onConnect?: () => void;
-        onDisconnect?: () => void;
-        onMessage?: (message: { source: 'user' | 'ai'; message: string }) => void;
-        onError?: (error: string) => void;
-        onStatusChange?: (status: { status: Status }) => void;
-        onModeChange?: (mode: { mode: Mode }) => void;
-        onToolLog?: (message: string) => void;
-        onAgentChatResponsePart?: (responsePart: any) => void;
-        onVadScore?: (vadScore: number) => void;
-    };
+    callbacks?: AgentCallbacks;
 }
 
 export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentProps, textOnly: boolean = false) {
