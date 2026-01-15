@@ -14,10 +14,13 @@ interface CreditsState {
     balance: number;
     isLoading: boolean;
     error: string | null;
+    sessionStartTime: number | null; // Timestamp when session started
 
     // Actions
     setBalance: (balance: number) => void;
     canStartSession: () => boolean;
+    startSessionTimer: () => void;
+    endSessionTimer: () => number; // Returns duration in seconds
     deductCreditsForSession: (userId: string, durationSeconds: number, sessionId?: string) => Promise<{ success: boolean; newBalance: number; error?: string }>;
     refreshBalance: (userId: string) => Promise<void>;
     reset: () => void;
@@ -28,6 +31,7 @@ export const useCredits = create<CreditsState>((set, get) => ({
     balance: 0,
     isLoading: false,
     error: null,
+    sessionStartTime: null,
 
     // Set balance (called when profile is fetched)
     setBalance: (balance: number) => {
@@ -39,6 +43,20 @@ export const useCredits = create<CreditsState>((set, get) => ({
         const { balance } = get();
         // Require at least 1 minute worth of credits
         return balance >= CREDITS_PER_MINUTE;
+    },
+
+    // Start session timer (called when session connects)
+    startSessionTimer: () => {
+        set({ sessionStartTime: Date.now() });
+    },
+
+    // End session timer and return duration in seconds
+    endSessionTimer: () => {
+        const { sessionStartTime } = get();
+        if (!sessionStartTime) return 0;
+        const durationSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
+        set({ sessionStartTime: null });
+        return durationSeconds;
     },
 
     // Deduct credits after a session ends

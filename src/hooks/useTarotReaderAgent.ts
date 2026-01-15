@@ -193,6 +193,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         drawnCardsRef.current = [];
         // Record session start time for credit calculation
         sessionStartTimeRef.current = Date.now();
+        // Start the session timer in the store (for UI chronometer)
+        useCredits.getState().startSessionTimer();
 
         callbacks?.onConnect?.();
     }, [callbacks]);
@@ -233,6 +235,9 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             });
             sessionStartTimeRef.current = null;
         }
+
+        // End the session timer in the store (stops UI chronometer)
+        useCredits.getState().endSessionTimer();
 
         // Trigger save session if we have an ID
         if (currentConversationIdRef.current) {

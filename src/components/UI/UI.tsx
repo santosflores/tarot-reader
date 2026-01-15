@@ -11,7 +11,7 @@ import { ControlsTabs } from './components/ControlsTabs';
 import { TarotSimulator } from './components/TarotSimulator';
 import { ConversationsList } from './components/ConversationsList';
 import { useAuthContext } from '../../hooks/useAuthContext';
-import { CreditsBadge } from '../Credits/CreditsBadge.tsx';
+import { CreditsBadge, SessionTimer } from '../Credits';
 
 export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
@@ -30,6 +30,9 @@ export const UI = () => {
     <>
       {/* Credits Badge - Fixed top right, always visible when logged in */}
       {!loading && user && <CreditsBadge />}
+
+      {/* Session Timer - Shows below badge during active calls */}
+      {!loading && user && <SessionTimer />}
 
       {/* Toggle Button - Always visible when drawer is closed */}
       {!isOpen && !loading && user && (
