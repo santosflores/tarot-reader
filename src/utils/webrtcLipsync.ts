@@ -6,6 +6,7 @@
  * This is based on the wawa-lipsync algorithm but modified to:
  * 1. Accept MediaStream directly (not audio element)
  * 2. NOT connect to audio destination (no playback)
+ * 3. Optimized for zero-allocation in high-frequency loops
  */
 
 import { VISEMES } from "wawa-lipsync";
@@ -44,10 +45,6 @@ export interface WebRTCLipsyncAnalyzer {
   isConnected: () => boolean;
 }
 
-function average(arr: number[]): number {
-  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-}
-
 /**
  * Creates a WebRTC lipsync analyzer using the same algorithm as wawa-lipsync
  * but modified to work with MediaStreams without audio output
@@ -65,12 +62,6 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   let visemeStartTime = 0;
   const maxVisemeDuration = 100;
 
-  // History for smoothing
-  const historySize = 10;
-  const historyBuffer: AudioFeatures[] = new Array(historySize);
-  let historyIndex = 0;
-  let historyCount = 0;
-
   // Frequency bands (same as wawa-lipsync)
   const bands = [
     { start: 50, end: 200 }, // Band 0: Low energy
@@ -81,6 +72,30 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     { start: 2500, end: 4000 }, // Band 5: Fricatives
     { start: 4000, end: 8000 }, // Band 6: High fricatives
   ];
+
+  // History for smoothing - Pre-allocated with reusable objects
+  const historySize = 10;
+  const historyBuffer: AudioFeatures[] = Array.from({ length: historySize }, () => ({
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0),
+    volume: 0,
+    centroid: 0,
+  }));
+
+  let historyIndex = 0;
+  let historyCount = 0;
+
+  // Reusable objects to avoid allocation in loop
+  const averagedFeatures: AudioFeatures = {
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0),
+    volume: 0,
+    centroid: 0,
+  };
+
+  const scores: Record<string, number> = {};
+  // Initialize scores
+  Object.values(VISEMES).forEach(v => scores[v] = 0);
 
   let sampleRate = 44100;
   let binWidth = sampleRate / 2048;
@@ -98,9 +113,7 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       sourceNode = audioContext.createMediaStreamSource(stream);
 
       // Connect source to analyser ONLY - not to destination
-      // This is the key difference from wawa-lipsync
       sourceNode.connect(analyser);
-      // Do NOT connect to destination: analyser.connect(audioContext.destination)
 
       dataArray = new Uint8Array(analyser.frequencyBinCount);
       sampleRate = audioContext.sampleRate;
@@ -157,22 +170,26 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       dataArray as unknown as Uint8Array<ArrayBuffer>
     );
 
-    // Calculate band energies
-    const bandEnergies = bands.map(({ start, end }) => {
+    // Reuse object from buffer
+    const features = historyBuffer[historyIndex];
+
+    // Calculate band energies in-place
+    for (let i = 0; i < bands.length; i++) {
+      const { start, end } = bands[i];
       const startBin = Math.round(start / binWidth);
       const endBin = Math.min(
         Math.round(end / binWidth),
-        dataArray!.length - 1
+        dataArray.length - 1
       );
 
       let sum = 0;
-      for (let i = startBin; i < endBin; i++) {
-        sum += dataArray![i];
+      for (let j = startBin; j < endBin; j++) {
+        sum += dataArray[j];
       }
       const count = endBin - startBin;
       const avg = count > 0 ? sum / count : 0;
-      return avg / 255;
-    });
+      features.bands[i] = avg / 255;
+    }
 
     // Calculate spectral centroid
     let totalEnergy = 0;
@@ -183,29 +200,28 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       totalEnergy += energy;
       weightedSum += freq * energy;
     }
-    const centroid = totalEnergy > 0 ? weightedSum / totalEnergy : 0;
+    features.centroid = totalEnergy > 0 ? weightedSum / totalEnergy : 0;
 
     // Calculate volume
-    const volume = average(bandEnergies);
+    let sumBands = 0;
+    for(let i=0; i < features.bands.length; i++) {
+        sumBands += features.bands[i];
+    }
+    features.volume = features.bands.length ? sumBands / features.bands.length : 0;
 
     // Calculate delta bands (change from previous)
-    const deltaBands = bandEnergies.map((energy, idx) => {
-      if (historyCount < 2) return 0;
-      const prevIndex = (historyIndex - 2 + historySize) % historySize;
-      const prev = historyBuffer[prevIndex].bands[idx];
-      return energy - prev;
-    });
+    if (historyCount < 2) {
+        for(let i=0; i<bands.length; i++) features.deltaBands[i] = 0;
+    } else {
+        const prevIndex = (historyIndex - 2 + historySize) % historySize;
+        const prev = historyBuffer[prevIndex];
+        for (let i = 0; i < bands.length; i++) {
+            features.deltaBands[i] = features.bands[i] - prev.bands[i];
+        }
+    }
 
-    const features: AudioFeatures = {
-      bands: bandEnergies,
-      deltaBands,
-      volume,
-      centroid,
-    };
-
-    // Update history
+    // Update history index
     if (totalEnergy > 0) {
-      historyBuffer[historyIndex] = features;
       historyIndex = (historyIndex + 1) % historySize;
       if (historyCount < historySize) {
         historyCount++;
@@ -216,24 +232,31 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   };
 
   const getAveragedFeatures = (): AudioFeatures => {
-    const result: AudioFeatures = {
-      volume: 0,
-      centroid: 0,
-      bands: Array(bands.length).fill(0),
-      deltaBands: Array(bands.length).fill(0),
-    };
+    const result = averagedFeatures;
+
+    // Reset result
+    result.volume = 0;
+    result.centroid = 0;
+    for (let i = 0; i < bands.length; i++) {
+        result.bands[i] = 0;
+        result.deltaBands[i] = 0;
+    }
 
     for (let i = 0; i < historyCount; i++) {
       const h = historyBuffer[i];
       result.volume += h.volume;
       result.centroid += h.centroid;
-      h.bands.forEach((b, k) => (result.bands[k] += b));
+      for(let k=0; k<bands.length; k++) {
+          result.bands[k] += h.bands[k];
+      }
     }
 
     if (historyCount > 0) {
       result.volume /= historyCount;
       result.centroid /= historyCount;
-      result.bands = result.bands.map((b) => b / historyCount);
+      for(let k=0; k<bands.length; k++) {
+          result.bands[k] /= historyCount;
+      }
     }
 
     return result;
@@ -244,26 +267,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     averaged: AudioFeatures,
     volumeDelta: number,
     centroidDelta: number
-  ): Record<string, number> => {
-    const scores: Record<string, number> = {
-      [VISEMES.sil]: 0,
-      [VISEMES.PP]: 0,
-      [VISEMES.FF]: 0,
-      [VISEMES.TH]: 0,
-      [VISEMES.DD]: 0,
-      [VISEMES.kk]: 0,
-      [VISEMES.CH]: 0,
-      [VISEMES.SS]: 0,
-      [VISEMES.nn]: 0,
-      [VISEMES.RR]: 0,
-      [VISEMES.aa]: 0,
-      [VISEMES.E]: 0,
-      [VISEMES.I]: 0,
-      [VISEMES.O]: 0,
-      [VISEMES.U]: 0,
-    };
+  ): void => { // Returns void, updates 'scores' in place
 
-    const [, , , , , , band6] = current.bands;
+    // Reset scores
+    for (const key in scores) {
+        scores[key] = 0;
+    }
+
+    const band6 = current.bands[6];
 
     // Silence detection
     if (averaged.volume < 0.2 && current.volume < 0.2) {
@@ -312,7 +323,11 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       averaged.centroid < 6000 &&
       current.centroid < 6000
     ) {
-      const [, avgBand1, avgBand2, avgBand3, avgBand4] = averaged.bands;
+      const avgBand1 = averaged.bands[1];
+      const avgBand2 = averaged.bands[2];
+      const avgBand3 = averaged.bands[3];
+      const avgBand4 = averaged.bands[4];
+
       const band1Diff = Math.abs(avgBand1 - avgBand2);
       const bandVariance = Math.max(
         Math.abs(avgBand2 - avgBand3),
@@ -359,19 +374,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
         }
       }
     }
-
-    return scores;
   };
 
-  const adjustScoresForConsistency = (
-    scores: Record<string, number>
-  ): Record<string, number> => {
-    const adjusted = { ...scores };
-
+  const adjustScoresForConsistency = (): void => {
+    // Modifies 'scores' in place
     if (currentViseme) {
       const elapsed = performance.now() - visemeStartTime;
 
-      for (const viseme in adjusted) {
+      for (const viseme in scores) {
         if (viseme === currentViseme) {
           let multiplier: number;
 
@@ -385,12 +395,10 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
             multiplier = Math.max(0.5, 1 - excess / 1000);
           }
 
-          adjusted[viseme] *= multiplier;
+          scores[viseme] *= multiplier;
         }
       }
     }
-
-    return adjusted;
   };
 
   const processAudio = (): void => {
@@ -404,21 +412,21 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     const volumeDelta = features.volume - averaged.volume;
     const centroidDelta = features.centroid - averaged.centroid;
 
-    const scores = computeVisemeScores(
+    computeVisemeScores(
       features,
       averaged,
       volumeDelta,
       centroidDelta
     );
-    const adjusted = adjustScoresForConsistency(scores);
+    adjustScoresForConsistency();
 
     // Find best viseme
     let bestScore = -Infinity;
     let bestViseme = VISEMES.sil;
 
-    for (const viseme in adjusted) {
-      if (adjusted[viseme] > bestScore) {
-        bestScore = adjusted[viseme];
+    for (const viseme in scores) {
+      if (scores[viseme] > bestScore) {
+        bestScore = scores[viseme];
         bestViseme = viseme as VISEMES;
       }
     }
