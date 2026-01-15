@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.credit_transactions (
     balance_after INTEGER NOT NULL,
     transaction_type TEXT NOT NULL, -- 'purchase', 'deduction', 'bonus', 'refund'
     description TEXT,
-    session_id UUID REFERENCES public.reading_sessions(id) ON DELETE SET NULL, -- Link to session if deduction
+    session_id TEXT, -- Use TEXT to support ElevenLabs conversation IDs
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION public.deduct_credits(
     p_user_id UUID,
     p_amount INTEGER,
     p_description TEXT DEFAULT NULL,
-    p_session_id UUID DEFAULT NULL
+    p_session_id TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     success BOOLEAN,
@@ -99,7 +99,8 @@ BEGIN
 
     -- Update balance
     UPDATE public.user_profiles
-    SET credits_balance = v_new_balance
+    SET credits_balance = v_new_balance,
+        updated_at = now()
     WHERE id = p_user_id;
 
     -- Log transaction
@@ -119,7 +120,11 @@ BEGIN
         p_session_id
     );
 
+    -- Return result
     RETURN QUERY SELECT true, v_new_balance, NULL::TEXT;
+EXCEPTION WHEN OTHERS THEN
+    -- Capture any other errors
+    RETURN QUERY SELECT false, CASE WHEN v_current_balance IS NULL THEN 0 ELSE v_current_balance END, SQLERRM::TEXT;
 END;
 $$;
 
