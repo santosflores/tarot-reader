@@ -124,17 +124,8 @@ serve(async (req: Request) => {
       },
     });
 
-    const data = await elevenlabsResponse.text();
-    
-    if (!elevenlabsResponse.ok) {
-      return new Response(data, {
-        status: elevenlabsResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(data, {
-      status: 200,
+    return new Response(elevenlabsResponse.body, {
+      status: elevenlabsResponse.ok ? 200 : elevenlabsResponse.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
