@@ -59,7 +59,7 @@ export const Character = ({ ...props }: CharacterProps) => {
   ]);
 
   // Get selected animation from UI controls
-  const { currentAnimation } = useAnimation();
+  const currentAnimation = useAnimation((state) => state.currentAnimation);
 
   // Find skinned meshes for morph targets using utility function
   const avatarSkinnedMeshes = useMemo(() => findSkinnedMeshes(scene), [scene]);
