@@ -152,13 +152,20 @@ export function useConversationReplay(conversationId: string | null) {
       if (audioPlayer) {
         const currentPlayTime = audioPlayer.currentTime;
         setCurrentTime(currentPlayTime);
-        setDuration(audioPlayer.duration || 0);
+        // Duration is now handled in loadedmetadata and durationchange events
+        // to avoid redundant state updates in this high-frequency handler
 
         // Check if current time is within any agent speaking range
         const isInAgentRange = agentSpeakingRanges.some(
           (range) => currentPlayTime >= range.start && currentPlayTime < range.end
         );
         setAgentSpeaking(isInAgentRange);
+      }
+    };
+
+    const handleDurationChange = () => {
+      if (audioPlayer && activeReplayId === conversationId) {
+        setDuration(audioPlayer.duration || 0);
       }
     };
 
@@ -191,6 +198,7 @@ export function useConversationReplay(conversationId: string | null) {
     };
 
     audioPlayer.addEventListener("timeupdate", handleTimeUpdate);
+    audioPlayer.addEventListener("durationchange", handleDurationChange);
     audioPlayer.addEventListener("playing", handlePlaying);
     audioPlayer.addEventListener("pause", handlePause);
     audioPlayer.addEventListener("ended", handleEnded);
@@ -198,6 +206,7 @@ export function useConversationReplay(conversationId: string | null) {
 
     return () => {
       audioPlayer.removeEventListener("timeupdate", handleTimeUpdate);
+      audioPlayer.removeEventListener("durationchange", handleDurationChange);
       audioPlayer.removeEventListener("playing", handlePlaying);
       audioPlayer.removeEventListener("pause", handlePause);
       audioPlayer.removeEventListener("ended", handleEnded);
