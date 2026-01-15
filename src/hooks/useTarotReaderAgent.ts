@@ -6,6 +6,7 @@ import { createTarotDeck, shuffleDeck as shuffleTarotDeck, drawCards } from '../
 import { isMajorArcana } from '../types/tarot';
 import { useRevealedCard } from '../hooks/useRevealedCard';
 import { useAuthContext } from '../hooks/useAuthContext';
+import { useCredits } from '../stores/creditsStore';
 import { supabase } from '@/lib/supabase';
 import type {
     AgentCallbacks,
@@ -36,6 +37,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     const drawnCardsRef = useRef<TarotCard[]>([]);
     // Store current conversation ID for session tracking
     const currentConversationIdRef = useRef<string | null>(null);
+    // Track session start time for credit deduction
+    const sessionStartTimeRef = useRef<number | null>(null);
 
     // Get user ID and profile from auth context
     const { user, profile } = useAuthContext();
@@ -188,6 +191,8 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         deckRef.current = null;
         setDeck(null);
         drawnCardsRef.current = [];
+        // Record session start time for credit calculation
+        sessionStartTimeRef.current = Date.now();
 
         callbacks?.onConnect?.();
     }, [callbacks]);
@@ -210,6 +215,25 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
             console.log('[useTarotReaderAgent][onDisconnect]');
         }
 
+        // Calculate session duration and deduct credits
+        if (sessionStartTimeRef.current && user?.id) {
+            const durationSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+            if (DEBUG) {
+                console.log(`[useTarotReaderAgent] Session duration: ${durationSeconds}s`);
+            }
+            // Deduct credits asynchronously (don't block disconnect)
+            useCredits.getState().deductCreditsForSession(
+                user.id,
+                durationSeconds,
+                currentConversationIdRef.current || undefined
+            ).then(result => {
+                if (DEBUG) {
+                    console.log('[useTarotReaderAgent] Credit deduction result:', result);
+                }
+            });
+            sessionStartTimeRef.current = null;
+        }
+
         // Trigger save session if we have an ID
         if (currentConversationIdRef.current) {
             saveSession(currentConversationIdRef.current);
@@ -217,7 +241,7 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
         }
 
         callbacks?.onDisconnect?.();
-    }, [callbacks, saveSession]);
+    }, [callbacks, saveSession, user]);
 
     const handleMessage: NonNullable<Callbacks['onMessage']> = useCallback(
         (payload) => {
@@ -332,11 +356,18 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
     // Helper Functions
     // ============================================================================
 
-    const startSession = useCallback(async () => {
+    const startSession = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
         if (!agentId) {
             const msg = 'Agent ID is not configured. Set VITE_ELEVENLABS_AGENT_ID in your environment.';
             callbacks?.onError?.(msg);
-            return;
+            return { success: false, error: msg };
+        }
+
+        // Check if user has enough credits
+        if (!useCredits.getState().canStartSession()) {
+            const msg = 'Insufficient credits to start a session.';
+            callbacks?.onError?.(msg);
+            return { success: false, error: 'INSUFFICIENT_CREDITS' };
         }
 
         try {
@@ -362,18 +393,19 @@ export function useTarotReaderAgent({ agentId, callbacks }: UseTarotReaderAgentP
 
             await conversation.setVolume({ volume: 0.8 });
 
+            return { success: true };
+
         } catch (err) {
             const errorMessage = getErrorMessage(err);
             // Provide user-friendly error for permission denial
             if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
                 callbacks?.onError?.('Microphone access is required for voice conversations. Please allow microphone access and try again.');
-                // Also set explicit error if the callback doesn't handle UI state updates fully? 
-                // We rely on the `onError` callback to propagate this to the UI.
             } else {
                 callbacks?.onError?.(errorMessage);
             }
+            return { success: false, error: errorMessage };
         }
-    }, [agentId, conversation, user, profile, callbacks]);
+    }, [agentId, conversation, user, profile, callbacks, textOnly]);
 
     return {
         conversation,

@@ -12,6 +12,7 @@ import { useRevealedCard } from '../hooks/useRevealedCard';
 import { useAnimation } from '../hooks/useAnimation';
 import { useChatbot } from '../hooks/useChatbot';
 import { useCamera } from '../hooks/useCamera';
+import { useCredits } from '../stores/creditsStore';
 import { DEFAULT_ANIMATION } from '../config/animations';
 import { DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_FOV } from '../config/camera';
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error.message);
           if (mounted) {
@@ -72,6 +73,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           fetchProfile(session.user.id).then((profileData) => {
             if (mounted && profileData) {
               setProfile(profileData);
+              // Sync credits balance with store
+              useCredits.getState().setBalance(profileData.credits_balance);
             }
           });
         }
@@ -99,10 +102,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           fetchProfile(session.user.id).then((profileData) => {
             if (mounted && profileData) {
               setProfile(profileData);
+              // Sync credits balance with store
+              useCredits.getState().setBalance(profileData.credits_balance);
             }
           });
         } else {
           setProfile(null);
+          // Reset credits on logout
+          useCredits.getState().reset();
         }
       }
     );
@@ -118,7 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email,
       password,
     });
-    
+
     // Immediately update state on successful sign-in to avoid race condition
     if (!error && data.session) {
       setSession(data.session);
@@ -131,7 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       });
     }
-    
+
     return { error: error ? new Error(error.message) : null };
   }, [fetchProfile]);
 
@@ -160,17 +167,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       // Clear revealed cards
       useRevealedCard.getState().clearRevealedCards();
-      
+
       // Reset animation to default
       useAnimation.getState().setCurrentAnimation(DEFAULT_ANIMATION);
-      
+
       // Reset camera to default position and FOV
       useCamera.getState().setCameraPosition(DEFAULT_CAMERA_POSITION);
       useCamera.getState().setCameraFov(DEFAULT_CAMERA_FOV);
-      
+
       // Clean up audio/chatbot state
       useChatbot.getState().cleanup();
-      
+
       // Clear any localStorage items related to the session
       // (Add any other localStorage keys that need clearing)
       const keysToRemove: string[] = [];
@@ -185,7 +192,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Error during session cleanup:', cleanupError);
       // Continue with sign out even if cleanup fails
     }
-    
+
     // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (!error) {
