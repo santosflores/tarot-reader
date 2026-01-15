@@ -6,7 +6,7 @@
  * @see https://elevenlabs.io/docs/agents-platform/libraries/react
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import type { Status, Mode } from '@elevenlabs/client';
 import { useElevenLabsAudio } from '../../hooks/useElevenLabsAudio';
 import { useTarotReaderAgent } from '../../hooks/useTarotReaderAgent';
@@ -28,7 +28,7 @@ interface MessageBubbleProps {
   readonly message: ChatMessage;
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({ message }: MessageBubbleProps) {
   const bubbleStyles: Record<ChatMessage['role'], string> = {
     user: 'bg-blue-500 text-white',
     system: 'bg-gray-200 text-gray-700 text-sm',
@@ -56,7 +56,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
       </div>
     </div>
   );
-}
+});
 
 // ============================================================================
 // Component: ConnectionStatus
