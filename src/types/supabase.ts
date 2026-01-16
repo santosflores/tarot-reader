@@ -7,33 +7,240 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          session_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          session_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          session_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horoscope_views: {
+        Row: {
+          clicked_tarot_cta: boolean | null
+          horoscope_id: string
+          id: string
+          persona_id: string
+          referrer: string | null
+          session_duration_seconds: number | null
+          user_agent: string | null
+          viewed_at: string
+          zodiac_sign: string
+        }
+        Insert: {
+          clicked_tarot_cta?: boolean | null
+          horoscope_id: string
+          id?: string
+          persona_id: string
+          referrer?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          viewed_at?: string
+          zodiac_sign: string
+        }
+        Update: {
+          clicked_tarot_cta?: boolean | null
+          horoscope_id?: string
+          id?: string
+          persona_id?: string
+          referrer?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          viewed_at?: string
+          zodiac_sign?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horoscope_views_horoscope_id_fkey"
+            columns: ["horoscope_id"]
+            isOneToOne: false
+            referencedRelation: "horoscopes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horoscope_views_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horoscopes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          meta_description: string
+          persona_id: string
+          publish_date: string
+          status: string
+          title: string
+          updated_at: string
+          zodiac_sign: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          meta_description: string
+          persona_id: string
+          publish_date: string
+          status?: string
+          title: string
+          updated_at?: string
+          zodiac_sign: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          meta_description?: string
+          persona_id?: string
+          publish_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          zodiac_sign?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horoscopes_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      personas: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          description: string
+          id: string
+          name: string
+          slug: string
+          system_instruction: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          slug: string
+          system_instruction: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+          system_instruction?: string
+        }
+        Relationships: []
+      }
+      reading_sessions: {
+        Row: {
+          created_at: string
+          elevenlabs_conversation_id: string
+          ended_at: string
+          id: string
+          metadata: Json | null
+          started_at: string
+          summary: string | null
+          transcript: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          elevenlabs_conversation_id: string
+          ended_at: string
+          id?: string
+          metadata?: Json | null
+          started_at: string
+          summary?: string | null
+          transcript?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          elevenlabs_conversation_id?: string
+          ended_at?: string
+          id?: string
+          metadata?: Json | null
+          started_at?: string
+          summary?: string | null
+          transcript?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           bio: string | null
@@ -49,6 +256,7 @@ export type Database = {
           bio?: string | null
           birthdate?: string | null
           created_at?: string
+          credits_balance?: number
           display_name?: string | null
           id: string
           preferences?: Json | null
@@ -58,6 +266,7 @@ export type Database = {
           bio?: string | null
           birthdate?: string | null
           created_at?: string
+          credits_balance?: number
           display_name?: string | null
           id?: string
           preferences?: Json | null
@@ -65,104 +274,43 @@ export type Database = {
         }
         Relationships: []
       }
-      transactions: {
-        Row: {
-          id: string
-          user_id: string
-          amount: number
-          type: string
-          description: string | null
-          metadata: Json | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          amount: number
-          type: string
-          description?: string | null
-          metadata?: Json | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          amount?: number
-          type?: string
-          description?: string | null
-          metadata?: Json | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transactions_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      credit_transactions: {
-        Row: {
-          id: string
-          user_id: string
-          amount: number
-          balance_after: number
-          transaction_type: string
-          description: string | null
-          session_id: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          amount: number
-          balance_after: number
-          transaction_type: string
-          description?: string | null
-          session_id?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          amount?: number
-          balance_after?: number
-          transaction_type?: string
-          description?: string | null
-          session_id?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credit_transactions_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       add_credits: {
-        Args: {
-          p_user_id: string
-          p_amount: number
-          p_description?: string
-        }
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
         Returns: Json
       }
       deduct_credits: {
         Args: {
-          p_user_id: string
           p_amount: number
-          p_description: string
-          p_session_id?: string | null
+          p_description?: string
+          p_session_id?: string
+          p_user_id: string
         }
-        Returns: Json
+        Returns: {
+          error_message: string
+          new_balance: number
+          success: boolean
+        }[]
+      }
+      get_daily_horoscope_stats: {
+        Args: Record<string, never>
+        Returns: {
+          publish_date: string
+          total_views: number
+          conversions: number
+          avg_seconds: number
+        }[]
+      }
+      get_horoscope_sign_stats: {
+        Args: Record<string, never>
+        Returns: {
+          zodiac_sign: string
+          views: number
+        }[]
       }
     }
     Enums: {
@@ -292,17 +440,7 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-
-/**
- * Convenience type for UserProfile table
- */
-export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
-export type UserProfileInsert = Database['public']['Tables']['user_profiles']['Insert']
-export type UserProfileUpdate = Database['public']['Tables']['user_profiles']['Update']
