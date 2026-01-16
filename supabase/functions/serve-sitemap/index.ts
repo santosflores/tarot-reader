@@ -9,7 +9,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
-const BASE_URL = 'https://virtual-tarot.vercel.app'; // Replace with your actual production URL
+const BASE_URL = 'https://tarotreads.ai'; // Replace with your actual production URL
 
 serve(async (req: Request) => {
     try {
