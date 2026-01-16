@@ -22,6 +22,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.11.0",
+    "recharts": "^3.6.0",
     "three": "^0.173.0",
     "wawa-lipsync": "^0.0.2",
     "zustand": "^5.0.9"
