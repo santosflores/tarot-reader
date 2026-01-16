@@ -6,8 +6,8 @@
  * Point your Google Search Console to this URL.
  */
 
-import { serve } from 'std/server';
-import { createClient } from '@supabase/supabase-js';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const BASE_URL = 'https://virtual-tarot.vercel.app'; // Replace with your actual production URL
 
