@@ -4,6 +4,7 @@
  * Includes SEO meta tags and view tracking
  */
 
+import { track } from '@vercel/analytics';
 import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -85,62 +86,28 @@ export function HoroscopePage() {
         if (horoscope && !viewTrackedRef.current) {
             viewTrackedRef.current = true;
             trackView(horoscope.id);
-        }
-    }, [horoscope]);
 
-    // Track CTA click and session duration on unmount
-    useEffect(() => {
-        return () => {
-            if (horoscope && viewTrackedRef.current) {
-                const duration = Math.floor((Date.now() - sessionStartRef.current) / 1000);
-                updateViewWithDuration(horoscope.id, duration);
-            }
-        };
-    }, [horoscope]);
-
-    // SEO meta tags
-    useEffect(() => {
-        if (horoscope && zodiacInfo) {
-            document.title = horoscope.title;
-
-            // Update meta description
-            const metaDescription = document.querySelector('meta[name="description"]');
-            if (metaDescription) {
-                metaDescription.setAttribute('content', horoscope.meta_description);
-            }
-
-            // Add/update Open Graph tags
-            updateMetaTag('og:title', horoscope.title);
-            updateMetaTag('og:description', horoscope.meta_description);
-            updateMetaTag('og:type', 'article');
-            updateMetaTag('og:url', window.location.href);
-        }
-    }, [horoscope, zodiacInfo]);
-
-    async function trackView(horoscopeId: string) {
-        try {
-            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-            await fetch(`${supabaseUrl}/functions/v1/track-horoscope-view`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    horoscope_id: horoscopeId,
-                    referrer: document.referrer || null,
-                }),
+            // Vercel Analytics Event
+            track('horoscope_view', {
+                sign: horoscope.zodiac_sign,
+                persona: horoscope.persona.name,
+                date: horoscope.publish_date
             });
-        } catch (e) {
-            console.error('Failed to track view:', e);
         }
-    }
+    }, [horoscope]);
 
-    async function updateViewWithDuration(horoscopeId: string, duration: number) {
-        // This is a simplified approach - in production you'd update the existing view record
-        console.log(`Session duration for ${horoscopeId}: ${duration}s`);
-    }
+    // ... existing code ...
 
     function handleTarotClick() {
         // Track CTA click
         if (horoscope) {
+            // Vercel Analytics Event
+            track('tarot_cta_click', {
+                sign: horoscope.zodiac_sign,
+                persona: horoscope.persona.name,
+                source: 'horoscope_page'
+            });
+
             const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
             fetch(`${supabaseUrl}/functions/v1/track-horoscope-view`, {
                 method: 'POST',

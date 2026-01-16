@@ -12,6 +12,7 @@ import { ProfilePage } from './components/Profile';
 import { ElevenLabsAgent } from './components/ElevenLabs';
 import { TarotPage } from './components/Tarot';
 import { HoroscopeIndex, HoroscopePage } from './components/Horoscope';
+import { AnalyticsDashboard } from './components/Admin/AnalyticsDashboard';
 import { LandingPage } from './components/LandingPage';
 import App from './App';
 import './index.css';
@@ -97,6 +98,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedRoute>
                 <TarotPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsDashboard />
               </ProtectedRoute>
             }
           />
