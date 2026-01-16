@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS personas (
 -- Enable RLS (public read, admin write)
 ALTER TABLE personas ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Anyone can view personas" on personas;
 -- Public can read personas
 CREATE POLICY "Anyone can view personas"
   ON personas FOR SELECT
@@ -49,13 +50,17 @@ CREATE TABLE IF NOT EXISTS horoscopes (
 ALTER TABLE horoscopes ENABLE ROW LEVEL SECURITY;
 
 -- Public can read published horoscopes
+drop policy if exists "Anyone can view published horoscopes" on horoscopes;
 CREATE POLICY "Anyone can view published horoscopes"
   ON horoscopes FOR SELECT
   USING (status = 'published');
 
 -- Create index for common queries
+drop index if exists idx_horoscopes_publish_date;
 CREATE INDEX idx_horoscopes_publish_date ON horoscopes(publish_date);
+drop index if exists idx_horoscopes_zodiac_sign;
 CREATE INDEX idx_horoscopes_zodiac_sign ON horoscopes(zodiac_sign);
+drop index if exists idx_horoscopes_status;
 CREATE INDEX idx_horoscopes_status ON horoscopes(status);
 
 -- =========================================
@@ -76,14 +81,18 @@ CREATE TABLE IF NOT EXISTS horoscope_views (
 -- Enable RLS (public insert for tracking, admin read)
 ALTER TABLE horoscope_views ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Anyone can track views" on horoscope_views;
 -- Anyone can insert views (for tracking)
 CREATE POLICY "Anyone can track views"
   ON horoscope_views FOR INSERT
   WITH CHECK (true);
 
 -- Create indexes for analytics queries
+drop index if exists idx_horoscope_views_persona;
 CREATE INDEX idx_horoscope_views_persona ON horoscope_views(persona_id);
+drop index if exists idx_horoscope_views_zodiac;
 CREATE INDEX idx_horoscope_views_zodiac ON horoscope_views(zodiac_sign);
+drop index if exists idx_horoscope_views_viewed_at;
 CREATE INDEX idx_horoscope_views_viewed_at ON horoscope_views(viewed_at);
 
 -- =========================================
@@ -107,4 +116,8 @@ INSERT INTO personas (name, slug, system_instruction, description) VALUES
   'celeste-faye',
   'You are Celeste Faye, a compassionate soul guide who reads the stars with maternal wisdom. Your horoscopes are warm, nurturing, and emotionally resonant. Focus on relationships, self-care, and emotional wellbeing. Your tone is comforting and understanding, like a wise friend. Write in second person, addressing the reader directly. Keep the horoscope between 100-150 words.',
   'A compassionate soul guide who reads the stars with warmth and wisdom, focusing on emotional wellbeing and relationships.'
-);
+)
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  system_instruction = EXCLUDED.system_instruction,
+  description = EXCLUDED.description;

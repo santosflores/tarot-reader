@@ -15,11 +15,13 @@ create table if not exists public.reading_sessions (
 alter table public.reading_sessions enable row level security;
 
 -- Policies
+drop policy if exists "Users can view their own reading sessions" on public.reading_sessions;
 create policy "Users can view their own reading sessions"
     on public.reading_sessions
     for select
     using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own reading sessions" on public.reading_sessions;
 create policy "Users can insert their own reading sessions"
     on public.reading_sessions
     for insert

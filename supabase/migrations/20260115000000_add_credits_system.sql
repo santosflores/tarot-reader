@@ -31,6 +31,7 @@ COMMENT ON TABLE public.credit_transactions IS 'Audit log of all credit transact
 -- Enable RLS
 ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Users can view own credit transactions" on public.credit_transactions;
 -- Users can view their own transactions
 CREATE POLICY "Users can view own credit transactions"
     ON public.credit_transactions
@@ -38,6 +39,7 @@ CREATE POLICY "Users can view own credit transactions"
     USING (auth.uid() = user_id);
 
 -- Only service role can insert (via Edge Functions)
+drop policy if exists "Service role can insert credit transactions" on public.credit_transactions;
 CREATE POLICY "Service role can insert credit transactions"
     ON public.credit_transactions
     FOR INSERT
@@ -133,6 +135,9 @@ $$;
 -- Adds credits to a user (for purchases, bonuses, refunds)
 -- ============================================================================
 
+-- Drop potential overloaded version from old migrations if it exists
+DROP FUNCTION IF EXISTS public.add_credits(uuid, integer, text);
+
 CREATE OR REPLACE FUNCTION public.add_credits(
     p_user_id UUID,
     p_amount INTEGER,
@@ -193,9 +198,9 @@ END;
 $$;
 
 -- Grant execute permissions
-GRANT EXECUTE ON FUNCTION public.deduct_credits TO authenticated;
-GRANT EXECUTE ON FUNCTION public.deduct_credits TO service_role;
-GRANT EXECUTE ON FUNCTION public.add_credits TO service_role;
+GRANT EXECUTE ON FUNCTION public.deduct_credits(UUID, INTEGER, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.deduct_credits(UUID, INTEGER, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.add_credits(UUID, INTEGER, TEXT, TEXT) TO service_role;
 
 -- Grant table permissions
 GRANT SELECT ON public.credit_transactions TO authenticated;
