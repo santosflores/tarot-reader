@@ -35,7 +35,7 @@ export function LandingPage() {
                     </p>
 
                     {/* Call to Action */}
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-20">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
                         <Link
                             to="/app"
                             className="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
@@ -47,6 +47,18 @@ export function LandingPage() {
                         <a href="#pricing" className="text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-slate-400 pb-0.5">
                             View Offerings
                         </a>
+                    </div>
+
+                    {/* Daily Horoscopes Link */}
+                    <div className="mb-20">
+                        <Link
+                            to="/horoscope"
+                            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                            <span>✦</span>
+                            <span className="border-b border-purple-400/30 hover:border-purple-300">Read Today's Horoscopes</span>
+                            <span>→</span>
+                        </Link>
                     </div>
 
                     {/* Social Proof / Credibility */}
