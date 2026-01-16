@@ -11,6 +11,7 @@ import { LoginForm, SignupForm, ForgotPasswordForm, ResetPasswordForm } from './
 import { ProfilePage } from './components/Profile';
 import { ElevenLabsAgent } from './components/ElevenLabs';
 import { TarotPage } from './components/Tarot';
+import { HoroscopeIndex, HoroscopePage } from './components/Horoscope';
 import { LandingPage } from './components/LandingPage';
 import App from './App';
 import './index.css';
@@ -57,8 +58,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
           <Route path="/reset-password" element={<ResetPasswordForm />} />
 
-          {/* Protected Routes */}
+          {/* Public Horoscope Routes (SEO) */}
+          <Route path="/horoscope" element={<HoroscopeIndex />} />
+          <Route path="/horoscope/:date" element={<HoroscopeIndex />} />
+          <Route path="/horoscope/:date/:sign" element={<HoroscopePage />} />
+
+          {/* Public Landing */}
           <Route path="/" element={<LandingPage />} />
+
+          {/* Protected Routes */}
 
           <Route
             path="/app"
