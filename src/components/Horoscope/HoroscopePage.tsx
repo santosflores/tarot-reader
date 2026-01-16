@@ -101,9 +101,9 @@ export function HoroscopePage() {
         }
     }, [horoscope]);
 
-    // ... existing code ...
 
-    // ... existing code ...
+
+
 
     async function trackView(horoscopeId: string) {
         try {
@@ -276,15 +276,4 @@ export function HoroscopePage() {
             </footer>
         </div>
     );
-}
-
-// Helper to update/create meta tags
-function updateMetaTag(property: string, content: string) {
-    let meta = document.querySelector(`meta[property="${property}"]`);
-    if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', content);
 }
