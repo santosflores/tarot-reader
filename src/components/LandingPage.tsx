@@ -15,12 +15,12 @@ export function LandingPage() {
 
                     {/* The Hook */}
                     <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold tracking-wide animate-fade-in">
-                        THE ORACLE IS ONLINE
+                        ✨ UNLOCK YOUR DESTINY
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-none animate-fade-in-delay">
-                        The Future <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">Is Not What You Think.</span>
+                        Discover What <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">the Cards Reveal</span>
                     </h1>
 
                     {/* The Lead (First Sentence) */}
@@ -30,8 +30,7 @@ export function LandingPage() {
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Most people seek answers in the wrong places—vague horoscopes, generic advice, or random chance.
-                        But deep down, you know that true clarity requires something more... precise.
+                        Our AI-powered tarot readings blend ancient wisdom with modern intuition to guide your path forward.
                     </p>
 
                     {/* Call to Action */}
@@ -41,11 +40,11 @@ export function LandingPage() {
                             className="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                Enter the Void <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                Begin Your Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </span>
                         </Link>
                         <a href="#pricing" className="text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-slate-400 pb-0.5">
-                            View Offerings
+                            See Pricing
                         </a>
                     </div>
 
@@ -116,12 +115,12 @@ export function LandingPage() {
             {/* Footer */}
             <footer className="py-12 text-center border-t border-slate-800 bg-slate-950">
                 <div className="text-slate-600 text-sm mb-4">
-                    © {new Date().getFullYear()} Tarot Reader. The future is written.
+                    © {new Date().getFullYear()} Tarot Reader. Unlock the mysteries of your path.
                 </div>
                 <div className="flex items-center justify-center gap-6 text-slate-500 text-sm">
-                    <a href="#" className="hover:text-purple-400 transition-colors">Terms of Destiny</a>
-                    <a href="#" className="hover:text-purple-400 transition-colors">Privacy Sanctum</a>
-                    <a href="#" className="hover:text-purple-400 transition-colors">Contact Oracle</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">Terms of Service</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">Contact Us</a>
                 </div>
             </footer>
 

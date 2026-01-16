@@ -11,15 +11,14 @@ export function BusinessInfo() {
                 {/* Section Header */}
                 <div className="text-center mb-20">
                     <h2 className="text-sm font-bold text-purple-400 uppercase tracking-[0.2em] mb-3 animate-fade-in">
-                        Behind the Veil
+                        How It Works
                     </h2>
                     <h3 className="text-3xl md:text-5xl font-bold text-white mb-6 font-serif">
-                        The Science of Immersive Magic
+                        AI-Powered Tarot Readings
                     </h3>
                     <p className="max-w-2xl mx-auto text-slate-400 text-lg leading-relaxed">
-                        We've stripped away the vague generalizations of traditional horoscope apps.
-                        This is a 1:1 simulation of a physical tarot reading, powered by neural networks
-                        that understand context, nuance, and the human condition.
+                        Experience personalized guidance through our immersive 3D tarot experience.
+                        Every reading is uniquely crafted for you.
                     </p>
                 </div>
 
@@ -32,11 +31,11 @@ export function BusinessInfo() {
                             <span className="text-3xl">🧠</span>
                         </div>
                         <h4 className="text-xl font-bold text-slate-200 mb-3 group-hover:text-purple-300 transition-colors">
-                            Neural Intuition
+                            Personalized Insights
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Our models aren't just reciting definitions. They synthesize card meanings, their positions,
-                            and <strong>your specific question</strong> to weave a narrative that feels startlingly human.
+                            Our AI synthesizes card meanings, positions, and <strong>your specific question</strong>
+                            to deliver readings that feel genuinely personal and meaningful.
                         </p>
                     </div>
 
@@ -46,11 +45,11 @@ export function BusinessInfo() {
                             <span className="text-3xl">⚛️</span>
                         </div>
                         <h4 className="text-xl font-bold text-slate-200 mb-3 group-hover:text-indigo-300 transition-colors">
-                            Real-Time Physics
+                            Immersive 3D Experience
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Cards are shuffled, drawn, and placed in a 3D environment rendered in real-time.
-                            No pre-recorded animations. Every spread is uniquely generated for you, by the laws of probability.
+                            Watch cards shuffle, draw, and reveal in a stunning 3D environment.
+                            Every spread is uniquely generated for you in real-time.
                         </p>
                     </div>
 
@@ -60,11 +59,11 @@ export function BusinessInfo() {
                             <span className="text-3xl">🛡️</span>
                         </div>
                         <h4 className="text-xl font-bold text-slate-200 mb-3 group-hover:text-pink-300 transition-colors">
-                            Private Sanctuary
+                            100% Private
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Your deepest questions deserve absolute privacy. All sessions are encrypted and
-                            your history is accessible only to you. The void keeps its secrets.
+                            Your questions deserve absolute privacy. All sessions are encrypted
+                            and your history is accessible only to you.
                         </p>
                     </div>
                 </div>
@@ -75,14 +74,14 @@ export function BusinessInfo() {
 
                         <div>
                             <h3 className="text-2xl font-bold text-white mb-6">
-                                A Transparent Exchange of Energy
+                                Simple & Transparent Pricing
                             </h3>
                             <div className="space-y-6">
                                 <div className="flex gap-4">
                                     <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm shrink-0">1</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Get Credits</h5>
-                                        <p className="text-slate-400 text-sm">Purchase a credit pack anytime. No subscriptions, just pure energy.</p>
+                                        <p className="text-slate-400 text-sm">Purchase credits anytime. No subscriptions required.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">

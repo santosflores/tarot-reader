@@ -63,7 +63,7 @@ export function PricingTable() {
             credits: 500,
             color: "blue",
             features: [
-                "~50 Minutes of Insight",
+                "~50 minutes of readings",
                 "Full 3D Avatar Experience",
                 "Save Conversation History",
                 "Access to All Reading Modes"
@@ -76,7 +76,7 @@ export function PricingTable() {
             color: "purple",
             isPopular: true,
             features: [
-                "~200 Minutes of Wisdom",
+                "~200 minutes of readings",
                 "Full 3D Avatar Experience",
                 "Save Conversation History",
                 "Access to All Reading Modes",
@@ -89,7 +89,7 @@ export function PricingTable() {
             credits: 5000,
             color: "amber",
             features: [
-                "~500 Minutes of Enlightenment",
+                "~500 minutes of readings",
                 "Full 3D Avatar Experience",
                 "Save Conversation History",
                 "Access to All Reading Modes",
@@ -104,10 +104,10 @@ export function PricingTable() {
 
             <div className="text-center mb-12 relative z-10">
                 <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-indigo-100 to-purple-200 mb-6 font-serif uppercase tracking-tighter">
-                    Invest in Your Destiny
+                    Choose Your Path
                 </h2>
                 <p className="text-slate-400 max-w-xl mx-auto text-lg mb-8 leading-relaxed">
-                    One-time energy transfers for casual seekers. No commitments, just pure wisdom.
+                    Purchase credits to unlock personalized readings. No subscriptions.
                 </p>
             </div>
 
@@ -121,7 +121,7 @@ export function PricingTable() {
             </div>
 
             <div className="mt-12 text-center text-slate-500 text-sm max-w-2xl mx-auto italic">
-                * All energy exchanges are processed through encrypted spiritual channels.
+                * Secure payments powered by Stripe.
             </div>
         </section>
     );

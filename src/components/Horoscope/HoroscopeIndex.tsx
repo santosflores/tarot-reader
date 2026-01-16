@@ -191,17 +191,16 @@ export function HoroscopeIndex() {
                         {/* CTA to Tarot Reader */}
                         <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/20">
                             <h2 className="text-2xl font-bold text-white mb-4">
-                                Want Deeper Insights?
+                                Go Deeper with a Personal Reading
                             </h2>
                             <p className="text-slate-300 mb-6 max-w-md mx-auto">
-                                Get a personalized tarot reading from our AI Oracle.
-                                Discover what the cards reveal about your path.
+                                Ask the cards about love, career, or any question on your mind.
                             </p>
                             <Link
                                 to="/app"
                                 className="inline-flex items-center gap-2 px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                             >
-                                Start Your Reading <span>→</span>
+                                Get Your Tarot Reading <span>→</span>
                             </Link>
                         </div>
                     </>
