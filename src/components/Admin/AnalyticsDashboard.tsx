@@ -23,6 +23,7 @@ export function AnalyticsDashboard() {
     // Admin Controls State
     const [operationLoading, setOperationLoading] = useState<string | null>(null);
     const [operationMsg, setOperationMsg] = useState<string | null>(null);
+    const [targetDate, setTargetDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
         async function fetchStats() {
@@ -51,14 +52,15 @@ export function AnalyticsDashboard() {
             // Note: In local dev we might need to use the full URL if invoke doesn't resolve automatically
             // But invoke is the standard way. 
             const { data, error } = await supabase.functions.invoke(endpoint, {
-                body: { date: new Date().toISOString().split('T')[0] }
+                body: { date: targetDate }
             });
 
             if (error) throw error;
-            setOperationMsg(`Success: ${data.message || 'Operation completed'}`);
-        } catch (e: any) {
+            setOperationMsg(`Success: ${data.message || 'Operation completed'} (${targetDate})`);
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : 'Operation failed';
             console.error(e);
-            setOperationMsg(`Error: ${e.message || 'Operation failed'}`);
+            setOperationMsg(`Error: ${errorMessage}`);
         } finally {
             setOperationLoading(null);
         }
@@ -85,12 +87,22 @@ export function AnalyticsDashboard() {
             <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-12">
                 <h2 className="text-xl font-bold text-white mb-4">Content Controls</h2>
                 <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="targetDate" className="text-sm text-slate-400">Date:</label>
+                        <input
+                            type="date"
+                            id="targetDate"
+                            value={targetDate}
+                            onChange={(e) => setTargetDate(e.target.value)}
+                            className="px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                        />
+                    </div>
                     <button
                         onClick={() => handleOperation('generate')}
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                     >
-                        {operationLoading === 'generate' ? 'Generating...' : 'Generate Today\'s Content'}
+                        {operationLoading === 'generate' ? 'Generating...' : 'Generate Content'}
                     </button>
                     <button
                         onClick={() => handleOperation('publish')}
