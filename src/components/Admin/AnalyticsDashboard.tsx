@@ -20,6 +20,10 @@ export function AnalyticsDashboard() {
     const [signStats, setSignStats] = useState<SignStats[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Admin Controls State
+    const [operationLoading, setOperationLoading] = useState<string | null>(null);
+    const [operationMsg, setOperationMsg] = useState<string | null>(null);
+
     useEffect(() => {
         async function fetchStats() {
             setLoading(true);
@@ -39,6 +43,27 @@ export function AnalyticsDashboard() {
         fetchStats();
     }, []);
 
+    async function handleOperation(opType: 'generate' | 'publish') {
+        setOperationLoading(opType);
+        setOperationMsg(null);
+        try {
+            const endpoint = opType === 'generate' ? 'generate-daily-horoscopes' : 'publish-horoscopes';
+            // Note: In local dev we might need to use the full URL if invoke doesn't resolve automatically
+            // But invoke is the standard way. 
+            const { data, error } = await supabase.functions.invoke(endpoint, {
+                body: { date: new Date().toISOString().split('T')[0] }
+            });
+
+            if (error) throw error;
+            setOperationMsg(`Success: ${data.message || 'Operation completed'}`);
+        } catch (e: any) {
+            console.error(e);
+            setOperationMsg(`Error: ${e.message || 'Operation failed'}`);
+        } finally {
+            setOperationLoading(null);
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -49,7 +74,49 @@ export function AnalyticsDashboard() {
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-200 p-8">
-            <h1 className="text-3xl font-bold text-white mb-8">Horoscope Analytics</h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-white">Horoscope Admin</h1>
+                <div className="text-sm text-slate-400">
+                    Sitemap: <a href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-sitemap`} target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">/serve-sitemap</a>
+                </div>
+            </div>
+
+            {/* Content Controls */}
+            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-12">
+                <h2 className="text-xl font-bold text-white mb-4">Content Controls</h2>
+                <div className="flex flex-wrap items-center gap-4">
+                    <button
+                        onClick={() => handleOperation('generate')}
+                        disabled={!!operationLoading}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                    >
+                        {operationLoading === 'generate' ? 'Generating...' : 'Generate Today\'s Content'}
+                    </button>
+                    <button
+                        onClick={() => handleOperation('publish')}
+                        disabled={!!operationLoading}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                    >
+                        {operationLoading === 'publish' ? 'Publishing...' : 'Publish Drafts'}
+                    </button>
+
+                    <a
+                        href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-sitemap`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-colors ml-auto"
+                    >
+                        Check Sitemap XML
+                    </a>
+                </div>
+                {operationMsg && (
+                    <div className={`mt-4 p-3 rounded-lg text-sm border ${operationMsg.startsWith('Error') ? 'bg-red-900/20 border-red-900 text-red-200' : 'bg-green-900/20 border-green-900 text-green-200'}`}>
+                        {operationMsg}
+                    </div>
+                )}
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-6">Analytics Overview</h2>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
