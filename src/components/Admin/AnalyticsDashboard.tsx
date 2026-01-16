@@ -98,6 +98,7 @@ export function AnalyticsDashboard() {
                         />
                     </div>
                     <button
+                        type="button"
                         onClick={() => handleOperation('generate')}
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
@@ -105,6 +106,7 @@ export function AnalyticsDashboard() {
                         {operationLoading === 'generate' ? 'Generating...' : 'Generate Content'}
                     </button>
                     <button
+                        type="button"
                         onClick={() => handleOperation('publish')}
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
