@@ -103,6 +103,24 @@ export function HoroscopePage() {
 
     // ... existing code ...
 
+    // ... existing code ...
+
+    async function trackView(horoscopeId: string) {
+        try {
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            await fetch(`${supabaseUrl}/functions/v1/track-horoscope-view`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    horoscope_id: horoscopeId,
+                    referrer: document.referrer || null,
+                }),
+            });
+        } catch (e) {
+            console.error('Failed to track view:', e);
+        }
+    }
+
     function handleTarotClick() {
         // Track CTA click
         if (horoscope) {
