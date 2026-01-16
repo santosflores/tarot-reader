@@ -24,33 +24,20 @@ const createMockMesh = (morphTargetCount = 20) => {
   } as unknown as SkinnedMesh;
 };
 
-describe('useVisemeManager Performance', () => {
-  it('measures updateMorphTarget execution time (Baseline vs Optimized)', () => {
+describe('useVisemeManager Performance (Allocation & Epsilon)', () => {
+  it('measures execution time including Object.values and epsilon check', () => {
     const meshes = Array.from({ length: 5 }, () => createMockMesh(20));
-    // Simulate typical viseme set
-    const visemes = Object.values(VISEMES);
 
-    // Baseline implementation (Logic only)
-    const updateMorphTargetBaseline = (target: string, targetValue: number) => {
-      meshes.forEach((skinnedMesh) => {
-        if (!skinnedMesh.morphTargetDictionary) return;
-        const morphIndex = skinnedMesh.morphTargetDictionary[target];
-        if (
-          morphIndex !== undefined &&
-          skinnedMesh.morphTargetInfluences &&
-          typeof skinnedMesh.morphTargetInfluences[morphIndex] === 'number'
-        ) {
-          const currentValue = skinnedMesh.morphTargetInfluences[morphIndex];
-          const smoothing = 0.5;
-          skinnedMesh.morphTargetInfluences[morphIndex] = MathUtils.lerp(currentValue, targetValue, smoothing);
-        }
-      });
+    // Simulate what happens in useFrame
+    const updateMorphTarget = (mesh: SkinnedMesh, index: number, targetValue: number) => {
+        if (!mesh.morphTargetInfluences) return;
+        const currentValue = mesh.morphTargetInfluences[index];
+        const smoothing = 0.5;
+        mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
     };
 
-    // Optimized implementation (Logic only)
-    // 1. Precompute cache
     const morphTargetCache: Record<string, Array<{ mesh: SkinnedMesh; index: number }>> = {};
-    visemes.forEach((viseme) => {
+    Object.values(VISEMES).forEach((viseme) => {
       morphTargetCache[viseme] = [];
       meshes.forEach((mesh) => {
         if (mesh.morphTargetDictionary && mesh.morphTargetDictionary[viseme] !== undefined) {
@@ -62,16 +49,27 @@ describe('useVisemeManager Performance', () => {
       });
     });
 
-    const updateMorphTargetOptimized = (target: string, targetValue: number) => {
-      const targets = morphTargetCache[target];
+    const updateMorphTargetOptimized = (targets: Array<{ mesh: SkinnedMesh; index: number }>, targetValue: number) => {
       if (!targets) return;
-
       for (let i = 0; i < targets.length; i++) {
         const { mesh, index } = targets[i];
-        if (
-          mesh.morphTargetInfluences &&
-          typeof mesh.morphTargetInfluences[index] === 'number'
-        ) {
+        if (mesh.morphTargetInfluences) {
+           const currentValue = mesh.morphTargetInfluences[index];
+           if (Math.abs(targetValue - currentValue) < 0.001) {
+             if (currentValue !== targetValue) mesh.morphTargetInfluences[index] = targetValue;
+             continue;
+           }
+           const smoothing = 0.5;
+           mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
+        }
+      }
+    };
+
+    const updateMorphTargetBaseline = (targets: Array<{ mesh: SkinnedMesh; index: number }>, targetValue: number) => {
+      if (!targets) return;
+      for (let i = 0; i < targets.length; i++) {
+        const { mesh, index } = targets[i];
+        if (mesh.morphTargetInfluences) {
            const currentValue = mesh.morphTargetInfluences[index];
            const smoothing = 0.5;
            mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
@@ -80,17 +78,27 @@ describe('useVisemeManager Performance', () => {
     };
 
     const iterations = 50000;
+    const currentViseme = VISEMES.aa;
 
+    // Baseline: Call Object.values inside loop + no epsilon check
     const startBaseline = performance.now();
     for (let i = 0; i < iterations; i++) {
-         visemes.forEach(v => updateMorphTargetBaseline(v, 0.5));
+         Object.values(VISEMES).forEach((viseme) => {
+             const targetValue = viseme === currentViseme ? 1 : 0;
+             updateMorphTargetBaseline(morphTargetCache[viseme], targetValue);
+         });
     }
     const endBaseline = performance.now();
     const baselineTime = endBaseline - startBaseline;
 
+    // Optimized: Cached Object.values + epsilon check
+    const VISEME_VALUES = Object.values(VISEMES);
     const startOptimized = performance.now();
     for (let i = 0; i < iterations; i++) {
-         visemes.forEach(v => updateMorphTargetOptimized(v, 0.5));
+         VISEME_VALUES.forEach((viseme) => {
+             const targetValue = viseme === currentViseme ? 1 : 0;
+             updateMorphTargetOptimized(morphTargetCache[viseme], targetValue);
+         });
     }
     const endOptimized = performance.now();
     const optimizedTime = endOptimized - startOptimized;
