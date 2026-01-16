@@ -49,6 +49,7 @@ export function HoroscopePage() {
 
             setLoading(true);
             setError(null);
+            setHoroscope(null);
 
             const { data, error: fetchError } = await supabase
                 .from('horoscopes')
