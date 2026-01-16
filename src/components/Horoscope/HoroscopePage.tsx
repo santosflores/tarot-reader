@@ -47,6 +47,7 @@ export function HoroscopePage() {
         async function fetchHoroscope() {
             if (!date || !sign) return;
 
+            console.log('Fetching horoscope for:', date, sign);
             setLoading(true);
             setError(null);
             setHoroscope(null);
@@ -62,7 +63,10 @@ export function HoroscopePage() {
                 .eq('status', 'published')
                 .single();
 
+            console.log('Fetch result:', { data, fetchError });
+
             if (fetchError || !data) {
+                console.error('Error fetching horoscope:', fetchError);
                 setError('Horoscope not found for this date and sign.');
                 setLoading(false);
                 return;
