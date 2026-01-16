@@ -12,6 +12,9 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
+// Cache viseme values to avoid object allocation in loop
+const VISEME_VALUES = Object.values(VISEMES);
+
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -54,9 +57,8 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
    */
   const morphTargetCache = useMemo(() => {
     const cache: Record<string, Array<{ mesh: SkinnedMesh; index: number }>> = {};
-    const visemes = Object.values(VISEMES);
 
-    visemes.forEach((viseme) => {
+    VISEME_VALUES.forEach((viseme) => {
       cache[viseme] = [];
       avatarSkinnedMeshes.forEach((mesh) => {
         if (mesh.morphTargetDictionary && mesh.morphTargetDictionary[viseme] !== undefined) {
@@ -86,6 +88,16 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
           typeof mesh.morphTargetInfluences[index] === 'number'
         ) {
           const currentValue = mesh.morphTargetInfluences[index];
+
+          // Optimization: Skip if already at target (within epsilon)
+          // This avoids unnecessary lerp calculations and property assignments
+          if (Math.abs(currentValue - targetValue) < 0.001) {
+            if (currentValue !== targetValue) {
+              mesh.morphTargetInfluences[index] = targetValue;
+            }
+            continue;
+          }
+
           const smoothing =
             targetValue > currentValue
               ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING
@@ -140,13 +152,13 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         }
       }
 
-      Object.values(VISEMES).forEach((viseme) => {
+      VISEME_VALUES.forEach((viseme) => {
         const targetValue = viseme === currentViseme ? 1 : 0;
         updateMorphTarget(viseme, targetValue);
       });
     } else {
       // Reset all visemes when not playing
-      Object.values(VISEMES).forEach((viseme) => {
+      VISEME_VALUES.forEach((viseme) => {
         updateMorphTarget(viseme, 0);
       });
     }
