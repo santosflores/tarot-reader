@@ -40,6 +40,8 @@ export function HoroscopeIndex() {
         async function fetchHoroscopes() {
             setLoading(true);
             setError(null);
+            setHoroscopes([]);
+            setPersona(null);
 
             const { data, error: fetchError } = await supabase
                 .from('horoscopes')
