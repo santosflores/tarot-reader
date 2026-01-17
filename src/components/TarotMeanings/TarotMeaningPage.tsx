@@ -4,7 +4,7 @@
  * Public SEO page
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { findCardById, TAROT_MEANINGS, getCardImageFromMeaning } from '../../data';
 import { ELEMENT_INFO } from '../../types/tarotMeaning';
@@ -12,6 +12,7 @@ import { ELEMENT_INFO } from '../../types/tarotMeaning';
 export function TarotMeaningPage() {
     const { cardId } = useParams<{ cardId: string }>();
     const navigate = useNavigate();
+    const [isImageOpen, setIsImageOpen] = useState(false);
 
     const card = useMemo(() => {
         if (!cardId) return null;
@@ -116,11 +117,21 @@ export function TarotMeaningPage() {
                 <div className="grid md:grid-cols-[280px_1fr] gap-8">
                     {/* Card Image */}
                     <div className="flex flex-col items-center md:items-start">
-                        <img
-                            src={getCardImageFromMeaning(card)}
-                            alt={`${card.name} tarot card meaning`}
-                            className="w-full max-w-[280px] rounded-xl shadow-lg"
-                        />
+                        <button
+                            onClick={() => setIsImageOpen(true)}
+                            className="relative group cursor-zoom-in"
+                        >
+                            <img
+                                src={getCardImageFromMeaning(card)}
+                                alt={`${card.name} tarot card meaning`}
+                                className="w-full max-w-[280px] rounded-xl shadow-lg transition-transform group-hover:scale-[1.02]"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="px-3 py-1.5 bg-black/70 text-white text-sm rounded-full">
+                                    Click to enlarge
+                                </span>
+                            </div>
+                        </button>
                     </div>
 
                     {/* Card Details */}
@@ -232,6 +243,29 @@ export function TarotMeaningPage() {
                     </Link>
                 </div>
             </footer>
+            {/* Full-screen Image Modal */}
+            {isImageOpen && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+                    onClick={() => setIsImageOpen(false)}
+                >
+                    <button
+                        onClick={() => setIsImageOpen(false)}
+                        className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+                        aria-label="Close"
+                    >
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <img
+                        src={getCardImageFromMeaning(card)}
+                        alt={`${card.name} tarot card`}
+                        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 }
