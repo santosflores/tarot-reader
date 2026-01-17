@@ -79,6 +79,60 @@ export function LandingPage() {
                 </div>
             </header>
 
+            {/* Trust & Community Section */}
+            <section className="py-20 relative border-t border-slate-800/50">
+                <div className="absolute inset-0 bg-purple-900/5 mix-blend-overlay pointer-events-none" />
+                <div className="max-w-4xl mx-auto px-6 relative z-10">
+
+                    {/* Stats */}
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold mb-6">
+                            <span>🚀</span> <span>Trusted by Thousands</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">+4,000 Readings</span> Delivered
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            Join a growing community of seekers finding clarity, direction, and peace through our AI-powered guidance.
+                        </p>
+                    </div>
+
+                    {/* Testimonials */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Testimonial 1 */}
+                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
+                            <p className="text-slate-300 mb-4 italic">"I was skeptical about AI tarot, but the accuracy was chilling. It picked up on exactly what I was going through."</p>
+                            <div className="text-sm">
+                                <span className="font-semibold text-white block">Sarah M.</span>
+                                <span className="text-slate-500">New York, NY</span>
+                            </div>
+                        </div>
+
+                        {/* Testimonial 2 */}
+                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
+                            <p className="text-slate-300 mb-4 italic">"The voice interaction makes it feel so real. It's like having a spiritual advisor in my pocket 24/7."</p>
+                            <div className="text-sm">
+                                <span className="font-semibold text-white block">James R.</span>
+                                <span className="text-slate-500">London, UK</span>
+                            </div>
+                        </div>
+
+                        {/* Testimonial 3 */}
+                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
+                            <p className="text-slate-300 mb-4 italic">"Daily horoscopes are spot on. This app has become part of my morning ritual for mindfulness."</p>
+                            <div className="text-sm">
+                                <span className="font-semibold text-white block">Elena K.</span>
+                                <span className="text-slate-500">Toronto, CA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
             {/* Business Info / Science of Magic */}
             <BusinessInfo />
 
