@@ -4,7 +4,7 @@
  * Public SEO page - fetches from database with static fallback
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { JSX, useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { findCardById, TAROT_MEANINGS, getCardImageFromMeaning } from '../../data';
 import { ELEMENT_INFO, TarotCardMeaning } from '../../types/tarotMeaning';
@@ -117,6 +117,17 @@ function MarkdownContent({ content }: { content: string }) {
 
             if (trimmedLine === '') {
                 flushParagraph();
+                continue;
+            }
+
+            // H1 headers (render as H2 style for hierarchy)
+            if (trimmedLine.startsWith('# ')) {
+                flushParagraph();
+                elements.push(
+                    <h2 key={key++} className="text-xl font-semibold text-white mt-6 mb-3">
+                        {trimmedLine.slice(2)}
+                    </h2>
+                );
                 continue;
             }
 
