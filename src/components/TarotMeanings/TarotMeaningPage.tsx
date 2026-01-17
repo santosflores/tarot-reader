@@ -50,6 +50,11 @@ export function TarotMeaningPage() {
         }
     }, [cardId, card, navigate]);
 
+    // Scroll to top on navigation
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [cardId]);
+
     if (!card) {
         return (
             <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex items-center justify-center">
