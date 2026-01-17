@@ -10,7 +10,7 @@
 
 import { serve } from 'std/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from 'npm:@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 const MINOR_RANKS = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Page', 'Knight', 'Queen', 'King'];
 
@@ -115,7 +115,7 @@ async function generateMeaning(ai: GoogleGenAI, card: TarotCard): Promise<Genera
         ? `Major Arcana card ${card.number}`
         : `${card.suit} suit, ${card.rank}`;
 
-    const prompt = `You are an expert tarot reader. Generate comprehensive meanings for the tarot card "${card.name}" (${cardType}, Element: ${card.element}${card.zodiacSign ? `, Associated with: ${card.zodiacSign}` : ''}).
+    const prompt = `You are an expert tarot reader. Generate comprehensive meanings for the tarot card "${card.name}" (${cardType}, Element: ${card.element}).
 
 Provide the following in a structured format:
 
