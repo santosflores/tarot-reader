@@ -13,29 +13,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-// All 78 tarot cards
-const TAROT_CARDS = [
-    // Major Arcana (22 cards)
-    ...Array.from({ length: 22 }, (_, i) => ({
-        id: `major-${i}`,
-        name: getMajorArcanaName(i),
-        arcana: 'major' as const,
-        number: i,
-        suit: null,
-        rank: null,
-        element: getMajorArcanaElement(i),
-        zodiacSign: getMajorArcanaZodiac(i),
-    })),
-    // Minor Arcana - Cups (14 cards)
-    ...getMinorArcanaCards('Cups', 'Water'),
-    // Minor Arcana - Pentacles (14 cards)
-    ...getMinorArcanaCards('Pentacles', 'Earth'),
-    // Minor Arcana - Swords (14 cards)
-    ...getMinorArcanaCards('Swords', 'Air'),
-    // Minor Arcana - Wands (14 cards)
-    ...getMinorArcanaCards('Wands', 'Fire'),
-];
-
 const MINOR_RANKS = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Page', 'Knight', 'Queen', 'King'];
 
 function getMajorArcanaName(number: number): string {
@@ -72,7 +49,7 @@ function getMajorArcanaZodiac(number: number): string | null {
 }
 
 function getMinorArcanaCards(suit: string, element: string) {
-    return MINOR_RANKS.map((rank, index) => ({
+    return MINOR_RANKS.map((rank) => ({
         id: `${suit.toLowerCase()}-${rank.toLowerCase()}`,
         name: `${rank} of ${suit}`,
         arcana: 'minor' as const,
@@ -83,6 +60,29 @@ function getMinorArcanaCards(suit: string, element: string) {
         zodiacSign: null,
     }));
 }
+
+// All 78 tarot cards
+const TAROT_CARDS = [
+    // Major Arcana (22 cards)
+    ...Array.from({ length: 22 }, (_, i) => ({
+        id: `major-${i}`,
+        name: getMajorArcanaName(i),
+        arcana: 'major' as const,
+        number: i,
+        suit: null,
+        rank: null,
+        element: getMajorArcanaElement(i),
+        zodiacSign: getMajorArcanaZodiac(i),
+    })),
+    // Minor Arcana - Cups (14 cards)
+    ...getMinorArcanaCards('Cups', 'Water'),
+    // Minor Arcana - Pentacles (14 cards)
+    ...getMinorArcanaCards('Pentacles', 'Earth'),
+    // Minor Arcana - Swords (14 cards)
+    ...getMinorArcanaCards('Swords', 'Air'),
+    // Minor Arcana - Wands (14 cards)
+    ...getMinorArcanaCards('Wands', 'Fire'),
+];
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
