@@ -34,8 +34,7 @@ export function BusinessInfo() {
                             Personalized Insights
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Our AI synthesizes card meanings, positions, and <strong>your specific question</strong>
-                            to deliver readings that feel genuinely personal and meaningful.
+                            Our AI reads the cards and your question to give you a personal answer.
                         </p>
                     </div>
 
@@ -48,8 +47,7 @@ export function BusinessInfo() {
                             Immersive 3D Experience
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Watch cards shuffle, draw, and reveal in a stunning 3D environment.
-                            Every spread is uniquely generated for you in real-time.
+                            See the cards shuffle and reveal in 3D. Every reading is unique.
                         </p>
                     </div>
 
@@ -62,8 +60,7 @@ export function BusinessInfo() {
                             100% Private
                         </h4>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Your questions deserve absolute privacy. All sessions are encrypted
-                            and your history is accessible only to you.
+                            Your questions are private. Only you can see your history.
                         </p>
                     </div>
                 </div>
@@ -81,21 +78,21 @@ export function BusinessInfo() {
                                     <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm shrink-0">1</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Get Credits</h5>
-                                        <p className="text-slate-400 text-sm">Purchase credits anytime. No subscriptions required.</p>
+                                        <p className="text-slate-400 text-sm">Buy credits anytime. No subscriptions.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-sm shrink-0">2</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Enter the Session</h5>
-                                        <p className="text-slate-400 text-sm">Connect with the AI avatar. The connection costs <span className="text-white font-bold">10 credits per minute</span>.</p>
+                                        <p className="text-slate-400 text-sm">Chat with the AI. Cost: <span className="text-white font-bold">10 credits/min</span>.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-sm shrink-0">3</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Receive Wisdom</h5>
-                                        <p className="text-slate-400 text-sm">Ask clarifying questions. Dig deeper. You only pay for the time you use.</p>
+                                        <p className="text-slate-400 text-sm">Ask questions. Only pay for what you use.</p>
                                     </div>
                                 </div>
                             </div>

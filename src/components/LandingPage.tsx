@@ -25,12 +25,12 @@ export function LandingPage() {
 
                     {/* The Lead (First Sentence) */}
                     <p className="text-xl md:text-2xl text-slate-300 mb-6 leading-relaxed max-w-2xl mx-auto font-light">
-                        You have a burning question. It’s been keeping you awake at night, gnawing at the edge of your mind.
+                        You have a question that keeps you up at night.
                     </p>
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Our AI-powered tarot readings blend ancient wisdom with modern intuition to guide your path forward.
+                        We combine ancient wisdom with AI to guide you.
                     </p>
 
                     {/* Call to Action */}
