@@ -99,39 +99,24 @@ interface TarotCard {
     zodiacSign: string | null;
 }
 
-interface GeneratedMeaning {
-    keywords: string[];
-    uprightKeywords: string[];
-    uprightDescription: string;
-    reversedKeywords: string[];
-    reversedDescription: string;
-}
-
 /**
  * Generate tarot card meaning using Google Gemini SDK
+ * Returns full markdown content for the card
  */
-async function generateMeaning(ai: GoogleGenAI, card: TarotCard): Promise<GeneratedMeaning> {
+async function generateMeaning(ai: GoogleGenAI, card: TarotCard): Promise<string> {
     const cardType = card.arcana === 'major'
         ? `Major Arcana card ${card.number}`
         : `${card.suit} suit, ${card.rank}`;
 
-    const prompt = `You are an expert tarot reader. Generate comprehensive, detailed, and insightful meanings for the tarot card "${card.name}" (${cardType}, Element: ${card.element}).
-Make it at least 600 words long. Use rich, descriptive language and provide specific examples to illustrate your points.
+    const prompt = `You are an expert tarot reader. Write a comprehensive, detailed, and insightful guide for the tarot card "${card.name}" (${cardType}, Element: ${card.element}).
 
-Provide the following in a structured format:
+Write in markdown format. The content should be around 300-400 words and include:
+- An introduction to the card's core meaning and symbolism
+- What the card represents when drawn upright
+- What the card represents when reversed
+- Key themes and life areas this card relates to
 
-KEYWORDS: (3-5 core keywords that capture the card's essence)
-UPRIGHT_KEYWORDS: (3-5 keywords for upright position)
-UPRIGHT_DESCRIPTION: (2-3 sentences describing the upright meaning)
-REVERSED_KEYWORDS: (3-5 keywords for reversed position)
-REVERSED_DESCRIPTION: (2-3 sentences describing the reversed meaning)
-
-Format exactly like this:
-KEYWORDS: keyword1, keyword2, keyword3
-UPRIGHT_KEYWORDS: keyword1, keyword2, keyword3
-UPRIGHT_DESCRIPTION: Your description here.
-REVERSED_KEYWORDS: keyword1, keyword2, keyword3
-REVERSED_DESCRIPTION: Your description here.`;
+Use rich, descriptive language that helps readers understand the depth of this card. Write in a warm, mystical but accessible tone.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -150,25 +135,7 @@ REVERSED_DESCRIPTION: Your description here.`;
         throw new Error('Empty response from Gemini');
     }
 
-    // Parse response
-    const keywordsMatch = text.match(/KEYWORDS:\s*(.+?)(?=\n|UPRIGHT)/is);
-    const uprightKeyMatch = text.match(/UPRIGHT_KEYWORDS:\s*(.+?)(?=\n|UPRIGHT_DESC)/is);
-    const uprightDescMatch = text.match(/UPRIGHT_DESCRIPTION:\s*(.+?)(?=\n|REVERSED_KEY)/is);
-    const reversedKeyMatch = text.match(/REVERSED_KEYWORDS:\s*(.+?)(?=\n|REVERSED_DESC)/is);
-    const reversedDescMatch = text.match(/REVERSED_DESCRIPTION:\s*(.+?)$/is);
-
-    const parseKeywords = (match: RegExpMatchArray | null): string[] => {
-        if (!match) return ['Transformation', 'Change', 'Mystery'];
-        return match[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
-    };
-
-    return {
-        keywords: parseKeywords(keywordsMatch),
-        uprightKeywords: parseKeywords(uprightKeyMatch),
-        uprightDescription: uprightDescMatch?.[1]?.trim() || 'A time of positive energy and growth.',
-        reversedKeywords: parseKeywords(reversedKeyMatch),
-        reversedDescription: reversedDescMatch?.[1]?.trim() || 'Challenges may arise, requiring reflection and patience.',
-    };
+    return text;
 }
 
 serve(async (req: Request) => {
@@ -233,7 +200,7 @@ serve(async (req: Request) => {
             try {
                 console.log(`Generating meaning for ${card.name}...`);
 
-                const meaning = await generateMeaning(ai, card);
+                const content = await generateMeaning(ai, card);
 
                 const { error: insertError } = await supabase
                     .from('tarot_card_meanings')
@@ -246,11 +213,7 @@ serve(async (req: Request) => {
                         rank: card.rank,
                         element: card.element,
                         zodiac_sign: card.zodiacSign,
-                        keywords: meaning.keywords,
-                        upright_keywords: meaning.uprightKeywords,
-                        upright_description: meaning.uprightDescription,
-                        reversed_keywords: meaning.reversedKeywords,
-                        reversed_description: meaning.reversedDescription,
+                        content: content,
                         updated_at: new Date().toISOString(),
                     });
 

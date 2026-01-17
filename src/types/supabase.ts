@@ -221,11 +221,7 @@ export type Database = {
           rank: string | null
           element: string
           zodiac_sign: string | null
-          keywords: string[]
-          upright_keywords: string[]
-          upright_description: string
-          reversed_keywords: string[]
-          reversed_description: string
+          content: string
           created_at: string | null
           updated_at: string | null
         }
@@ -238,11 +234,7 @@ export type Database = {
           rank?: string | null
           element: string
           zodiac_sign?: string | null
-          keywords: string[]
-          upright_keywords: string[]
-          upright_description: string
-          reversed_keywords: string[]
-          reversed_description: string
+          content: string
           created_at?: string | null
           updated_at?: string | null
         }
@@ -255,11 +247,7 @@ export type Database = {
           rank?: string | null
           element?: string
           zodiac_sign?: string | null
-          keywords?: string[]
-          upright_keywords?: string[]
-          upright_description?: string
-          reversed_keywords?: string[]
-          reversed_description?: string
+          content?: string
           created_at?: string | null
           updated_at?: string | null
         }
