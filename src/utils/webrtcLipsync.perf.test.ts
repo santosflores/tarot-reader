@@ -1,5 +1,6 @@
 
 import { describe, it } from 'vitest';
+import { VISEMES } from 'wawa-lipsync';
 
 // Types needed for the benchmark
 interface AudioFeatures {
@@ -170,5 +171,74 @@ describe('History Performance', () => {
 
     const end = performance.now();
     console.log(`Ring Buffer: ${(end - start).toFixed(2)}ms`);
+  });
+});
+
+// Viseme Optimization Benchmarks
+
+const VISEME_CATEGORIES: Record<string, string> = {
+  [VISEMES.sil]: "silence",
+  [VISEMES.PP]: "plosive",
+  [VISEMES.FF]: "fricative",
+  [VISEMES.TH]: "fricative",
+  [VISEMES.DD]: "plosive",
+  [VISEMES.kk]: "plosive",
+  [VISEMES.CH]: "fricative",
+  [VISEMES.SS]: "fricative",
+  [VISEMES.nn]: "plosive",
+  [VISEMES.RR]: "fricative",
+  [VISEMES.aa]: "vowel",
+  [VISEMES.E]: "vowel",
+  [VISEMES.I]: "vowel",
+  [VISEMES.O]: "vowel",
+  [VISEMES.U]: "vowel",
+};
+
+const scores: Record<string, number> = {};
+Object.values(VISEMES).forEach(v => scores[v] = 0);
+
+// Pre-computed
+const PLOSIVE_VISEMES = Object.entries(VISEME_CATEGORIES)
+  .filter(([, category]) => category === "plosive")
+  .map(([viseme]) => viseme);
+
+describe('Viseme Loop Performance', () => {
+  const ITERATIONS = 1_000_000;
+  // Mock data
+  const volumeDelta = 0.005;
+  const averagedVolume = 0.1;
+  const centroidDelta = 1200;
+
+  it('measures Object.entries loop', () => {
+    const start = performance.now();
+
+    for (let i = 0; i < ITERATIONS; i++) {
+       Object.entries(VISEME_CATEGORIES).forEach(([viseme, category]) => {
+        if (category === "plosive") {
+          if (volumeDelta < 0.01) scores[viseme] -= 0.5;
+          if (averagedVolume < 0.2) scores[viseme] += 0.2;
+          if (centroidDelta > 1000) scores[viseme] += 0.2;
+        }
+      });
+    }
+
+    const end = performance.now();
+    console.log(`Object.entries Loop: ${(end - start).toFixed(2)}ms`);
+  });
+
+  it('measures Pre-computed array loop', () => {
+    const start = performance.now();
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      for (let j = 0; j < PLOSIVE_VISEMES.length; j++) {
+        const viseme = PLOSIVE_VISEMES[j];
+        if (volumeDelta < 0.01) scores[viseme] -= 0.5;
+        if (averagedVolume < 0.2) scores[viseme] += 0.2;
+        if (centroidDelta > 1000) scores[viseme] += 0.2;
+      }
+    }
+
+    const end = performance.now();
+    console.log(`Pre-computed Array Loop: ${(end - start).toFixed(2)}ms`);
   });
 });

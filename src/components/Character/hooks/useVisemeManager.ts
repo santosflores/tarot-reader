@@ -6,7 +6,7 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
-import { VISEMES } from 'wawa-lipsync';
+import { VISEME_VALUES } from '../../../utils/webrtcLipsync';
 import { useChatbot } from '../../../hooks/useChatbot';
 import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
@@ -54,7 +54,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
    */
   const morphTargetCache = useMemo(() => {
     const cache: Record<string, Array<{ mesh: SkinnedMesh; index: number }>> = {};
-    const visemes = Object.values(VISEMES);
+    const visemes = VISEME_VALUES;
 
     visemes.forEach((viseme) => {
       cache[viseme] = [];
@@ -140,13 +140,13 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         }
       }
 
-      Object.values(VISEMES).forEach((viseme) => {
+      VISEME_VALUES.forEach((viseme) => {
         const targetValue = viseme === currentViseme ? 1 : 0;
         updateMorphTarget(viseme, targetValue);
       });
     } else {
       // Reset all visemes when not playing
-      Object.values(VISEMES).forEach((viseme) => {
+      VISEME_VALUES.forEach((viseme) => {
         updateMorphTarget(viseme, 0);
       });
     }

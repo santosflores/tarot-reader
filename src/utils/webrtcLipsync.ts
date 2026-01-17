@@ -30,6 +30,12 @@ const VISEME_CATEGORIES: Record<string, string> = {
   [VISEMES.U]: "vowel",
 };
 
+// Optimization: Pre-compute derived arrays to avoid allocation in loops
+export const VISEME_VALUES = Object.values(VISEMES);
+const PLOSIVE_VISEMES = Object.entries(VISEME_CATEGORIES)
+  .filter(([, category]) => category === "plosive")
+  .map(([viseme]) => viseme);
+
 interface AudioFeatures {
   bands: number[];
   deltaBands: number[];
@@ -95,7 +101,7 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
 
   const scores: Record<string, number> = {};
   // Initialize scores
-  Object.values(VISEMES).forEach(v => scores[v] = 0);
+  VISEME_VALUES.forEach(v => scores[v] = 0);
 
   let sampleRate = 44100;
   let binWidth = sampleRate / 2048;
@@ -282,13 +288,12 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     }
 
     // Plosive scoring
-    Object.entries(VISEME_CATEGORIES).forEach(([viseme, category]) => {
-      if (category === "plosive") {
-        if (volumeDelta < 0.01) scores[viseme] -= 0.5;
-        if (averaged.volume < 0.2) scores[viseme] += 0.2;
-        if (centroidDelta > 1000) scores[viseme] += 0.2;
-      }
-    });
+    for (let i = 0; i < PLOSIVE_VISEMES.length; i++) {
+      const viseme = PLOSIVE_VISEMES[i];
+      if (volumeDelta < 0.01) scores[viseme] -= 0.5;
+      if (averaged.volume < 0.2) scores[viseme] += 0.2;
+      if (centroidDelta > 1000) scores[viseme] += 0.2;
+    }
 
     // Consonant detection based on centroid
     if (current.centroid > 1000 && current.centroid < 8000) {
