@@ -18,13 +18,12 @@ export function TarotMeaningCard({ card }: TarotMeaningCardProps) {
     return (
         <Link
             to={`/tarot-card-meaning/${card.id}`}
-            className="group block bg-gradient-to-br from-purple-900/40 to-indigo-900/40 
-                 rounded-xl border border-purple-500/30 overflow-hidden
-                 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/20
-                 transition-all duration-300 transform hover:-translate-y-1"
+            className="group block p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 
+                 hover:border-purple-500/30 hover:bg-slate-800
+                 transition-all duration-200"
         >
             {/* Card Image */}
-            <div className="relative aspect-[2/3] overflow-hidden bg-black/30">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-lg mb-3 bg-slate-900">
                 <img
                     src={getCardImageFromMeaning(card)}
                     alt={`${card.name} tarot card meaning`}
@@ -34,34 +33,31 @@ export function TarotMeaningCard({ card }: TarotMeaningCardProps) {
                 {/* Element Badge */}
                 <div
                     className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium
-                     bg-black/60 backdrop-blur-sm flex items-center gap-1"
+                     bg-slate-900/80 backdrop-blur-sm flex items-center gap-1"
                     style={{ color: elementInfo.color }}
                 >
                     <span>{elementInfo.emoji}</span>
-                    <span>{card.element}</span>
                 </div>
             </div>
 
             {/* Card Info */}
-            <div className="p-4">
-                <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-purple-300 transition-colors">
-                    {card.name}
-                </h3>
-                <p className="text-sm text-purple-300/70 mb-2">
-                    {card.arcana === 'major'
-                        ? `Major Arcana • ${card.number}`
-                        : `${card.suit} • ${card.rank}`}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                    {card.keywords.slice(0, 3).map((keyword) => (
-                        <span
-                            key={keyword}
-                            className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300"
-                        >
-                            {keyword}
-                        </span>
-                    ))}
-                </div>
+            <h3 className="font-semibold text-white mb-1 group-hover:text-purple-400 transition-colors">
+                {card.name}
+            </h3>
+            <p className="text-sm text-slate-400 mb-2">
+                {card.arcana === 'major'
+                    ? `Major • ${card.number}`
+                    : `${card.suit}`}
+            </p>
+            <div className="flex flex-wrap gap-1">
+                {card.keywords.slice(0, 2).map((keyword) => (
+                    <span
+                        key={keyword}
+                        className="text-xs px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300"
+                    >
+                        {keyword}
+                    </span>
+                ))}
             </div>
         </Link>
     );
