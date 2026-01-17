@@ -232,7 +232,7 @@ function FeaturedTarotCard() {
                             <img
                                 src={getCardImageFromMeaning(randomCard)}
                                 alt={`${randomCard.name} tarot card`}
-                                className="w-48 rounded-xl shadow-2xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-purple-500/20"
+                                className="w-56 rounded-xl shadow-2xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-purple-500/20"
                             />
                             <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
                                 <span className="text-white font-semibold">{randomCard.name}</span>
