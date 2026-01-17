@@ -124,7 +124,7 @@ function MarkdownContent({ content }: { content: string }) {
             if (trimmedLine.startsWith('# ')) {
                 flushParagraph();
                 elements.push(
-                    <h2 key={key++} className="text-xl font-semibold text-white mt-6 mb-3">
+                    <h2 key={key++} className="text-2xl font-semibold text-white mb-4">
                         {trimmedLine.slice(2)}
                     </h2>
                 );
@@ -135,7 +135,7 @@ function MarkdownContent({ content }: { content: string }) {
             if (trimmedLine.startsWith('## ')) {
                 flushParagraph();
                 elements.push(
-                    <h2 key={key++} className="text-xl font-semibold text-white mt-6 mb-3">
+                    <h2 key={key++} className="text-xl font-semibold text-white">
                         {trimmedLine.slice(3)}
                     </h2>
                 );
@@ -300,11 +300,14 @@ export function TarotMeaningPage() {
                         <span className="mx-2">›</span>
                         <span className="text-slate-200">{card.name}</span>
                     </nav>
+                    <h1 className="hidden">
+                        Tarot Card Meaning - {card.name}
+                    </h1>
 
                     {/* Card Title */}
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-2">
                         {card.name}
-                    </h1>
+                    </h2>
 
                     <p className="text-lg text-slate-400 mb-2">
                         {card.arcana === 'major'
