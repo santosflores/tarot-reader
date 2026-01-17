@@ -1,7 +1,7 @@
 /**
  * Supabase Edge Function: Generate Tarot Card Meanings
  * 
- * Generates meanings for all 78 tarot cards using Gemini API.
+ * Generates meanings for all 78 tarot cards using Google Gemini SDK.
  * Supports batch generation with filtering by arcana/suit.
  * 
  * Trigger: Manual invocation from admin panel
@@ -10,8 +10,7 @@
 
 import { serve } from 'std/server';
 import { createClient } from '@supabase/supabase-js';
-
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+import { GoogleGenAI } from 'npm:@google/genai';
 
 const MINOR_RANKS = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Page', 'Knight', 'Queen', 'King'];
 
@@ -109,9 +108,9 @@ interface GeneratedMeaning {
 }
 
 /**
- * Generate tarot card meaning using Gemini API
+ * Generate tarot card meaning using Google Gemini SDK
  */
-async function generateMeaning(apiKey: string, card: TarotCard): Promise<GeneratedMeaning> {
+async function generateMeaning(ai: GoogleGenAI, card: TarotCard): Promise<GeneratedMeaning> {
     const cardType = card.arcana === 'major'
         ? `Major Arcana card ${card.number}`
         : `${card.suit} suit, ${card.rank}`;
@@ -133,25 +132,16 @@ UPRIGHT_DESCRIPTION: Your description here.
 REVERSED_KEYWORDS: keyword1, keyword2, keyword3
 REVERSED_DESCRIPTION: Your description here.`;
 
-    const response = await fetch(`${GEMINI_API_BASE}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 500,
-            }
-        }),
+    const response = await ai.models.generateContent({
+        model: 'gemini-3.0-flash',
+        contents: prompt,
+        config: {
+            temperature: 0.7,
+            maxOutputTokens: 500,
+        }
     });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = response.text || '';
 
     // Parse response
     const keywordsMatch = text.match(/KEYWORDS:\s*(.+?)(?=\n|UPRIGHT)/is);
@@ -187,6 +177,9 @@ serve(async (req: Request) => {
                 { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
+
+        // Initialize Google Gemini SDK
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -225,7 +218,7 @@ serve(async (req: Request) => {
             );
         }
 
-        console.log(`Generating meanings for ${cardsToGenerate.length} cards...`);
+        console.log(`Generating meanings for ${cardsToGenerate.length} cards using gemini-3.0-flash...`);
 
         const results: { id: string; success: boolean; error?: string }[] = [];
 
@@ -233,7 +226,7 @@ serve(async (req: Request) => {
             try {
                 console.log(`Generating meaning for ${card.name}...`);
 
-                const meaning = await generateMeaning(geminiApiKey, card);
+                const meaning = await generateMeaning(ai, card);
 
                 const { error: insertError } = await supabase
                     .from('tarot_card_meanings')

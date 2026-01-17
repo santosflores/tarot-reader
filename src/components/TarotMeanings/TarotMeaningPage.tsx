@@ -52,7 +52,7 @@ export function TarotMeaningPage() {
 
     // Scroll to top on navigation
     useEffect(() => {
-        window.scrollTo(0, 0);
+        globalThis.scrollTo(0, 0);
     }, [cardId]);
 
     if (!card) {
@@ -123,6 +123,7 @@ export function TarotMeaningPage() {
                     {/* Card Image */}
                     <div className="flex flex-col items-center md:items-start">
                         <button
+                            type="button"
                             onClick={() => setIsImageOpen(true)}
                             className="relative group cursor-zoom-in"
                         >
@@ -255,6 +256,7 @@ export function TarotMeaningPage() {
                     onClick={() => setIsImageOpen(false)}
                 >
                     <button
+                        type="button"
                         onClick={() => setIsImageOpen(false)}
                         className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
                         aria-label="Close"
