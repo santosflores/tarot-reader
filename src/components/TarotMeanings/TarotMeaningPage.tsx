@@ -1,23 +1,93 @@
 /**
  * TarotMeaningPage Component
  * Individual tarot card detail page with full meaning
- * Public SEO page
+ * Public SEO page - fetches from database with static fallback
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { findCardById, TAROT_MEANINGS, getCardImageFromMeaning } from '../../data';
-import { ELEMENT_INFO } from '../../types/tarotMeaning';
+import { ELEMENT_INFO, TarotCardMeaning } from '../../types/tarotMeaning';
+import { supabase } from '../../lib/supabase';
+
+interface DbTarotCard {
+    id: string;
+    name: string;
+    arcana: 'major' | 'minor';
+    number: number | null;
+    suit: string | null;
+    rank: string | null;
+    element: string;
+    zodiac_sign: string | null;
+    keywords: string[];
+    upright_keywords: string[];
+    upright_description: string;
+    reversed_keywords: string[];
+    reversed_description: string;
+}
+
+function mapDbToTarotMeaning(dbCard: DbTarotCard): TarotCardMeaning {
+    return {
+        id: dbCard.id,
+        name: dbCard.name,
+        arcana: dbCard.arcana,
+        number: dbCard.number ?? undefined,
+        suit: dbCard.suit as TarotCardMeaning['suit'],
+        rank: dbCard.rank as TarotCardMeaning['rank'],
+        element: dbCard.element as TarotCardMeaning['element'],
+        zodiacSign: dbCard.zodiac_sign ?? undefined,
+        keywords: dbCard.keywords,
+        uprightMeaning: {
+            keywords: dbCard.upright_keywords,
+            description: dbCard.upright_description,
+        },
+        reversedMeaning: {
+            keywords: dbCard.reversed_keywords,
+            description: dbCard.reversed_description,
+        },
+    };
+}
 
 export function TarotMeaningPage() {
     const { cardId } = useParams<{ cardId: string }>();
     const navigate = useNavigate();
     const [isImageOpen, setIsImageOpen] = useState(false);
+    const [dbCard, setDbCard] = useState<TarotCardMeaning | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const card = useMemo(() => {
+    // Fetch from database
+    useEffect(() => {
+        async function fetchCard() {
+            if (!cardId) return;
+
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('tarot_card_meanings')
+                    .select('*')
+                    .eq('id', cardId)
+                    .single();
+
+                if (!error && data) {
+                    setDbCard(mapDbToTarotMeaning(data as DbTarotCard));
+                }
+            } catch (e) {
+                console.error('Error fetching tarot card:', e);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchCard();
+    }, [cardId]);
+
+    // Use database card if available, otherwise fall back to static
+    const staticCard = useMemo(() => {
         if (!cardId) return null;
         return findCardById(cardId);
     }, [cardId]);
+
+    const card = dbCard || staticCard;
 
     // Navigation to prev/next card
     const { prevCard, nextCard } = useMemo(() => {
@@ -45,15 +115,23 @@ export function TarotMeaningPage() {
 
     // Redirect if card not found
     useEffect(() => {
-        if (cardId && !card) {
+        if (cardId && !loading && !card) {
             navigate('/tarot-card-meaning', { replace: true });
         }
-    }, [cardId, card, navigate]);
+    }, [cardId, card, loading, navigate]);
 
     // Scroll to top on navigation
     useEffect(() => {
         globalThis.scrollTo(0, 0);
     }, [cardId]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex items-center justify-center">
+                <div className="animate-pulse text-purple-400">Loading...</div>
+            </div>
+        );
+    }
 
     if (!card) {
         return (
@@ -173,7 +251,7 @@ export function TarotMeaningPage() {
                                     </span>
                                 ))}
                             </div>
-                            <p className="text-slate-300 leading-relaxed">{card.uprightMeaning.description}</p>
+                            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{card.uprightMeaning.description}</p>
                         </div>
 
                         {/* Reversed Meaning */}
@@ -192,7 +270,7 @@ export function TarotMeaningPage() {
                                     </span>
                                 ))}
                             </div>
-                            <p className="text-slate-300 leading-relaxed">{card.reversedMeaning.description}</p>
+                            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{card.reversedMeaning.description}</p>
                         </div>
                     </div>
                 </div>

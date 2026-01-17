@@ -115,7 +115,8 @@ async function generateMeaning(ai: GoogleGenAI, card: TarotCard): Promise<Genera
         ? `Major Arcana card ${card.number}`
         : `${card.suit} suit, ${card.rank}`;
 
-    const prompt = `You are an expert tarot reader. Generate comprehensive meanings for the tarot card "${card.name}" (${cardType}, Element: ${card.element}).
+    const prompt = `You are an expert tarot reader. Generate comprehensive, detailed, and insightful meanings for the tarot card "${card.name}" (${cardType}, Element: ${card.element}).
+Make it at least 600 words long. Use rich, descriptive language and provide specific examples to illustrate your points.
 
 Provide the following in a structured format:
 
@@ -133,15 +134,21 @@ REVERSED_KEYWORDS: keyword1, keyword2, keyword3
 REVERSED_DESCRIPTION: Your description here.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             temperature: 0.7,
-            maxOutputTokens: 500,
         }
     });
 
     const text = response.text || '';
+
+    console.log(`[Debug] Response for ${card.name}: ${text.slice(0, 100)}...`);
+
+    if (!text) {
+        console.error(`[Error] Empty response for ${card.name}`);
+        throw new Error('Empty response from Gemini');
+    }
 
     // Parse response
     const keywordsMatch = text.match(/KEYWORDS:\s*(.+?)(?=\n|UPRIGHT)/is);
@@ -218,7 +225,7 @@ serve(async (req: Request) => {
             );
         }
 
-        console.log(`Generating meanings for ${cardsToGenerate.length} cards using gemini-3.0-flash...`);
+        console.log(`Generating meanings for ${cardsToGenerate.length} cards using gemini-3-flash-preview...`);
 
         const results: { id: string; success: boolean; error?: string }[] = [];
 
