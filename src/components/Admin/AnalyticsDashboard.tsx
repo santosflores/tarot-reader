@@ -66,6 +66,27 @@ export function AnalyticsDashboard() {
         }
     }
 
+    async function handleTarotOperation(scope: 'all' | 'major' | 'minor') {
+        setOperationLoading(`tarot-${scope}`);
+        setOperationMsg(null);
+        try {
+            const body: { arcana?: string } = {};
+            if (scope === 'major') body.arcana = 'major';
+            if (scope === 'minor') body.arcana = 'minor';
+
+            const { data, error } = await supabase.functions.invoke('generate-tarot-meanings', { body });
+
+            if (error) throw error;
+            setOperationMsg(`Success: ${data.message || 'Tarot meanings generated'}`);
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : 'Operation failed';
+            console.error(e);
+            setOperationMsg(`Error: ${errorMessage}`);
+        } finally {
+            setOperationLoading(null);
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -128,6 +149,40 @@ export function AnalyticsDashboard() {
                         {operationMsg}
                     </div>
                 )}
+            </div>
+
+            {/* Tarot Meanings Controls */}
+            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-12">
+                <h2 className="text-xl font-bold text-white mb-4">Tarot Card Meanings</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                    Generate AI meanings for tarot cards. This will only generate missing cards.
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                    <button
+                        type="button"
+                        onClick={() => handleTarotOperation('all')}
+                        disabled={!!operationLoading}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                    >
+                        {operationLoading === 'tarot-all' ? 'Generating...' : 'Generate All (78 cards)'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleTarotOperation('major')}
+                        disabled={!!operationLoading}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                    >
+                        {operationLoading === 'tarot-major' ? 'Generating...' : 'Major Arcana Only'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleTarotOperation('minor')}
+                        disabled={!!operationLoading}
+                        className="px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                    >
+                        {operationLoading === 'tarot-minor' ? 'Generating...' : 'Minor Arcana Only'}
+                    </button>
+                </div>
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-6">Analytics Overview</h2>

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { PricingTable } from './UI/components/PricingTable';
 import { BusinessInfo } from './UI/components/BusinessInfo';
+import { TAROT_MEANINGS, getCardImageFromMeaning } from '../data';
 
 export function LandingPage() {
     return (
@@ -30,7 +32,7 @@ export function LandingPage() {
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Experience tarot readings voice online — speak directly with your digital psychic for real-time guidance.
+                        Experience the world's first <strong>Interactive Voice Tarot</strong>. Speak directly with your AI spiritual guide and hear your destiny revealed in real-time.
                     </p>
 
                     {/* Call to Action */}
@@ -40,7 +42,7 @@ export function LandingPage() {
                             className="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                Begin Your Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                Start Voice Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </span>
                         </Link>
                         <a href="#pricing" className="text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-slate-400 pb-0.5">
@@ -49,13 +51,22 @@ export function LandingPage() {
                     </div>
 
                     {/* Daily Horoscopes Link */}
-                    <div className="mb-20">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-20">
                         <Link
                             to="/horoscope"
                             className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
                         >
                             <span>✦</span>
                             <span className="border-b border-purple-400/30 hover:border-purple-300">Read Today's Horoscopes</span>
+                            <span>→</span>
+                        </Link>
+                        <span className="hidden md:block text-slate-600">|</span>
+                        <Link
+                            to="/tarot-card-meaning"
+                            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                            <span>🃏</span>
+                            <span className="border-b border-purple-400/30 hover:border-purple-300">Explore Tarot Card Meanings</span>
                             <span>→</span>
                         </Link>
                     </div>
@@ -133,6 +144,9 @@ export function LandingPage() {
                 </div>
             </section>
 
+            {/* Featured Tarot Card */}
+            <FeaturedTarotCard />
+
             {/* Business Info / Science of Magic */}
             <BusinessInfo />
 
@@ -179,5 +193,88 @@ export function LandingPage() {
             </footer>
 
         </div>
+    );
+}
+
+/**
+ * Featured Tarot Card Component
+ * Displays a random tarot card with link to explore all meanings
+ */
+function FeaturedTarotCard() {
+    const randomCard = useMemo(() => {
+        const randomIndex = Math.floor(Math.random() * TAROT_MEANINGS.length);
+        return TAROT_MEANINGS[randomIndex];
+    }, []);
+
+    return (
+        <section className="py-20 relative border-t border-slate-800/50">
+            <div className="absolute inset-0 bg-purple-900/5 mix-blend-overlay pointer-events-none" />
+            <div className="max-w-4xl mx-auto px-6 relative z-10">
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold mb-6">
+                        <span>🃏</span> <span>Card of the Moment</span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        Discover Tarot Card Meanings
+                    </h2>
+                    <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                        Learn the symbolism and interpretation of all 78 tarot cards in our comprehensive guide.
+                    </p>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+                    {/* Featured Card */}
+                    <Link
+                        to={`/tarot-card-meaning/${randomCard.id}`}
+                        className="group flex-shrink-0"
+                    >
+                        <div className="relative">
+                            <img
+                                src={getCardImageFromMeaning(randomCard)}
+                                alt={`${randomCard.name} tarot card`}
+                                className="w-56 rounded-xl shadow-[0_0_40px_-10px_rgba(168,85,247,0.5)] border-2 border-purple-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_60px_-10px_rgba(168,85,247,0.7)] group-hover:border-purple-400/50"
+                            />
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                                <span className="text-white font-semibold">{randomCard.name}</span>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Card Info & CTA */}
+                    <div className="text-center md:text-left">
+                        <h3 className="text-2xl font-bold text-white mb-2">{randomCard.name}</h3>
+                        <p className="text-slate-400 mb-2">
+                            {randomCard.arcana === 'major'
+                                ? `Major Arcana • Card ${randomCard.number}`
+                                : `${randomCard.suit} • ${randomCard.rank}`}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
+                            {randomCard.keywords.slice(0, 3).map((keyword) => (
+                                <span
+                                    key={keyword}
+                                    className="px-3 py-1 text-sm rounded-full bg-slate-800 text-slate-300 border border-slate-700"
+                                >
+                                    {keyword}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                            <Link
+                                to={`/tarot-card-meaning/${randomCard.id}`}
+                                className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold transition-colors"
+                            >
+                                Read Meaning
+                            </Link>
+                            <Link
+                                to="/tarot-card-meaning"
+                                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors"
+                            >
+                                Explore All 78 Cards →
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 }

@@ -4,6 +4,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/Auth';
@@ -118,6 +119,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           {/* Catch-all: redirect unknown routes to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        <Analytics />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
