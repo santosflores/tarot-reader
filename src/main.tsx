@@ -12,6 +12,7 @@ import { ProfilePage } from './components/Profile';
 import { ElevenLabsAgent } from './components/ElevenLabs';
 import { TarotPage } from './components/Tarot';
 import { HoroscopeIndex, HoroscopePage } from './components/Horoscope';
+import { TarotMeaningsIndex, TarotMeaningPage } from './components/TarotMeanings';
 import { AnalyticsDashboard } from './components/Admin/AnalyticsDashboard';
 import { LandingPage } from './components/LandingPage';
 import App from './App';
@@ -63,6 +64,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/horoscope" element={<HoroscopeIndex />} />
           <Route path="/horoscope/:date" element={<HoroscopeIndex />} />
           <Route path="/horoscope/:date/:sign" element={<HoroscopePage />} />
+
+          {/* Public Tarot Card Meaning Routes (SEO) */}
+          <Route path="/tarot-card-meaning" element={<TarotMeaningsIndex />} />
+          <Route path="/tarot-card-meaning/:cardId" element={<TarotMeaningPage />} />
 
           {/* Public Landing */}
           <Route path="/" element={<LandingPage />} />
