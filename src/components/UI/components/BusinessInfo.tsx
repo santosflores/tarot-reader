@@ -85,7 +85,7 @@ export function BusinessInfo() {
                                     <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-sm shrink-0">2</div>
                                     <div>
                                         <h5 className="font-bold text-slate-200 mb-1">Enter the Session</h5>
-                                        <p className="text-slate-400 text-sm">Start a tarot readings phone call with the AI. Cost: <span className="text-white font-bold">10 credits/min</span>.</p>
+                                        <p className="text-slate-400 text-sm">Start a tarot readings voice call with the AI. Cost: <span className="text-white font-bold">10 credits/min</span>.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
