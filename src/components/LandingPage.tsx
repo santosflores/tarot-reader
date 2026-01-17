@@ -32,7 +32,7 @@ export function LandingPage() {
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Experience tarot readings voice online — speak directly with your digital psychic for real-time guidance.
+                        Experience the world's first <strong>Interactive Voice Tarot</strong>. Speak directly with your AI spiritual guide and hear your destiny revealed in real-time.
                     </p>
 
                     {/* Call to Action */}
@@ -42,7 +42,7 @@ export function LandingPage() {
                             className="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                Begin Your Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                Start Voice Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </span>
                         </Link>
                         <a href="#pricing" className="text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-slate-400 pb-0.5">

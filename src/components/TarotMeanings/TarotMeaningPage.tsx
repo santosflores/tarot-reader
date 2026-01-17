@@ -392,16 +392,16 @@ export function TarotMeaningPage() {
                 {/* CTA to Tarot Reader */}
                 <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/20">
                     <h2 className="text-2xl font-bold text-white mb-4">
-                        Seek Deeper Guidance
+                        Experience a Live Voice Reading
                     </h2>
                     <p className="text-slate-300 mb-6 max-w-md mx-auto">
-                        Understanding {card.name} is just the beginning. Get a personalized tarot reading for your unique situation.
+                        Understanding {card.name} is just the beginning. Speak with our AI Tarot Reader for a deeply personal reading with <strong>immersive voice guidance</strong>. Hear the cards reveal your path.
                     </p>
                     <Link
                         to="/app"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                     >
-                        Get Your Tarot Reading <span>→</span>
+                        Start Voice Reading <span>→</span>
                     </Link>
                 </div>
             </main>
