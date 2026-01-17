@@ -30,7 +30,7 @@ export function LandingPage() {
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        We combine ancient wisdom with AI to guide you.
+                        Experience tarot readings voice online — speak directly with your digital psychic for real-time guidance.
                     </p>
 
                     {/* Call to Action */}
@@ -112,7 +112,7 @@ export function LandingPage() {
                         {/* Testimonial 2 */}
                         <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
                             <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
-                            <p className="text-slate-300 mb-4 italic">"The voice interaction makes it feel so real. It's like having a spiritual advisor in my pocket 24/7."</p>
+                            <p className="text-slate-300 mb-4 italic">"The tarot cards voice feature makes it feel like a real phone call. It's like having a spiritual advisor in my pocket 24/7."</p>
                             <div className="text-sm">
                                 <span className="font-semibold text-white block">James R.</span>
                                 <span className="text-slate-500">London, UK</span>
