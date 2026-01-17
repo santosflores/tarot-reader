@@ -124,7 +124,7 @@ export function TarotMeaningPage() {
                             <img
                                 src={getCardImageFromMeaning(card)}
                                 alt={`${card.name} tarot card meaning`}
-                                className="w-full max-w-[280px] rounded-xl shadow-lg transition-transform group-hover:scale-[1.02]"
+                                className="w-full max-w-[280px] rounded-xl shadow-[0_0_40px_-10px_rgba(168,85,247,0.5)] border-2 border-purple-500/30 transition-all group-hover:scale-[1.02] group-hover:shadow-[0_0_60px_-10px_rgba(168,85,247,0.7)] group-hover:border-purple-400/50"
                             />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span className="px-3 py-1.5 bg-black/70 text-white text-sm rounded-full">
