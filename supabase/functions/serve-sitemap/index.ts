@@ -31,10 +31,21 @@ serve(async (req: Request) => {
             throw error;
         }
 
+        // Fetch all tarot card meanings
+        const { data: tarotCards, error: tarotError } = await supabase
+            .from('tarot_card_meanings')
+            .select('id, updated_at');
+
+        if (tarotError) {
+            console.error('Error fetching tarot cards:', tarotError);
+            // Don't fail the whole sitemap, just log it
+        }
+
         // Static routes
         const staticRoutes = [
             '',
             '/horoscope',
+            '/tarot-card-meaning',
             '/app',
             '/login',
             '/signup'
@@ -50,6 +61,17 @@ serve(async (req: Request) => {
         <loc>${BASE_URL}${route}</loc>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
+    </url>`;
+        });
+
+        // Add dynamic tarot card routes
+        tarotCards?.forEach(card => {
+            sitemap += `
+    <url>
+        <loc>${BASE_URL}/tarot-card-meaning/${card.id}</loc>
+        ${card.updated_at ? `<lastmod>${new Date(card.updated_at).toISOString()}</lastmod>` : ''}
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
     </url>`;
         });
 
