@@ -73,7 +73,7 @@ export function TarotMeaningPage() {
             <header className="relative pt-16 pb-12 overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/40 via-slate-900/0 to-slate-900/0" />
 
-                <div className="max-w-3xl mx-auto px-6 relative z-10">
+                <div className="max-w-5xl mx-auto px-6 relative z-10">
                     {/* Breadcrumb */}
                     <nav className="mb-8 text-sm text-slate-400">
                         <Link to="/" className="hover:text-purple-400 transition-colors">Home</Link>
@@ -112,7 +112,7 @@ export function TarotMeaningPage() {
             </header>
 
             {/* Content */}
-            <main className="max-w-3xl mx-auto px-6 pb-20">
+            <main className="max-w-5xl mx-auto px-6 pb-20">
                 <div className="grid md:grid-cols-[280px_1fr] gap-8">
                     {/* Card Image */}
                     <div className="flex flex-col items-center md:items-start">
