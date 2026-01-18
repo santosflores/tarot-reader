@@ -95,13 +95,13 @@ export function ConversationsList() {
 
 
   return (
-    <CollapsibleSection title="Conversations" icon="💬" defaultExpanded={false} className="mt-4">
+    <CollapsibleSection title="Past Communions" icon="💬" defaultExpanded={false} className="mt-4">
       <div className="space-y-3">
         {loading && (
           <div className="flex items-center justify-center py-6">
             <div className="flex flex-col items-center gap-2">
               <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-              <div className="text-xs text-purple-300/80">Loading conversations...</div>
+              <div className="text-xs text-purple-300/80">Recalling memories...</div>
             </div>
           </div>
         )}
@@ -111,7 +111,7 @@ export function ConversationsList() {
             <div className="flex items-start gap-2">
               <div className="text-red-400 text-sm">⚠️</div>
               <div className="flex-1">
-                <div className="text-xs font-medium text-red-200 mb-1">Error loading conversations</div>
+                <div className="text-xs font-medium text-red-200 mb-1">Error recalling memories</div>
                 <div className="text-xs text-red-300/80 mb-2">{error}</div>
                 <button
                   type="button"
@@ -128,8 +128,8 @@ export function ConversationsList() {
         {!loading && !error && conversations.length === 0 && (
           <div className="text-center py-6">
             <div className="text-3xl mb-2 opacity-50">💬</div>
-            <div className="text-xs font-medium text-purple-300/80 mb-1">No conversations yet</div>
-            <div className="text-xs text-purple-400/60">Start a conversation to see it here</div>
+            <div className="text-xs font-medium text-purple-300/80 mb-1">No communions recorded</div>
+            <div className="text-xs text-purple-400/60">Manifest a connection to see it here</div>
           </div>
         )}
 
@@ -147,7 +147,7 @@ export function ConversationsList() {
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-purple-200 truncate">
-                        {conv.call_summary_title || `Conversation ${conv.conversation_id.slice(0, 8)}`}
+                        {conv.call_summary_title || `Communion ${conv.conversation_id.slice(0, 8)}`}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <div className="text-xs text-purple-300/80 flex items-center gap-1">
@@ -225,7 +225,7 @@ export function ConversationsList() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh conversations
+            Refresh Memories
           </button>
         )}
 

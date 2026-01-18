@@ -91,7 +91,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
               disabled={disabled || isConnecting}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {isConnecting ? 'Connecting...' : 'Start Session'}
+              {isConnecting ? 'Attuning...' : 'Begin Communion'}
             </button>
           ) : (
             <button
@@ -99,7 +99,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
               onClick={onEnd}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
-              End Session
+              Sever Connection
             </button>
           )}
         </div>
@@ -192,13 +192,13 @@ export function ElevenLabsAgent() {
     onConnect: () => {
       setError(null);
       setIsSessionConnected(true);
-      addMessage('system', 'Connected to agent');
+      addMessage('system', 'Channel Open');
     },
 
     onDisconnect: () => {
       setIsSessionConnected(false);
       setAgentMode(null);
-      addMessage('system', 'Disconnected from agent');
+      addMessage('system', 'Channel Closed');
     },
 
     onMessage: (payload: { source: 'user' | 'ai'; message: string }) => {
@@ -292,8 +292,8 @@ export function ElevenLabsAgent() {
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">ElevenLabs Agent</h1>
-        <p className="text-sm text-gray-600 mt-1">Voice conversation interface</p>
+        <h1 className="text-2xl font-bold text-gray-900">Oracle Interface</h1>
+        <p className="text-sm text-gray-600 mt-1">Direct Channel to the Source</p>
       </header>
 
       {/* Error Display */}

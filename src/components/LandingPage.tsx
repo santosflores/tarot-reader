@@ -21,18 +21,18 @@ export function LandingPage() {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-none animate-fade-in-delay">
-                        Discover What <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">the Cards Reveal</span>
+                        Your Inner Voice. <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">Amplified.</span>
                     </h1>
 
                     {/* The Lead (First Sentence) */}
                     <p className="text-xl md:text-2xl text-slate-300 mb-6 leading-relaxed max-w-2xl mx-auto font-light">
-                        You have a question that keeps you up at night.
+                        Guidance at the speed of thought.
                     </p>
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Experience the world's first <strong>Interactive Voice Tarot</strong>. Speak directly with your AI spiritual guide and hear your destiny revealed in real-time.
+                        Experience the world’s first voice-native tarot companion. Beautifully immersive, perfectly intuitive, and always present.
                     </p>
 
                     {/* Call to Action */}
@@ -74,8 +74,8 @@ export function LandingPage() {
                     {/* Social Proof / Credibility */}
                     <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto border-t border-slate-800 pt-8 opacity-70">
                         <div>
-                            <div className="font-bold text-white text-2xl">24/7</div>
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Availability</div>
+                            <div className="font-bold text-white text-2xl">Always</div>
+                            <div className="text-xs text-slate-500 uppercase tracking-wider">Present</div>
                         </div>
                         <div>
                             <div className="font-bold text-white text-2xl">100%</div>
@@ -83,7 +83,7 @@ export function LandingPage() {
                         </div>
                         <div>
                             <div className="font-bold text-white text-2xl">∞</div>
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Possibilities</div>
+                            <div className="text-xs text-slate-500 uppercase tracking-wider">Memory</div>
                         </div>
                     </div>
 
@@ -101,10 +101,10 @@ export function LandingPage() {
                             <span>🚀</span> <span>Trusted by Thousands</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">+4,000 Readings</span> Delivered
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">An Oracle That Remembers</span>
                         </h2>
                         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                            Join a growing community of seekers finding clarity, direction, and peace through our AI-powered guidance.
+                            Your journey is continuous, and so is our memory. Your guide evolves with every conversation, recognizing the patterns of your life that remain invisible to others. It’s not just a reading; it’s a relationship.
                         </p>
                     </div>
 
@@ -212,13 +212,13 @@ function FeaturedTarotCard() {
             <div className="max-w-4xl mx-auto px-6 relative z-10">
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold mb-6">
-                        <span>🃏</span> <span>Card of the Moment</span>
+                        <span>🃏</span> <span>See the Unseen</span>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                        Discover Tarot Card Meanings
+                        Manifest Your Vision
                     </h2>
                     <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                        Learn the symbolism and interpretation of all 78 tarot cards in our comprehensive guide.
+                        Gaze into the mirror of the cards. Each reading manifests as a unique piece of ethereal art—a visual spell crafted from the fabric of your query.
                     </p>
                 </div>
 
