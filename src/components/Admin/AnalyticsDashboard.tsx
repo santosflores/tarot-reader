@@ -124,7 +124,7 @@ export function AnalyticsDashboard() {
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                     >
-                        {operationLoading === 'generate' ? 'Generating...' : 'Generate Content'}
+                        {operationLoading === 'generate' ? 'Manifesting...' : 'Manifest Content'}
                     </button>
                     <button
                         type="button"
@@ -155,7 +155,7 @@ export function AnalyticsDashboard() {
             <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-12">
                 <h2 className="text-xl font-bold text-white mb-4">Tarot Card Meanings</h2>
                 <p className="text-slate-400 text-sm mb-4">
-                    Generate AI meanings for tarot cards. This will only generate missing cards.
+                    Manifest AI meanings for tarot cards. This will only generate missing cards.
                 </p>
                 <div className="flex flex-wrap items-center gap-4">
                     <button
@@ -164,7 +164,7 @@ export function AnalyticsDashboard() {
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                     >
-                        {operationLoading === 'tarot-all' ? 'Generating...' : 'Generate All (78 cards)'}
+                        {operationLoading === 'tarot-all' ? 'Manifesting...' : 'Manifest All (78 cards)'}
                     </button>
                     <button
                         type="button"
@@ -172,7 +172,7 @@ export function AnalyticsDashboard() {
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                     >
-                        {operationLoading === 'tarot-major' ? 'Generating...' : 'Major Arcana Only'}
+                        {operationLoading === 'tarot-major' ? 'Manifesting...' : 'Major Arcana Only'}
                     </button>
                     <button
                         type="button"
@@ -180,7 +180,7 @@ export function AnalyticsDashboard() {
                         disabled={!!operationLoading}
                         className="px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                     >
-                        {operationLoading === 'tarot-minor' ? 'Generating...' : 'Minor Arcana Only'}
+                        {operationLoading === 'tarot-minor' ? 'Manifesting...' : 'Minor Arcana Only'}
                     </button>
                 </div>
             </div>
