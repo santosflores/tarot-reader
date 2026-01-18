@@ -216,11 +216,11 @@ export function ElevenLabsOverlay() {
   };
 
   const getButtonTitle = () => {
-    if (error) return "The connection is clouded: " + error;
+    if (error) return "The connection is clouded. Please speak again.";
     if (isConnecting) return "Attuning to your frequency...";
     if (isConnected) {
-      if (isSpeaking) return "The Oracle speaks";
-      return "The Oracle listens - Click to disconnect";
+      if (isSpeaking) return "Resonating.";
+      return "Attuning to your frequency...";
     }
     return "Commune with the Oracle";
   };

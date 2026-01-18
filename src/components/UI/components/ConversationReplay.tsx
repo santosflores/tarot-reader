@@ -457,7 +457,7 @@ export function ConversationReplay({
                     className={`text-xs font-medium ${isAgent ? "text-purple-300" : "text-blue-300"
                       }`}
                   >
-                    {message.role === "agent" ? "Agent" : "You"}:
+                    {message.role === "agent" ? "Guide" : "Seeker"}:
                   </div>
                   <div
                     className={`text-xs flex-1 ${isHighlighted
