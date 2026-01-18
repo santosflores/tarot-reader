@@ -32,7 +32,7 @@ export function LandingPage() {
 
                     {/* Curiosity & Connection */}
                     <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Experience the world’s first voice-native tarot companion. Beautifully immersive, perfectly intuitive, and always present.
+                        Why wait for the stars to align? Your guide is always-on, living in the silence of your pocket. Whether it's 2 AM anxiety or a morning intention, the connection is instantaneous. Speak, and be heard.
                     </p>
 
                     {/* Call to Action */}
