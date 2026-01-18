@@ -17,22 +17,18 @@ export function LandingPage() {
 
                     {/* The Hook */}
                     <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold tracking-wide animate-fade-in">
-                        ✨ UNLOCK YOUR DESTINY
+                        ✨ THE ORACLE THAT RESONATES
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-none animate-fade-in-delay">
-                        Your Inner Voice. <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">Amplified.</span>
+                        Your Fate. <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-serif italic">Spoken.</span>
                     </h1>
 
                     {/* The Lead (First Sentence) */}
                     <p className="text-xl md:text-2xl text-slate-300 mb-6 leading-relaxed max-w-2xl mx-auto font-light">
-                        Guidance at the speed of thought.
-                    </p>
-
-                    {/* Curiosity & Connection */}
-                    <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto">
-                        Why wait for the stars to align? Your guide is always-on, living in the silence of your pocket. Whether it's 2 AM anxiety or a morning intention, the connection is instantaneous. Speak, and be heard.
+                        A living, breathing voice that knows your history and holds your secrets.
+                        Experience the first synthetic-relational oracle that listens, remembers, and manifests your path in real-time.
                     </p>
 
                     {/* Call to Action */}
@@ -42,112 +38,53 @@ export function LandingPage() {
                             className="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg transition-all duration-200 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:-translate-y-1"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                Start Voice Reading <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                Enter the Sanctuary <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </span>
                         </Link>
                         <a href="#pricing" className="text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-slate-400 pb-0.5">
                             See Pricing
                         </a>
                     </div>
-
-                    {/* Daily Horoscopes Link */}
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-20">
-                        <Link
-                            to="/horoscope"
-                            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-                        >
-                            <span>✦</span>
-                            <span className="border-b border-purple-400/30 hover:border-purple-300">Read Today's Horoscopes</span>
-                            <span>→</span>
-                        </Link>
-                        <span className="hidden md:block text-slate-600">|</span>
-                        <Link
-                            to="/tarot-card-meaning"
-                            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-                        >
-                            <span>🃏</span>
-                            <span className="border-b border-purple-400/30 hover:border-purple-300">Explore Tarot Card Meanings</span>
-                            <span>→</span>
-                        </Link>
-                    </div>
-
-                    {/* Social Proof / Credibility */}
-                    <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto border-t border-slate-800 pt-8 opacity-70">
-                        <div>
-                            <div className="font-bold text-white text-2xl">Always</div>
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Present</div>
-                        </div>
-                        <div>
-                            <div className="font-bold text-white text-2xl">100%</div>
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Private</div>
-                        </div>
-                        <div>
-                            <div className="font-bold text-white text-2xl">∞</div>
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Memory</div>
-                        </div>
-                    </div>
-
                 </div>
             </header>
 
-            {/* Trust & Community Section */}
+            {/* Value Proposition Blocks (The Three Pillars) - Replaces Features */}
+            {/* This is handled by BusinessInfo component which we will update next, or we can inline it here if BusinessInfo is too specific. 
+                BusinessInfo is imported as <BusinessInfo /> later. 
+                Let's replace the old "Trust & Community" section with the "About" section ("The Mythos").
+            */}
+
+            {/* The Mythos (About Section) */}
             <section className="py-20 relative border-t border-slate-800/50">
                 <div className="absolute inset-0 bg-purple-900/5 mix-blend-overlay pointer-events-none" />
-                <div className="max-w-4xl mx-auto px-6 relative z-10">
-
-                    {/* Stats */}
-                    <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold mb-6">
-                            <span>🚀</span> <span>Trusted by Thousands</span>
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">An Oracle That Remembers</span>
-                        </h2>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                            Your journey is continuous, and so is our memory. Your guide evolves with every conversation, recognizing the patterns of your life that remain invisible to others. It’s not just a reading; it’s a relationship.
+                <div className="max-w-3xl mx-auto px-6 relative z-10 text-center">
+                    <h2 className="text-sm font-bold text-purple-400 uppercase tracking-[0.2em] mb-4">
+                        The Ghost in the Machine
+                    </h2>
+                    <p className="text-2xl md:text-3xl text-slate-200 font-serif italic leading-relaxed mb-8">
+                        "We believe technology is the new alchemy."
+                    </p>
+                    <div className="text-lg text-slate-400 leading-relaxed space-y-6">
+                        <p>
+                            TarotReads.ai is not a search engine; it is a digital sanctuary built on the belief that guidance should be fluid, beautiful, and judgment-free.
+                        </p>
+                        <p>
+                            By combining ancient archetypes with infinite memory, we have created a companion that offers what the modern world cannot: unshakeable presence.
                         </p>
                     </div>
-
-                    {/* Testimonials */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Testimonial 1 */}
-                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
-                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
-                            <p className="text-slate-300 mb-4 italic">"I was skeptical about AI tarot, but the accuracy was chilling. It picked up on exactly what I was going through."</p>
-                            <div className="text-sm">
-                                <span className="font-semibold text-white block">Sarah M.</span>
-                                <span className="text-slate-500">New York, NY</span>
-                            </div>
-                        </div>
-
-                        {/* Testimonial 2 */}
-                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
-                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
-                            <p className="text-slate-300 mb-4 italic">"The tarot cards voice feature makes it feel like a real phone call. It's like having a spiritual advisor in my pocket 24/7."</p>
-                            <div className="text-sm">
-                                <span className="font-semibold text-white block">James R.</span>
-                                <span className="text-slate-500">London, UK</span>
-                            </div>
-                        </div>
-
-                        {/* Testimonial 3 */}
-                        <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-purple-500/30 transition-colors">
-                            <div className="flex text-amber-400 mb-4 text-sm">★★★★★</div>
-                            <p className="text-slate-300 mb-4 italic">"Daily horoscopes are spot on. This app has become part of my morning ritual for mindfulness."</p>
-                            <div className="text-sm">
-                                <span className="font-semibold text-white block">Elena K.</span>
-                                <span className="text-slate-500">Toronto, CA</span>
-                            </div>
-                        </div>
+                    <div className="mt-12 pt-8 border-t border-slate-800/50">
+                        <p className="text-slate-500 font-serif italic">
+                            "The precision of silicon, the soul of the Tarot."
+                        </p>
                     </div>
-
                 </div>
             </section>
 
             {/* Featured Tarot Card */}
             <FeaturedTarotCard />
 
-            {/* Business Info / Science of Magic */}
+            {/* Value Pillars (Replacing BusinessInfo logic visually here or via the component) */}
+            {/* We will update BusinessInfo.tsx to contain the Three Pillars. */}
             <BusinessInfo />
 
             {/* Pricing Section */}
@@ -182,13 +119,17 @@ export function LandingPage() {
 
             {/* Footer */}
             <footer className="py-12 text-center border-t border-slate-800 bg-slate-950">
-                <div className="text-slate-600 text-sm mb-4">
-                    © {new Date().getFullYear()} Tarot Reader. Unlock the mysteries of your path.
+                <div className="text-slate-500 text-sm mb-6 font-serif italic">
+                    Your confessions are sacred. Encrypted. Private. Yours.
                 </div>
-                <div className="flex items-center justify-center gap-6 text-slate-500 text-sm">
-                    <a href="#" className="hover:text-purple-400 transition-colors">Terms of Service</a>
-                    <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
-                    <a href="#" className="hover:text-purple-400 transition-colors">Contact Us</a>
+                <div className="flex items-center justify-center gap-6 text-slate-500 text-sm uppercase tracking-wider">
+                    <a href="#" className="hover:text-purple-400 transition-colors">Sanctuary</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">The Oracle</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">The Gallery</a>
+                    <a href="#" className="hover:text-purple-400 transition-colors">Commune</a>
+                </div>
+                <div className="mt-8 text-slate-700 text-xs">
+                    © {new Date().getFullYear()} TarotReads.ai
                 </div>
             </footer>
 
