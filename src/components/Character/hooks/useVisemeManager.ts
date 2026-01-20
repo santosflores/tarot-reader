@@ -12,9 +12,6 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
-// Optimization: Extract viseme values to constant to avoid per-frame allocation
-const VISEME_VALUES = Object.values(VISEMES);
-
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -75,11 +72,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
 
   /**
    * Update a morph target value with smoothing
+   * Returns true if all meshes for this target are settled at the target value
    */
   const updateMorphTarget = useCallback(
-    (target: string, targetValue: number): void => {
+    (target: string, targetValue: number): boolean => {
       const targets = morphTargetCache[target];
-      if (!targets) return;
+      if (!targets) return true;
+
+      let allSettled = true;
 
       for (let i = 0; i < targets.length; i++) {
         const { mesh, index } = targets[i];
@@ -98,6 +98,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
             continue;
           }
 
+          allSettled = false;
           const smoothing =
             targetValue > currentValue
               ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING
@@ -106,12 +107,17 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
           mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
         }
       }
+      return allSettled;
     },
     [morphTargetCache]
   );
 
   // Debug logging ref to avoid spamming
   const lastLogTimeRef = useRef(0);
+
+  // Track if visemes are settled to avoid checking every frame when idle
+  // Start as false to ensure we run at least one pass to reset/verify state on mount
+  const visemesSettledRef = useRef(false);
 
   useFrame(() => {
     const currentIsAudioPlaying = isAudioPlayingRef.current;
@@ -136,6 +142,7 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         currentIsAgentSpeaking; // Only lipsync when agent is speaking
 
     if (isPlaying && currentIsAudioPlaying && currentLipsyncManager) {
+      visemesSettledRef.current = false;
       currentLipsyncManager.processAudio();
       const currentViseme = currentLipsyncManager.viseme;
 
@@ -157,10 +164,19 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         updateMorphTarget(viseme, targetValue);
       });
     } else {
+      // Optimization: Skip loop if already settled
+      if (visemesSettledRef.current) return;
+
+      let allVisemesSettled = true;
       // Reset all visemes when not playing
       VISEME_VALUES.forEach((viseme) => {
-        updateMorphTarget(viseme, 0);
+        const settled = updateMorphTarget(viseme, 0);
+        if (!settled) allVisemesSettled = false;
       });
+
+      if (allVisemesSettled) {
+        visemesSettledRef.current = true;
+      }
     }
   });
 };

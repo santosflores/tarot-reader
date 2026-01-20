@@ -7,3 +7,7 @@
 ## 2024-05-24 - Idle State Short-Circuiting in useFrame
 **Learning:** `useFrame` loops that drive animations (like blinking) often continue to run calculation logic even when the animation is settled (e.g., eyes fully open), causing unnecessary CPU usage and potential Three.js overhead.
 **Action:** Track a "settled" state ref (e.g., `isIdle`) and return early from `useFrame` callbacks to skip all processing when no updates are needed.
+
+## 2024-05-25 - Viseme Manager Idle Optimization
+**Learning:** `useVisemeManager` was iterating over all visemes and checking morph target values every frame even when the character was silent.
+**Action:** Implemented a short-circuit mechanism using a `visemesSettledRef` to skip processing loop entirely when audio is not playing and all visemes are reset to 0.
