@@ -12,6 +12,9 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
+// Optimization: Extract viseme values to constant to avoid per-frame allocation
+const VISEME_VALUES = Object.values(VISEMES);
+
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -54,9 +57,8 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
    */
   const morphTargetCache = useMemo(() => {
     const cache: Record<string, Array<{ mesh: SkinnedMesh; index: number }>> = {};
-    const visemes = VISEME_VALUES;
 
-    visemes.forEach((viseme) => {
+    VISEME_VALUES.forEach((viseme) => {
       cache[viseme] = [];
       avatarSkinnedMeshes.forEach((mesh) => {
         if (mesh.morphTargetDictionary && mesh.morphTargetDictionary[viseme] !== undefined) {
@@ -86,6 +88,16 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
           typeof mesh.morphTargetInfluences[index] === 'number'
         ) {
           const currentValue = mesh.morphTargetInfluences[index];
+
+          // Optimization: Skip update if already close enough to target
+          // This prevents unnecessary calculations and three.js updates for stable values
+          if (Math.abs(currentValue - targetValue) < 0.001) {
+            if (currentValue !== targetValue) {
+              mesh.morphTargetInfluences[index] = targetValue;
+            }
+            continue;
+          }
+
           const smoothing =
             targetValue > currentValue
               ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING

@@ -4,7 +4,7 @@
  * Now behaves as a drawer that slides in from the left
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SupabaseTest } from './components/SupabaseTest';
 import { ControlsTabs } from './components/ControlsTabs';
@@ -18,6 +18,17 @@ export const UI = () => {
   const { user, profile, signOut, loading } = useAuthContext();
   const [signingOut, setSigningOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Close drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -42,6 +53,8 @@ export const UI = () => {
           onClick={() => setIsOpen(true)}
           className="fixed left-4 top-4 z-[150] w-14 h-14 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-xl border-2 border-purple-400/40 rounded-full shadow-xl shadow-purple-900/50 flex items-center justify-center transition-all hover:scale-110 hover:border-purple-300/60 hover:shadow-2xl hover:shadow-purple-900/60"
           title="Open menu"
+          aria-label="Open main menu"
+          aria-expanded={isOpen}
         >
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-lg shadow-purple-900/50 border border-purple-300/30">
             {displayName.charAt(0).toUpperCase()}
@@ -51,6 +64,10 @@ export const UI = () => {
 
       {/* Drawer */}
       <div
+        role={isOpen ? 'dialog' : undefined}
+        aria-modal={isOpen ? 'true' : undefined}
+        aria-label="Main Menu"
+        aria-hidden={!isOpen}
         className={`fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border-r-2 border-purple-400/40 shadow-2xl shadow-purple-900/50 z-[140] transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
@@ -84,6 +101,7 @@ export const UI = () => {
             onClick={() => setIsOpen(false)}
             className="p-2 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 backdrop-blur-sm border border-purple-400/30 hover:border-purple-300/50 text-gray-300 hover:text-white transition-all hover:scale-110 shadow-lg ml-2"
             title="Close drawer"
+            aria-label="Close main menu"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

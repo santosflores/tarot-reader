@@ -216,13 +216,13 @@ export function ElevenLabsOverlay() {
   };
 
   const getButtonTitle = () => {
-    if (error) return "Error: " + error;
-    if (isConnecting) return "Connecting...";
+    if (error) return "The connection is clouded. Please speak again.";
+    if (isConnecting) return "Attuning to your frequency...";
     if (isConnected) {
-      if (isSpeaking) return "Agent is speaking";
-      return "Listening - Click to end session";
+      if (isSpeaking) return "Resonating.";
+      return "Attuning to your frequency...";
     }
-    return "Click to start conversation";
+    return "Commune with the Oracle";
   };
 
   const handleButtonClick = () => {

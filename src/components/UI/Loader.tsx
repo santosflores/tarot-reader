@@ -25,10 +25,10 @@ export const Loader = () => {
             <div className="w-80 space-y-6 text-center bg-slate-900/50 p-8 rounded-2xl border border-purple-500/20 shadow-2xl shadow-purple-900/50">
                 <div className="space-y-2">
                     <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 animate-pulse">
-                        Loading Experience
+                        Opening the Veil...
                     </div>
                     <div className="text-sm text-purple-200/60 font-medium">
-                        Preparing mystical energies...
+                        Attuning the energies...
                     </div>
                 </div>
 
@@ -41,7 +41,7 @@ export const Loader = () => {
                     </div>
 
                     <div className="mt-4 flex justify-between text-xs font-medium text-purple-300/50 uppercase tracking-widest">
-                        <span>Initialising</span>
+                        <span>Manifesting</span>
                         <span>{Math.floor(progress)}%</span>
                     </div>
                 </div>

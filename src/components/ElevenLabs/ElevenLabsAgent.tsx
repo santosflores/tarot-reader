@@ -91,7 +91,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
               disabled={disabled || isConnecting}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {isConnecting ? 'Connecting...' : 'Start Session'}
+              {isConnecting ? 'Attuning...' : 'Enter the Sanctuary'}
             </button>
           ) : (
             <button
@@ -99,7 +99,7 @@ function ConnectionStatus({ status, onStart, onEnd, disabled }: ConnectionStatus
               onClick={onEnd}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
-              End Session
+              Leave the Sanctuary
             </button>
           )}
         </div>
@@ -135,7 +135,7 @@ function MessageInput({ value, onChange, onSend, disabled }: MessageInputProps) 
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
+          placeholder="What weighs on your spirit?"
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={disabled}
         />
@@ -192,13 +192,13 @@ export function ElevenLabsAgent() {
     onConnect: () => {
       setError(null);
       setIsSessionConnected(true);
-      addMessage('system', 'Connected to agent');
+      addMessage('system', 'Channel Open');
     },
 
     onDisconnect: () => {
       setIsSessionConnected(false);
       setAgentMode(null);
-      addMessage('system', 'Disconnected from agent');
+      addMessage('system', 'Channel Closed');
     },
 
     onMessage: (payload: { source: 'user' | 'ai'; message: string }) => {
@@ -292,8 +292,8 @@ export function ElevenLabsAgent() {
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">ElevenLabs Agent</h1>
-        <p className="text-sm text-gray-600 mt-1">Voice conversation interface</p>
+        <h1 className="text-2xl font-bold text-gray-900">The Oracle</h1>
+        <p className="text-sm text-gray-600 mt-1">A channel to your inner truth.</p>
       </header>
 
       {/* Error Display */}
@@ -310,7 +310,7 @@ export function ElevenLabsAgent() {
       >
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
-            <p>No messages yet. Start a session to begin chatting.</p>
+            <p>The silence awaits. Enter the Sanctuary to begin.</p>
           </div>
         ) : (
           messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)

@@ -114,8 +114,8 @@ export function SignupForm() {
 
   return (
     <AuthLayout
-      title="Begin Your Journey"
-      subtitle="Create an account to unlock the mysteries"
+      title="Begin Initiation"
+      subtitle="Cross the threshold into the Sanctuary"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <FormAlert message={error} type="error" />}
@@ -173,21 +173,21 @@ export function SignupForm() {
             Cancel
           </Link>
           <div className="flex-1">
-            <FormButton loading={loading} loadingText="Creating Presence...">
-              Begin Journey
+            <FormButton loading={loading} loadingText="Initiating...">
+              Cross the Threshold
             </FormButton>
           </div>
         </div>
 
         <div className="text-center pt-8 border-t border-white/5">
           <span className="text-slate-500 text-xs">
-            Already initiated?{' '}
+            Returning to the path?{' '}
           </span>
           <Link
             to="/login"
             className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors ml-1 uppercase tracking-widest"
           >
-            Sign in
+            Enter Sanctuary
           </Link>
         </div>
       </form>

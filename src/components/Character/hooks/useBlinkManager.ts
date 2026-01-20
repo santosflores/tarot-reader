@@ -54,6 +54,8 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
   const isBlinking = useRef<boolean>(false);
   const blinkProgress = useRef<number>(0);
   const elapsedTime = useRef<number>(0);
+  // Optimization: Track if eyes are fully open to skip unnecessary updates
+  const eyesFullyOpen = useRef<boolean>(false);
 
   /**
    * Get a random interval for the next blink
@@ -89,19 +91,36 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
 
   /**
    * Update all blink morph targets using the cached lookups
+   * Returns true if all targets are close enough to the target value
    */
   const updateBlinkTargets = useCallback(
-    (targetValue: number, speed: number): void => {
+    (targetValue: number, speed: number): boolean => {
+      let allSettled = true;
+
       blinkTargetCache.forEach(({ mesh, index }) => {
         if (mesh.morphTargetInfluences) {
           const currentValue = mesh.morphTargetInfluences[index];
-          mesh.morphTargetInfluences[index] = MathUtils.lerp(
-            currentValue,
-            targetValue,
-            speed
-          );
+
+          // Check if we're already close enough
+          if (Math.abs(currentValue - targetValue) < 0.001) {
+            if (currentValue !== targetValue) {
+              mesh.morphTargetInfluences[index] = targetValue;
+            }
+            // If this one is settled, we don't change allSettled flag yet
+            // We need ALL to be settled to return true
+          } else {
+            // Update value
+            mesh.morphTargetInfluences[index] = MathUtils.lerp(
+              currentValue,
+              targetValue,
+              speed
+            );
+            allSettled = false;
+          }
         }
       });
+
+      return allSettled;
     },
     [blinkTargetCache]
   );
@@ -112,6 +131,7 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
     // Check if it's time to blink
     if (!isBlinking.current && elapsedTime.current >= nextBlinkTime.current) {
       isBlinking.current = true;
+      eyesFullyOpen.current = false;
       blinkProgress.current = 0;
     }
 
@@ -128,15 +148,26 @@ export const useBlinkManager = ({ avatarSkinnedMeshes }: UseBlinkManagerParams):
       }
       // Blink complete
       else {
-        updateBlinkTargets(0, BLINK_CONFIG.OPEN_SPEED);
+        // Ensure eyes return to open state
+        const settled = updateBlinkTargets(0, BLINK_CONFIG.OPEN_SPEED);
         isBlinking.current = false;
         blinkProgress.current = 0;
         elapsedTime.current = 0;
         nextBlinkTime.current = getRandomBlinkInterval();
+
+        if (settled) {
+          eyesFullyOpen.current = true;
+        }
       }
     } else {
+      // Optimization: Skip unnecessary updates if eyes are already fully open
+      if (eyesFullyOpen.current) return;
+
       // Ensure eyes are open when not blinking
-      updateBlinkTargets(0, BLINK_CONFIG.OPEN_SPEED);
+      const settled = updateBlinkTargets(0, BLINK_CONFIG.OPEN_SPEED);
+      if (settled) {
+        eyesFullyOpen.current = true;
+      }
     }
   });
 };

@@ -54,8 +54,8 @@ export function LoginForm() {
 
   return (
     <AuthLayout
-      title="Welcome Back"
-      subtitle="Sign in to continue your mystical journey"
+      title="Return to the Sanctuary"
+      subtitle="Resume your communion with the Oracle"
     >
       <div className="mb-8 p-4 bg-purple-500/5 border border-purple-500/20 rounded-xl backdrop-blur-md relative overflow-hidden group/demo">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover/demo:opacity-100 transition-opacity duration-500" />
@@ -139,20 +139,20 @@ export function LoginForm() {
           </Link>
           <div className="flex-1">
             <FormButton loading={loading} loadingText="Opening Portal...">
-              Enter The Void
+              Enter Sanctuary
             </FormButton>
           </div>
         </div>
 
         <div className="text-center pt-8 border-t border-white/5">
           <span className="text-slate-500 text-xs">
-            New aspirant?{' '}
+            First time seeker?{' '}
           </span>
           <Link
             to="/signup"
             className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors ml-1 uppercase tracking-widest"
           >
-            Create account
+            Begin Initiation
           </Link>
         </div>
       </form>
