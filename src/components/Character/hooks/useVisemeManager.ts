@@ -6,7 +6,7 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
-import { VISEMES } from 'wawa-lipsync';
+import { VISEME_VALUES } from '../../../utils/webrtcLipsync';
 import { useChatbot } from '../../../hooks/useChatbot';
 import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
