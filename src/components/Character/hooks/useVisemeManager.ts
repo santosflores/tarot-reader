@@ -12,9 +12,6 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
-// Optimization: Extract viseme values to constant to avoid per-frame allocation
-const VISEME_VALUES = Object.values(VISEMES);
-
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -40,6 +37,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   const audioPlayerRef = useRef(audioPlayer);
   const audioSourceTypeRef = useRef<AudioSourceType>(audioSourceType);
   const isAgentSpeakingRef = useRef(isAgentSpeaking);
+
+  // Optimization: Track active visemes to minimize loop iterations
+  const activeVisemes = useRef<Set<string>>(new Set());
+
+  // Initialize with all visemes to ensure any residual values from previous animations are cleared
+  useEffect(() => {
+    VISEME_VALUES.forEach((v) => activeVisemes.current.add(v));
+  }, []);
 
   // Update refs when values change
   useEffect(() => {
@@ -75,11 +80,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
 
   /**
    * Update a morph target value with smoothing
+   * Returns true if target is settled (value matches targetValue)
    */
   const updateMorphTarget = useCallback(
-    (target: string, targetValue: number): void => {
+    (target: string, targetValue: number): boolean => {
       const targets = morphTargetCache[target];
-      if (!targets) return;
+      if (!targets) return true;
+
+      let allSettled = true;
 
       for (let i = 0; i < targets.length; i++) {
         const { mesh, index } = targets[i];
@@ -95,17 +103,19 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
             if (currentValue !== targetValue) {
               mesh.morphTargetInfluences[index] = targetValue;
             }
-            continue;
+            // Settled for this mesh
+          } else {
+            const smoothing =
+              targetValue > currentValue
+                ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING
+                : ANIMATION_CONSTANTS.VISEME_DEACTIVATION_SMOOTHING;
+
+            mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
+            allSettled = false;
           }
-
-          const smoothing =
-            targetValue > currentValue
-              ? ANIMATION_CONSTANTS.VISEME_ACTIVATION_SMOOTHING
-              : ANIMATION_CONSTANTS.VISEME_DEACTIVATION_SMOOTHING;
-
-          mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
         }
       }
+      return allSettled;
     },
     [morphTargetCache]
   );
@@ -152,15 +162,29 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         }
       }
 
-      VISEME_VALUES.forEach((viseme) => {
+      // Add current viseme to active set
+      activeVisemes.current.add(currentViseme);
+
+      // Iterate only over active visemes
+      activeVisemes.current.forEach((viseme) => {
         const targetValue = viseme === currentViseme ? 1 : 0;
-        updateMorphTarget(viseme, targetValue);
+        const settled = updateMorphTarget(viseme, targetValue);
+
+        // If settled at 0 (inactive), remove from active set
+        if (settled && targetValue === 0) {
+          activeVisemes.current.delete(viseme);
+        }
       });
     } else {
-      // Reset all visemes when not playing
-      VISEME_VALUES.forEach((viseme) => {
-        updateMorphTarget(viseme, 0);
-      });
+      // Reset all active visemes when not playing
+      if (activeVisemes.current.size > 0) {
+        activeVisemes.current.forEach((viseme) => {
+          const settled = updateMorphTarget(viseme, 0);
+          if (settled) {
+            activeVisemes.current.delete(viseme);
+          }
+        });
+      }
     }
   });
 };
