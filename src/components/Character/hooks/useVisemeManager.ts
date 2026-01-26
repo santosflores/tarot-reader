@@ -12,9 +12,6 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
-// Optimization: Extract viseme values to constant to avoid per-frame allocation
-const VISEME_VALUES = Object.values(VISEMES);
-
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -40,6 +37,9 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   const audioPlayerRef = useRef(audioPlayer);
   const audioSourceTypeRef = useRef<AudioSourceType>(audioSourceType);
   const isAgentSpeakingRef = useRef(isAgentSpeaking);
+
+  // Optimization: Track if visemes are fully reset to skip unnecessary updates
+  const visemesSettled = useRef<boolean>(false);
 
   // Update refs when values change
   useEffect(() => {
@@ -75,11 +75,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
 
   /**
    * Update a morph target value with smoothing
+   * Returns true if all targets are settled (reached target value)
    */
   const updateMorphTarget = useCallback(
-    (target: string, targetValue: number): void => {
+    (target: string, targetValue: number): boolean => {
       const targets = morphTargetCache[target];
-      if (!targets) return;
+      if (!targets) return true;
+
+      let isSettled = true;
 
       for (let i = 0; i < targets.length; i++) {
         const { mesh, index } = targets[i];
@@ -104,8 +107,10 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
               : ANIMATION_CONSTANTS.VISEME_DEACTIVATION_SMOOTHING;
 
           mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
+          isSettled = false;
         }
       }
+      return isSettled;
     },
     [morphTargetCache]
   );
@@ -152,15 +157,27 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         }
       }
 
+      // If playing, we are definitely not settled
+      visemesSettled.current = false;
+
       VISEME_VALUES.forEach((viseme) => {
         const targetValue = viseme === currentViseme ? 1 : 0;
         updateMorphTarget(viseme, targetValue);
       });
     } else {
+      // Optimization: Skip unnecessary updates if visemes are already fully reset
+      if (visemesSettled.current) return;
+
+      let allSettled = true;
       // Reset all visemes when not playing
       VISEME_VALUES.forEach((viseme) => {
-        updateMorphTarget(viseme, 0);
+        const settled = updateMorphTarget(viseme, 0);
+        if (!settled) allSettled = false;
       });
+
+      if (allSettled) {
+        visemesSettled.current = true;
+      }
     }
   });
 };
