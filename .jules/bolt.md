@@ -7,3 +7,6 @@
 ## 2024-05-24 - Idle State Short-Circuiting in useFrame
 **Learning:** `useFrame` loops that drive animations (like blinking) often continue to run calculation logic even when the animation is settled (e.g., eyes fully open), causing unnecessary CPU usage and potential Three.js overhead.
 **Action:** Track a "settled" state ref (e.g., `isIdle`) and return early from `useFrame` callbacks to skip all processing when no updates are needed.
+## 2025-05-18 - Optimized Audio Averaging
+**Learning:** High-frequency loop averaging (O(N)) can be replaced by O(1) running sums even with ring buffers, provided the old value is subtracted before overwrite.
+**Action:** Apply running sum pattern to all sliding window averages in animation loops.
