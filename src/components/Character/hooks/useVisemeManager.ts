@@ -12,9 +12,6 @@ import { ANIMATION_CONSTANTS } from '../../../config/animations';
 import type { SkinnedMeshArray, AudioSourceType, LipsyncManager, WebRTCLipsyncManager } from '../../../types';
 import type { SkinnedMesh } from 'three';
 
-// Optimization: Extract viseme values to constant to avoid per-frame allocation
-const VISEME_VALUES = Object.values(VISEMES);
-
 interface UseVisemeManagerParams {
   avatarSkinnedMeshes: SkinnedMeshArray;
 }
@@ -41,6 +38,9 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
   const audioSourceTypeRef = useRef<AudioSourceType>(audioSourceType);
   const isAgentSpeakingRef = useRef(isAgentSpeaking);
 
+  // Optimization: Track if visemes are fully reset to 0 to skip updates in idle loop
+  const visemesSettledRef = useRef(false);
+
   // Update refs when values change
   useEffect(() => {
     lipsyncManagerRef.current = lipsyncManager;
@@ -50,6 +50,11 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
     audioSourceTypeRef.current = audioSourceType;
     isAgentSpeakingRef.current = isAgentSpeaking;
   }, [lipsyncManager, webrtcLipsyncManager, isAudioPlaying, audioPlayer, audioSourceType, isAgentSpeaking]);
+
+  // Reset settled state when meshes change to ensure we verify their state
+  useEffect(() => {
+    visemesSettledRef.current = false;
+  }, [avatarSkinnedMeshes]);
 
   /**
    * Optimization: Cache the mapping from viseme name to morph target indices for each mesh.
@@ -75,11 +80,14 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
 
   /**
    * Update a morph target value with smoothing
+   * Returns true if all meshes for this target are settled (at target value)
    */
   const updateMorphTarget = useCallback(
-    (target: string, targetValue: number): void => {
+    (target: string, targetValue: number): boolean => {
       const targets = morphTargetCache[target];
-      if (!targets) return;
+      if (!targets) return true;
+
+      let allSettled = true;
 
       for (let i = 0; i < targets.length; i++) {
         const { mesh, index } = targets[i];
@@ -104,8 +112,10 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
               : ANIMATION_CONSTANTS.VISEME_DEACTIVATION_SMOOTHING;
 
           mesh.morphTargetInfluences[index] = MathUtils.lerp(currentValue, targetValue, smoothing);
+          allSettled = false;
         }
       }
+      return allSettled;
     },
     [morphTargetCache]
   );
@@ -136,6 +146,9 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         currentIsAgentSpeaking; // Only lipsync when agent is speaking
 
     if (isPlaying && currentIsAudioPlaying && currentLipsyncManager) {
+      // Optimization: Reset settled state as we are now playing
+      visemesSettledRef.current = false;
+
       currentLipsyncManager.processAudio();
       const currentViseme = currentLipsyncManager.viseme;
 
@@ -157,10 +170,20 @@ export const useVisemeManager = ({ avatarSkinnedMeshes }: UseVisemeManagerParams
         updateMorphTarget(viseme, targetValue);
       });
     } else {
+      // Optimization: Short-circuit if already settled (all visemes at 0)
+      if (visemesSettledRef.current) return;
+
+      let allSettled = true;
+
       // Reset all visemes when not playing
       VISEME_VALUES.forEach((viseme) => {
-        updateMorphTarget(viseme, 0);
+        const settled = updateMorphTarget(viseme, 0);
+        if (!settled) allSettled = false;
       });
+
+      if (allSettled) {
+        visemesSettledRef.current = true;
+      }
     }
   });
 };
