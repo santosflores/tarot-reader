@@ -141,6 +141,94 @@ class HistoryRingBuffer {
   }
 }
 
+// Implementation 3: Ring Buffer with Running Sum
+class HistoryRingBufferRunningSum {
+  private buffer: AudioFeatures[];
+  private size: number;
+  private index: number = 0;
+  private count: number = 0;
+  private accumulated: AudioFeatures;
+
+  constructor(size: number) {
+    this.size = size;
+    // Initialize buffer with zeroed objects
+    this.buffer = Array.from({ length: size }, () => ({
+      bands: Array(7).fill(0),
+      deltaBands: Array(7).fill(0),
+      volume: 0,
+      centroid: 0,
+    }));
+
+    // Initialize accumulator
+    this.accumulated = {
+      bands: Array(7).fill(0),
+      deltaBands: Array(7).fill(0),
+      volume: 0,
+      centroid: 0,
+    };
+  }
+
+  add(features: AudioFeatures) {
+    // Current slot (contains old value if wrapped, or 0 if fresh)
+    const currentSlot = this.buffer[this.index];
+
+    // Subtract old values from accumulator
+    this.accumulated.volume -= currentSlot.volume;
+    this.accumulated.centroid -= currentSlot.centroid;
+    for(let i=0; i<7; i++) {
+        this.accumulated.bands[i] -= currentSlot.bands[i];
+    }
+
+    // Overwrite buffer slot with new values
+    currentSlot.volume = features.volume;
+    currentSlot.centroid = features.centroid;
+    for(let i=0; i<7; i++) {
+        currentSlot.bands[i] = features.bands[i];
+        currentSlot.deltaBands[i] = features.deltaBands[i];
+    }
+
+    // Add new values to accumulator
+    this.accumulated.volume += features.volume;
+    this.accumulated.centroid += features.centroid;
+    for(let i=0; i<7; i++) {
+        this.accumulated.bands[i] += features.bands[i];
+    }
+
+    // Update index
+    this.index = (this.index + 1) % this.size;
+    if (this.count < this.size) {
+      this.count++;
+    }
+  }
+
+  getAverage(): AudioFeatures {
+    const result: AudioFeatures = {
+      volume: 0,
+      centroid: 0,
+      bands: Array(7).fill(0),
+      deltaBands: Array(7).fill(0),
+    };
+
+    if (this.count > 0) {
+      // O(1) calculation using accumulated sum
+      result.volume = this.accumulated.volume / this.count;
+      result.centroid = this.accumulated.centroid / this.count;
+      for(let i=0; i<7; i++) {
+          result.bands[i] = this.accumulated.bands[i] / this.count;
+      }
+    }
+
+    return result;
+  }
+
+  getPrevious(offset: number): AudioFeatures | undefined {
+    if (this.count < offset) return undefined;
+    let ptr = this.index - offset;
+    if (ptr < 0) ptr += this.size;
+    return this.buffer[ptr];
+  }
+}
+
 describe('History Performance', () => {
   const ITERATIONS = 1_000_000;
   const HISTORY_SIZE = 10;
@@ -171,6 +259,20 @@ describe('History Performance', () => {
 
     const end = performance.now();
     console.log(`Ring Buffer: ${(end - start).toFixed(2)}ms`);
+  });
+
+  it('measures ring buffer w/ running sum performance', () => {
+    const history = new HistoryRingBufferRunningSum(HISTORY_SIZE);
+    const start = performance.now();
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      history.add(createMockFeatures());
+      history.getAverage();
+      history.getPrevious(2);
+    }
+
+    const end = performance.now();
+    console.log(`Ring Buffer + Sum: ${(end - start).toFixed(2)}ms`);
   });
 });
 
