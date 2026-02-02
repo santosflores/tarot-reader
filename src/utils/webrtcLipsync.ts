@@ -99,6 +99,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     centroid: 0,
   };
 
+  // Optimization: accumulated features for O(1) averaging
+  const accumulatedFeatures: AudioFeatures = {
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0),
+    volume: 0,
+    centroid: 0,
+  };
+
   const scores: Record<string, number> = {};
   // Initialize scores
   VISEME_VALUES.forEach(v => scores[v] = 0);
@@ -128,6 +136,26 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       connected = true;
       historyIndex = 0;
       historyCount = 0;
+
+      // Reset accumulator
+      accumulatedFeatures.volume = 0;
+      accumulatedFeatures.centroid = 0;
+      for (let i = 0; i < bands.length; i++) {
+        accumulatedFeatures.bands[i] = 0;
+        accumulatedFeatures.deltaBands[i] = 0;
+      }
+
+      // Reset history buffer to prevent stale data corruption
+      for (let i = 0; i < historySize; i++) {
+        const h = historyBuffer[i];
+        h.volume = 0;
+        h.centroid = 0;
+        for (let b = 0; b < bands.length; b++) {
+          h.bands[b] = 0;
+          h.deltaBands[b] = 0;
+        }
+      }
+
       visemeStartTime = performance.now();
 
       if (audioContext.state === "suspended") {
@@ -179,6 +207,13 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     // Reuse object from buffer
     const features = historyBuffer[historyIndex];
 
+    // Subtract old values from accumulator before overwriting
+    accumulatedFeatures.volume -= features.volume;
+    accumulatedFeatures.centroid -= features.centroid;
+    for (let i = 0; i < bands.length; i++) {
+      accumulatedFeatures.bands[i] -= features.bands[i];
+    }
+
     // Calculate band energies in-place
     for (let i = 0; i < bands.length; i++) {
       const { start, end } = bands[i];
@@ -215,6 +250,13 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     }
     features.volume = features.bands.length ? sumBands / features.bands.length : 0;
 
+    // Add new values to accumulator
+    accumulatedFeatures.volume += features.volume;
+    accumulatedFeatures.centroid += features.centroid;
+    for (let i = 0; i < bands.length; i++) {
+      accumulatedFeatures.bands[i] += features.bands[i];
+    }
+
     // Calculate delta bands (change from previous)
     if (historyCount < 2) {
         for(let i=0; i<bands.length; i++) features.deltaBands[i] = 0;
@@ -244,24 +286,15 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     result.volume = 0;
     result.centroid = 0;
     for (let i = 0; i < bands.length; i++) {
-        result.bands[i] = 0;
-        result.deltaBands[i] = 0;
-    }
-
-    for (let i = 0; i < historyCount; i++) {
-      const h = historyBuffer[i];
-      result.volume += h.volume;
-      result.centroid += h.centroid;
-      for(let k=0; k<bands.length; k++) {
-          result.bands[k] += h.bands[k];
-      }
+      result.bands[i] = 0;
+      result.deltaBands[i] = 0;
     }
 
     if (historyCount > 0) {
-      result.volume /= historyCount;
-      result.centroid /= historyCount;
-      for(let k=0; k<bands.length; k++) {
-          result.bands[k] /= historyCount;
+      result.volume = accumulatedFeatures.volume / historyCount;
+      result.centroid = accumulatedFeatures.centroid / historyCount;
+      for (let k = 0; k < bands.length; k++) {
+        result.bands[k] = accumulatedFeatures.bands[k] / historyCount;
       }
     }
 
