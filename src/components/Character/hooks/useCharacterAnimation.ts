@@ -33,6 +33,7 @@ export const useCharacterAnimation = ({
   const previousActionRef = useRef<THREE.AnimationAction | null>(null);
   const animationInitialized = useRef(false);
   const currentAnimationRef = useRef<AnimationName>(currentAnimation);
+  const lastReportedTime = useRef<number>(0);
 
   /**
    * Initialize animation mixer if it doesn't exist
@@ -142,7 +143,11 @@ export const useCharacterAnimation = ({
 
       // Update Time
       if (!action.paused && action.isRunning()) {
-        animState.setCurrentTime(action.time);
+        // Throttle time updates to ~10fps to avoid excessive re-renders
+        if (Math.abs(action.time - lastReportedTime.current) > 0.1) {
+          animState.setCurrentTime(action.time);
+          lastReportedTime.current = action.time;
+        }
       }
     }
 
