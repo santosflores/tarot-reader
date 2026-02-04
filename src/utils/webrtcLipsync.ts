@@ -99,6 +99,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     centroid: 0,
   };
 
+  // Running sum for O(1) averaging
+  const accumulatedFeatures: AudioFeatures = {
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0),
+    volume: 0,
+    centroid: 0,
+  };
+
   const scores: Record<string, number> = {};
   // Initialize scores
   VISEME_VALUES.forEach(v => scores[v] = 0);
@@ -128,6 +136,15 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       connected = true;
       historyIndex = 0;
       historyCount = 0;
+
+      // Reset accumulator
+      accumulatedFeatures.volume = 0;
+      accumulatedFeatures.centroid = 0;
+      for (let i = 0; i < bands.length; i++) {
+        accumulatedFeatures.bands[i] = 0;
+        accumulatedFeatures.deltaBands[i] = 0;
+      }
+
       visemeStartTime = performance.now();
 
       if (audioContext.state === "suspended") {
@@ -165,6 +182,14 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     currentViseme = VISEMES.sil;
     historyIndex = 0;
     historyCount = 0;
+
+    // Reset accumulator
+    accumulatedFeatures.volume = 0;
+    accumulatedFeatures.centroid = 0;
+    for (let i = 0; i < bands.length; i++) {
+      accumulatedFeatures.bands[i] = 0;
+      accumulatedFeatures.deltaBands[i] = 0;
+    }
   };
 
   const isConnected = (): boolean => connected;
@@ -178,6 +203,13 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
 
     // Reuse object from buffer
     const features = historyBuffer[historyIndex];
+
+    // Subtract old values from accumulator before overwriting
+    accumulatedFeatures.volume -= features.volume;
+    accumulatedFeatures.centroid -= features.centroid;
+    for (let k = 0; k < bands.length; k++) {
+      accumulatedFeatures.bands[k] -= features.bands[k];
+    }
 
     // Calculate band energies in-place
     for (let i = 0; i < bands.length; i++) {
@@ -226,6 +258,13 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
         }
     }
 
+    // Add new values to accumulator
+    accumulatedFeatures.volume += features.volume;
+    accumulatedFeatures.centroid += features.centroid;
+    for (let k = 0; k < bands.length; k++) {
+      accumulatedFeatures.bands[k] += features.bands[k];
+    }
+
     // Update history index
     if (totalEnergy > 0) {
       historyIndex = (historyIndex + 1) % historySize;
@@ -240,28 +279,20 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   const getAveragedFeatures = (): AudioFeatures => {
     const result = averagedFeatures;
 
-    // Reset result
-    result.volume = 0;
-    result.centroid = 0;
-    for (let i = 0; i < bands.length; i++) {
+    if (historyCount > 0) {
+      result.volume = accumulatedFeatures.volume / historyCount;
+      result.centroid = accumulatedFeatures.centroid / historyCount;
+      for (let k = 0; k < bands.length; k++) {
+        result.bands[k] = accumulatedFeatures.bands[k] / historyCount;
+        result.deltaBands[k] = 0; // Delta bands are not averaged
+      }
+    } else {
+      // Reset result if no history
+      result.volume = 0;
+      result.centroid = 0;
+      for (let i = 0; i < bands.length; i++) {
         result.bands[i] = 0;
         result.deltaBands[i] = 0;
-    }
-
-    for (let i = 0; i < historyCount; i++) {
-      const h = historyBuffer[i];
-      result.volume += h.volume;
-      result.centroid += h.centroid;
-      for(let k=0; k<bands.length; k++) {
-          result.bands[k] += h.bands[k];
-      }
-    }
-
-    if (historyCount > 0) {
-      result.volume /= historyCount;
-      result.centroid /= historyCount;
-      for(let k=0; k<bands.length; k++) {
-          result.bands[k] /= historyCount;
       }
     }
 
