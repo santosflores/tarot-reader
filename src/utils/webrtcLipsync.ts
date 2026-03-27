@@ -91,6 +91,21 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   let historyIndex = 0;
   let historyCount = 0;
 
+  // Scratch objects for incremental updates
+  const currentFeatures: AudioFeatures = {
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0),
+    volume: 0,
+    centroid: 0,
+  };
+
+  const accumulatedFeatures: AudioFeatures = {
+    bands: new Array(bands.length).fill(0),
+    deltaBands: new Array(bands.length).fill(0), // Unused but kept for type structure
+    volume: 0,
+    centroid: 0,
+  };
+
   // Reusable objects to avoid allocation in loop
   const averagedFeatures: AudioFeatures = {
     bands: new Array(bands.length).fill(0),
@@ -105,6 +120,22 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
 
   let sampleRate = 44100;
   let binWidth = sampleRate / 2048;
+
+  const resetState = (): void => {
+    historyIndex = 0;
+    historyCount = 0;
+    accumulatedFeatures.volume = 0;
+    accumulatedFeatures.centroid = 0;
+    currentFeatures.volume = 0;
+    currentFeatures.centroid = 0;
+
+    for(let i=0; i<bands.length; i++) {
+        accumulatedFeatures.bands[i] = 0;
+        accumulatedFeatures.deltaBands[i] = 0;
+        currentFeatures.bands[i] = 0;
+        currentFeatures.deltaBands[i] = 0;
+    }
+  };
 
   const connectStream = (stream: MediaStream): void => {
     if (connected) {
@@ -126,8 +157,7 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       binWidth = sampleRate / analyser.fftSize;
 
       connected = true;
-      historyIndex = 0;
-      historyCount = 0;
+      resetState();
       visemeStartTime = performance.now();
 
       if (audioContext.state === "suspended") {
@@ -163,8 +193,7 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     dataArray = null;
     connected = false;
     currentViseme = VISEMES.sil;
-    historyIndex = 0;
-    historyCount = 0;
+    resetState();
   };
 
   const isConnected = (): boolean => connected;
@@ -176,8 +205,8 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
       dataArray as unknown as Uint8Array<ArrayBuffer>
     );
 
-    // Reuse object from buffer
-    const features = historyBuffer[historyIndex];
+    // Use scratch object instead of direct buffer access
+    const features = currentFeatures;
 
     // Calculate band energies in-place
     for (let i = 0; i < bands.length; i++) {
@@ -216,6 +245,7 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
     features.volume = features.bands.length ? sumBands / features.bands.length : 0;
 
     // Calculate delta bands (change from previous)
+    // We can still use historyBuffer to look up previous frames
     if (historyCount < 2) {
         for(let i=0; i<bands.length; i++) features.deltaBands[i] = 0;
     } else {
@@ -226,7 +256,48 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
         }
     }
 
-    // Update history index
+    // Update Accumulator and History Buffer
+
+    // 1. Subtract oldest value if buffer is full
+    if (historyCount === historySize) {
+        const oldest = historyBuffer[historyIndex];
+        accumulatedFeatures.volume -= oldest.volume;
+        accumulatedFeatures.centroid -= oldest.centroid;
+        for(let k=0; k<bands.length; k++) {
+            accumulatedFeatures.bands[k] -= oldest.bands[k];
+        }
+    }
+
+    // 2. Add new value if it will be included in history
+    // (If buffer not full, we only include if totalEnergy > 0)
+    // (If buffer full, we always include, replacing the old one)
+    let willInclude = false;
+    if (historyCount === historySize) {
+        willInclude = true;
+    } else {
+        if (totalEnergy > 0) {
+            willInclude = true;
+        }
+    }
+
+    if (willInclude) {
+        accumulatedFeatures.volume += features.volume;
+        accumulatedFeatures.centroid += features.centroid;
+        for(let k=0; k<bands.length; k++) {
+            accumulatedFeatures.bands[k] += features.bands[k];
+        }
+    }
+
+    // 3. Copy scratch to history buffer
+    const dest = historyBuffer[historyIndex];
+    dest.volume = features.volume;
+    dest.centroid = features.centroid;
+    for(let k=0; k<bands.length; k++) {
+        dest.bands[k] = features.bands[k];
+        dest.deltaBands[k] = features.deltaBands[k];
+    }
+
+    // 4. Update history index
     if (totalEnergy > 0) {
       historyIndex = (historyIndex + 1) % historySize;
       if (historyCount < historySize) {
@@ -240,29 +311,24 @@ export function createWebRTCLipsyncAnalyzer(): WebRTCLipsyncAnalyzer {
   const getAveragedFeatures = (): AudioFeatures => {
     const result = averagedFeatures;
 
-    // Reset result
-    result.volume = 0;
-    result.centroid = 0;
+    // Reset result (not strictly needed as we overwrite, but safe for deltaBands)
     for (let i = 0; i < bands.length; i++) {
-        result.bands[i] = 0;
         result.deltaBands[i] = 0;
     }
 
-    for (let i = 0; i < historyCount; i++) {
-      const h = historyBuffer[i];
-      result.volume += h.volume;
-      result.centroid += h.centroid;
-      for(let k=0; k<bands.length; k++) {
-          result.bands[k] += h.bands[k];
-      }
-    }
-
+    // Incremental average O(1)
     if (historyCount > 0) {
-      result.volume /= historyCount;
-      result.centroid /= historyCount;
+      result.volume = accumulatedFeatures.volume / historyCount;
+      result.centroid = accumulatedFeatures.centroid / historyCount;
       for(let k=0; k<bands.length; k++) {
-          result.bands[k] /= historyCount;
+          result.bands[k] = accumulatedFeatures.bands[k] / historyCount;
       }
+    } else {
+        result.volume = 0;
+        result.centroid = 0;
+        for(let k=0; k<bands.length; k++) {
+            result.bands[k] = 0;
+        }
     }
 
     return result;
