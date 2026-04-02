@@ -141,6 +141,87 @@ class HistoryRingBuffer {
   }
 }
 
+// Implementation 3: Running Sum Ring Buffer
+class RunningSumRingBuffer {
+  private buffer: AudioFeatures[];
+  private size: number;
+  private index: number = 0;
+  private count: number = 0;
+  private runningSum: {
+    volume: number;
+    centroid: number;
+    bands: number[];
+  };
+
+  constructor(size: number) {
+    this.size = size;
+    this.buffer = new Array(size).fill(null).map(() => ({
+      bands: new Array(7).fill(0),
+      deltaBands: new Array(7).fill(0),
+      volume: 0,
+      centroid: 0
+    }));
+    this.runningSum = {
+      volume: 0,
+      centroid: 0,
+      bands: new Array(7).fill(0),
+    };
+  }
+
+  add(features: AudioFeatures) {
+    // If buffer is full, subtract the old value (at current index) from running sum
+    if (this.count === this.size) {
+      const old = this.buffer[this.index];
+      this.runningSum.volume -= old.volume;
+      this.runningSum.centroid -= old.centroid;
+      for(let i=0; i<7; i++) {
+          this.runningSum.bands[i] -= old.bands[i];
+      }
+    }
+
+    // Overwrite buffer (simulate in-place modification or assignment)
+    this.buffer[this.index] = features;
+
+    // Add new value to running sum
+    this.runningSum.volume += features.volume;
+    this.runningSum.centroid += features.centroid;
+    for(let i=0; i<7; i++) {
+        this.runningSum.bands[i] += features.bands[i];
+    }
+
+    this.index = (this.index + 1) % this.size;
+    if (this.count < this.size) {
+      this.count++;
+    }
+  }
+
+  getAverage(): AudioFeatures {
+    const result: AudioFeatures = {
+      volume: 0,
+      centroid: 0,
+      bands: Array(7).fill(0),
+      deltaBands: Array(7).fill(0),
+    };
+
+    if (this.count > 0) {
+      result.volume = this.runningSum.volume / this.count;
+      result.centroid = this.runningSum.centroid / this.count;
+      for(let i=0; i<7; i++) {
+          result.bands[i] = this.runningSum.bands[i] / this.count;
+      }
+    }
+
+    return result;
+  }
+
+  getPrevious(offset: number): AudioFeatures | undefined {
+    if (this.count < offset) return undefined;
+    let ptr = this.index - offset;
+    if (ptr < 0) ptr += this.size;
+    return this.buffer[ptr];
+  }
+}
+
 describe('History Performance', () => {
   const ITERATIONS = 1_000_000;
   const HISTORY_SIZE = 10;
@@ -171,6 +252,20 @@ describe('History Performance', () => {
 
     const end = performance.now();
     console.log(`Ring Buffer: ${(end - start).toFixed(2)}ms`);
+  });
+
+  it('measures running sum ring buffer performance', () => {
+    const history = new RunningSumRingBuffer(HISTORY_SIZE);
+    const start = performance.now();
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      history.add(createMockFeatures());
+      history.getAverage();
+      history.getPrevious(2);
+    }
+
+    const end = performance.now();
+    console.log(`Running Sum Ring Buffer: ${(end - start).toFixed(2)}ms`);
   });
 });
 
